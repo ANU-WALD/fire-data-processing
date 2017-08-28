@@ -14,7 +14,7 @@
     "institution": "Australian National University",
     "creator_url": "http://fennerschool.anu.edu.au/about-us/people/zachary-hatfield-dodds",
     "history": "",
-    "source": "The original MODIS data used to generate the Live FUel Moisture Content Product were supplied by the Land Processes Distributed Active Archive Center (LPDAAC), located at the U.S. Geological Survey (USGS) Earth Resources Observation and Science Center (EROS) http://lpdaac.usgs.gov.",
+    "source": "The original MODIS data used to generate the Live Fuel Moisture Content Product were supplied by the Land Processes Distributed Active Archive Center (LPDAAC), located at the U.S. Geological Survey (USGS) Earth Resources Observation and Science Center (EROS) http://lpdaac.usgs.gov.",
     "references": "Yebra, M., van Dijk, A., Quan, X., Cary, G. Monitoring and forecasting fuel moisture content for Australia using a combination of remote sensing and modelling. Proceedings for the 5th International Fire Behaviour and Fuels Conference. April 11-15, 2016, Melbourne, Australia. Published by the International Association of Wildland Fire, Missoula, Montana, USA",
     "acknowledgement": "This dataset was made possible through funding from the Bushfire and Natural Hazards CRC through the project 'Mapping bushfire hazard and impacts'"
 }
