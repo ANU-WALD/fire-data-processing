@@ -2,46 +2,31 @@ import os.path
 from osgeo import gdal
 import numpy as np
 import argparse
-from utils import pack_data, get_top_n_functor, get_fmc_functor, \
-    get_tile_map_transformer
+from utils import pack_data, get_top_n_functor, get_fmc_functor
 
 
-def get_fmc_image(rasters, ndvi_raster, auraster,
-                  q_mask, trans, x_size, y_size):
+def get_fmc_image(rasters, landcover_mask, q_mask):
 
     # In case the mask doesn't exist
     if q_mask is None:
-        q_mask = np.ones((y_size, x_size), dtype=bool)
+        q_mask = np.ones(landcover_mask.shape, dtype=bool)
 
-
-    mean_arr = np.zeros((y_size, x_size), dtype=np.float32)
-    std_arr = np.zeros((y_size, x_size), dtype=np.float32)
+    mean_arr = np.zeros(landcover_mask.shape, dtype=np.float32)
+    std_arr = np.zeros(landcover_mask.shape, dtype=np.float32)
 
     get_top_n = get_top_n_functor()
     get_fmc = get_fmc_functor()
 
-    auraster_xsize = auraster.shape[1]
-    auraster_ysize = auraster.shape[0]
-
-    map_ij = trans(0, 0)
-
     for i in range(x_size):
         for j in range(y_size):
-
-            if not (map_ij[0] + i >= auraster_xsize or map_ij[1] + j >= auraster_ysize):
-                vegtype_value = auraster[map_ij[1]+j, map_ij[0]+i]
-
-                if vegtype_value > .0 and ndvi_raster[j, i] > .15 and q_mask[j, i]:
-                    top_40 = get_top_n(rasters[j, i, :], vegtype_value, 40)
-                    mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
+            if landcover_mask[j, i] > .0 and q_mask[j, i]:
+                top_40 = get_top_n(rasters[j, i, :], landcover_mask[j, i], 40)
+                mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
 
     return mean_arr, std_arr
 
 
-def aggregator(tile_path, map_path, pq_mask_path):
-
-    trans = get_tile_map_transformer(tile_path, map_path)
-
+def aggregator(tile_path, landcover_mask, pq_mask_path):
     #Special case where we don't use all the bands 1, 2, 4, 6, 7
     file_pattern = 'HDF4_EOS:EOS_GRID:"{}":MOD_Grid_BRDF:Nadir_Reflectance_Band{}'
     bands = [gdal.Open(file_pattern.format(tile_path, b)) for b in [1, 2, 4, 6, 7]]
@@ -54,20 +39,20 @@ def aggregator(tile_path, map_path, pq_mask_path):
     # VDII compositions between bands 2 and 6 -> indexes 1 and 3
     raster_stack = np.dstack(
         (raster_stack,
-         (raster_stack[:, :, 1] - raster_stack[:, :, 3]) / (raster_stack[:, :, 1] + raster_stack[:, :, 3]))
+         (raster_stack[:, :, 1] - raster_stack[:, :, 3]) /
+         (raster_stack[:, :, 1] + raster_stack[:, :, 3])
+         )
     )
     #raster stack contains 6 bands: 5 bands from the sat rasters and the VDII one
 
-    ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
+    auraster = gdal.Open(landcover_mask).GetRasterBand(1).ReadAsArray()
 
-    auds = gdal.Open(map_path)
-    auraster = auds.GetRasterBand(1).ReadAsArray()
-
-    q_mask = quality_mask_composer(pq_mask_path)
+    red, nir = raster_stack[..., 0], raster_stack[..., 1]
+    ndvi_mask = ((nir - red) / (nir + red)) > 0.15
+    q_mask = np.logical_and(quality_mask_composer(pq_mask_path), ndvi_mask)
 
     x_size, y_size = bands[0].RasterXSize, bands[0].RasterYSize
-    mean_arr, std_arr  = get_fmc_image(raster_stack, ndvi_raster, auraster,
-                                       q_mask, trans, x_size, y_size)
+    mean_arr, std_arr  = get_fmc_image(raster_stack, auraster, q_mask)
 
     return mean_arr, std_arr
 
