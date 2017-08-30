@@ -2,7 +2,7 @@ import os.path
 from osgeo import gdal
 import numpy as np
 import argparse
-from utils import pack_data, get_top_n_functor, get_fmc_functor
+from utils import pack_data, get_top_n_functor
 
 
 def get_fmc_image(rasters, landcover_mask, q_mask):
@@ -14,14 +14,15 @@ def get_fmc_image(rasters, landcover_mask, q_mask):
     mean_arr = np.zeros(landcover_mask.shape, dtype=np.float32)
     std_arr = np.zeros(landcover_mask.shape, dtype=np.float32)
 
-    get_top_n = get_top_n_functor()
-    get_fmc = get_fmc_functor()
+    get_mean_std = get_top_n_functor(n=40)
+
+    y_size, x_size = landcover_mask.shape[-2:]
 
     for i in range(x_size):
         for j in range(y_size):
             if landcover_mask[j, i] > .0 and q_mask[j, i]:
-                top_40 = get_top_n(rasters[j, i, :], landcover_mask[j, i], 40)
-                mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
+                mean_arr[j, i], std_arr[j, i] = \
+                    get_mean_std(rasters[j, i, :], landcover_mask[j, i])
 
     return mean_arr, std_arr
 
@@ -36,25 +37,20 @@ def aggregator(tile_path, landcover_mask, pq_mask_path):
         raster_stack = np.dstack(
             (raster_stack, bands[b].GetRasterBand(1).ReadAsArray() * .0001))
 
-    # VDII compositions between bands 2 and 6 -> indexes 1 and 3
-    raster_stack = np.dstack(
-        (raster_stack,
-         (raster_stack[:, :, 1] - raster_stack[:, :, 3]) /
-         (raster_stack[:, :, 1] + raster_stack[:, :, 3])
-         )
-    )
-    #raster stack contains 6 bands: 5 bands from the sat rasters and the VDII one
-
-    auraster = gdal.Open(landcover_mask).GetRasterBand(1).ReadAsArray()
 
     red, nir = raster_stack[..., 0], raster_stack[..., 1]
     ndvi_mask = ((nir - red) / (nir + red)) > 0.15
-    q_mask = np.logical_and(quality_mask_composer(pq_mask_path), ndvi_mask)
 
-    x_size, y_size = bands[0].RasterXSize, bands[0].RasterYSize
-    mean_arr, std_arr  = get_fmc_image(raster_stack, auraster, q_mask)
+    # NDII compositions between bands 2 and 6 -> indexes 1 and 3
+    NDII = (nir - raster_stack[:, :, 3]) / (nir + raster_stack[:, :, 3])
+    #raster stack contains 6 bands: 5 bands from the sat rasters and the NDII one
+    raster_stack = np.dstack((raster_stack, NDII))
 
-    return mean_arr, std_arr
+    return get_fmc_image(
+        raster_stack,
+        auraster=gdal.Open(landcover_mask).GetRasterBand(1).ReadAsArray(),
+        q_mask=np.logical_and(quality_mask_composer(pq_mask_path), ndvi_mask)
+        )
 
 
 def quality_mask_composer(pq_mask_path):

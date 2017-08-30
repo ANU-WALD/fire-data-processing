@@ -70,33 +70,16 @@ def pack_data(hdf_file, mean_arr, std_arr, dest):
         var.GeoTransform = ' '.join(str(geot[i]) for i in range(6))
 
 
-def get_fmc_functor():
+def get_top_n_functor(n=40):
     # Notes: FMC.npy should be a column in the lookup table; after we
     # get the ton N indicies (below) we use them to select FMC here.
-    # TODO: just return FMC directly after selecting rows
     fmc = np.load("./FMC.npy")
-
-    def get_fmc(idxs, fmc=fmc):
-        return fmc[idxs].mean(axis=-1), fmc[idxs].std(axis=-1)
-
-    return get_fmc
-
-
-def get_vegtype_idx(veg_type):
-    # TODO: use Pandas for lookup table, select by row value
-    return {1: (0, 2563),
-            2: (2563, 4226),
-            3: (4226, 8708),
-            }[veg_type]
-
-
-def get_top_n_functor():
     lut = np.load("./LUT.npy")[:, [0,1,3,5,6,7]]
     lut_sq = np.sqrt(np.einsum('ij,ij->i', lut, lut))
 
-    def get_top_n(mb, veg_type, top_n, mat=lut, smat=lut_sq):
+    def get_top_n(mb, veg_type, top_n=n, mat=lut, smat=lut_sq):
         # Select Veg type subset from LUT table
-        start, end = get_vegtype_idx(veg_type)
+        start, end = {1: (0, 2563), 2: (2563, 4226), 3: (4226, 8708)}[veg_type]
         vmat = mat[start:end]
         vsmat = smat[start:end]
         # Fast calculation of spectral angle between observation and each row
@@ -106,6 +89,6 @@ def get_top_n_functor():
         )
         # Returns indices into the full lookup table for best matches
         idxs = np.argpartition(spectral_angle, top_n)[:top_n] + start
-        return idxs
+        return fmc[idxs].mean(axis=-1), fmc[idxs].std(axis=-1)
 
     return get_top_n
