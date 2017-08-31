@@ -28,7 +28,7 @@ bands_to_use = ['red_630_690', 'nir1_780_900', 'green_530_610',
 
 
 # Get the main dataset - demo is one tile for a year
-ds = xr.open_dataset(in_file)
+ds = xr.open_dataset(in_file, chunks=dict(time=1, y=800, x=800))
 ds.rename(modis_band_map, inplace=True)
 ds['ndvi_ok_mask'] = 0.15 < (ds.nir1_780_900 - ds.red_630_690) / (ds.nir1_780_900 + ds.red_630_690)
 ds['ndii'] = (ds.nir1_780_900 - ds.swir1_1550_1750) / (ds.nir1_780_900 + ds.swir1_1550_1750)
@@ -83,7 +83,7 @@ def get_fmc(dataset):
             out[:,cond] = np.apply_along_axis(get_functor(kind), 0, vals)
     
     data_vars = dict(lfmc_mean=(('y', 'x'), out[0]), 
-                     lfmc_stdev=(('y', 'x'), out[1]))
+                     lfmc_stdv=(('y', 'x'), out[1]))
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
@@ -97,20 +97,31 @@ def add_sinusoidal_var(dataset):
         ds.x[0], (ds.x[-1] - ds.x[0]) / ds.x.size, 0,
         ds.y[0], 0, (ds.y[-1] - ds.y[0]) / ds.y.size
     ]))
-    dataset[u'sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
-
+    dataset['sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
 
 # Do the expensive bit
 with ThreadPoolExecutor(28) as pool:
     slices = list(pool.map(lambda t: get_fmc(ds.sel(time=t)), ds.time))
 out = xr.concat(slices, dim='time')
 
+# Ugly hack because PyNIO dropped coords; add them in from another MODIS dataset
+coord_ds = xr.open_dataset('/g/data/ub8/au/FMC/sinusoidal/MCD43A4.2001.h31v11.005.2007077085626_LFMC.nc')
+out['x'] = coord_ds.x
+out['y'] = coord_ds.y
+
 # Add metadata to the resulting file
 out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
 out.encoding.update(dict(shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6)))
 out.attrs.update(json_attrs)
 add_sinusoidal_var(out)
+var_attrs = dict(
+    units='%', grid_mapping='sinusoidal',
+    comment='Ratio of water to dry plant matter.  '
+    'Mean of top 40 matches from observed to simulated reflectance.'
+)
+out.lfmc_mean.attrs.update(dict(long_name='LFMC Arithmetic Mean', **var_attrs))
+out.lfmc_stdv.attrs.update(dict(long_name='LFMC Standard Deviation', **var_attrs))
 
 # Save the file!
-out.to_netcdf('/g/data/xc0/user/HatfieldDodds/LFMC_new_demo.nc')
-
+out.to_netcdf('/g/data/xc0/user/HatfieldDodds/LFMC_new_demo_test.nc')
+out
