@@ -1,3 +1,4 @@
+import json
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
 
@@ -5,11 +6,12 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-import matplotlib.pyplot as plt
-
 
 in_file = '/g/data1/xc0/project/FMC_Australia/MCD43A4-collection-six/MCD43A4.A2017.h31v11.006.nc'
 lc_file = '/g/data/xc0/user/HatfieldDodds/FMC/landcover.2013.h31v11.nc'
+
+with open('modis_prods/nc_metadata.json') as f:
+    json_attrs = json.load(f)
 
 modis_band_map = {
     'band1': 'red_630_690',
@@ -80,17 +82,35 @@ def get_fmc(dataset):
             # Only calculate for and assign to the unmasked values
             out[:,cond] = np.apply_along_axis(get_functor(kind), 0, vals)
     
-    data_vars = {
-        'LFMC_mean': (tuple(dataset.dims), out[0]),
-        'LFMC_stdev': (tuple(dataset.dims), out[1])
-    }
+    data_vars = dict(lfmc_mean=(('y', 'x'), out[0]), 
+                     lfmc_stdev=(('y', 'x'), out[1]))
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
+
+
+def add_sinusoidal_var(dataset):
+    if u'sinusoidal' in dataset.variables:
+        return
+    with open('sinusoidal.json') as f:
+        attrs = json.load(f)
+    attrs['GeoTransform'] = ' '.join(map(str, [
+        # Affine matrix - start/step/rotation, start/rotation/step - in 1D
+        ds.x[0], (ds.x[-1] - ds.x[0]) / ds.x.size, 0,
+        ds.y[0], 0, (ds.y[-1] - ds.y[0]) / ds.y.size
+    ]))
+    dataset[u'sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
 
 
 # Do the expensive bit
 with ThreadPoolExecutor(28) as pool:
     slices = list(pool.map(lambda t: get_fmc(ds.sel(time=t)), ds.time))
-
 out = xr.concat(slices, dim='time')
+
+# Add metadata to the resulting file
+out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
+out.encoding.update(dict(shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6)))
+out.attrs.update(json_attrs)
+add_sinusoidal_var(out)
+
+# Save the file!
 out.to_netcdf('/g/data/xc0/user/HatfieldDodds/LFMC_new_demo.nc')
 
