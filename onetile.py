@@ -146,12 +146,12 @@ def get_validated_args():
 
     def check_year(val):
         """Validate arg and transform glob pattern to file list."""
-        assert re.match(r'\A20\d\d\Z', val), val
+        assert re.match(r'\A20\d\d\Z', val), repr(val)
         return val
 
     def check_tile(val):
         """Validate that arg is an existing directory."""
-        assert re.match(r'\Ah\d\dv\d\d\Z', val), val
+        assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
         return val
 
     parser = argparse.ArgumentParser()
