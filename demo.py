@@ -1,13 +1,11 @@
+from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 import pandas as pd
 import xarray as xr
 
 import matplotlib.pyplot as plt
-    
-try:
-    from functools import lru_cache
-except ImportError:
-    from backports.functools_lru_cache import lru_cache
 
 
 in_file = '/g/data1/xc0/project/FMC_Australia/MCD43A4-collection-six/MCD43A4.A2017.h31v11.006.nc'
@@ -28,7 +26,7 @@ bands_to_use = ['red_630_690', 'nir1_780_900', 'green_530_610',
 
 
 # Get the main dataset - demo is one tile for a year
-ds = xr.open_dataset(in_file, chunks=dict(time=1, y=800, x=800))
+ds = xr.open_dataset(in_file)
 ds.rename(modis_band_map, inplace=True)
 ds['ndvi_ok_mask'] = 0.15 < (ds.nir1_780_900 - ds.red_630_690) / (ds.nir1_780_900 + ds.red_630_690)
 ds['ndii'] = (ds.nir1_780_900 - ds.swir1_1550_1750) / (ds.nir1_780_900 + ds.swir1_1550_1750)
@@ -90,6 +88,9 @@ def get_fmc(dataset):
 
 
 # Do the expensive bit
-out = xr.concat([get_fmc(ds.sel(time=t)) for t in ds.time], dim='time')
+with ThreadPoolExecutor(28) as pool:
+    slices = list(pool.map(lambda t: get_fmc(ds.sel(time=t)), ds.time))
+
+out = xr.concat(slices, dim='time')
 out.to_netcdf('/g/data/xc0/user/HatfieldDodds/LFMC_new_demo.nc')
 
