@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import glob
@@ -157,12 +158,15 @@ def get_validated_args():
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
     parser.add_argument(
-        '--year', type=check_year, help='four-digit year to process')
+        '--year', type=check_year, default=os.environ.get('FMC_YEAR'),
+        help='four-digit year to process')
     parser.add_argument(
-        '--tile', type=check_tile, help='tile to process, "hXXvYY"')
+        '--tile', type=check_tile, default=os.environ.get('FMC_TILE'),
+        help='tile to process, "hXXvYY"')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_validated_args()
+    print(args)
     main(args.year, args.tile)
