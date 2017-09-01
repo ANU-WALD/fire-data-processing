@@ -77,11 +77,11 @@ def get_fmc(dataset, masks):
 def add_sinusoidal_var(ds):
     with open('sinusoidal.json') as f:
         attrs = json.load(f)
-    attrs['GeoTransform'] = ' '.join(map(str, [
+    attrs['GeoTransform'] = ' '.join(str(float(x)) for x in [
         # Affine matrix - start/step/rotation, start/rotation/step - in 1D
         ds.x[0], (ds.x[-1] - ds.x[0]) / ds.x.size, 0,
         ds.y[0], 0, (ds.y[-1] - ds.y[0]) / ds.y.size
-    ]))
+    ])
     ds['sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
 
 
@@ -136,7 +136,9 @@ def main(year, tile):
     out.lfmc_mean.attrs.update(dict(long_name='LFMC Arithmetic Mean', **var_attrs))
     out.lfmc_stdv.attrs.update(dict(long_name='LFMC Standard Deviation', **var_attrs))
     out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    out.encoding.update(dict(shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6)))
+    for d in (out.lfmc_mean, out.lfmc_stdv):
+        d.encoding.update(dict(shuffle=True, zlib=True,
+                          chunks=dict(x=400, y=400, time=6)))
 
     # Save the file!
     out.to_netcdf('/g/data/ub8/au/FMC/c6/LFMC_{}_{}.nc'.format(year, tile))
