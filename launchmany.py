@@ -5,4 +5,9 @@ tiles = ('h27v11 h27v12 h28v11 h28v12 h28v13 h29v10 h29v11 h29v12 h29v13 '
 
 for year in (2016, 2017):
     for tile in tiles:
+        fname = '/g/data/ub8/au/FMC/c6/LFMC_{}_{}.nc'.format(year, tile)
+        if os.path.isfile(fname):
+            print('Already done:', fname)
+            continue
+        print('Submitting job for', fname)
         os.system('qsub -v "FMC_YEAR={},FMC_TILE={}" onetile.qsub'.format(year, tile))

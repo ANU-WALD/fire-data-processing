@@ -126,8 +126,6 @@ def main(year, tile):
         json_attrs = json.load(f)
 
     # Add metadata to the resulting file
-    out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    out.encoding.update(dict(shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6)))
     out.attrs.update(json_attrs)
     add_sinusoidal_var(out)
     var_attrs = dict(
@@ -137,6 +135,8 @@ def main(year, tile):
     )
     out.lfmc_mean.attrs.update(dict(long_name='LFMC Arithmetic Mean', **var_attrs))
     out.lfmc_stdv.attrs.update(dict(long_name='LFMC Standard Deviation', **var_attrs))
+    out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
+    out.encoding.update(dict(shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6)))
 
     # Save the file!
     out.to_netcdf('/g/data/ub8/au/FMC/c6/LFMC_{}_{}.nc'.format(year, tile))
