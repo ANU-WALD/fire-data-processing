@@ -4,7 +4,6 @@ import json
 import glob
 import argparse
 from functools import lru_cache
-from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pandas as pd
@@ -110,13 +109,11 @@ def main(year, tile):
         forest=sum((lc == i) for i in (1, 2, 3, 4, 5, 8, 9)).astype(bool)
     )
 
-    def makeslice(timestamp):
-        return get_fmc(ds.sel(time=timestamp), masks=masks)
-
     # Do the expensive bit
-    with ThreadPoolExecutor(28) as pool:
-        slices = list(pool.map(makeslice, ds.time))
-    out = xr.concat(slices, dim='time')
+    out = xr.concat(
+        [get_fmc(ds.sel(time=ts), masks=masks) for ts in ds.time],
+        dim='time',
+    )
 
     # Ugly hack because PyNIO dropped coords; add them in from another MODIS dataset
     with xr.open_dataset(glob.glob(
