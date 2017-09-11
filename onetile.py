@@ -69,8 +69,8 @@ def get_fmc(dataset, masks):
             # Only calculate for and assign to the unmasked values
             out[:,cond] = np.apply_along_axis(get_functor(kind), 0, vals)
 
-    data_vars = dict(lfmc_mean=(('y', 'x'), out[0]),
-                     lfmc_stdv=(('y', 'x'), out[1]))
+    data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
+                     lvmc_stdv=(('y', 'x'), out[1]))
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
@@ -133,15 +133,15 @@ def main(year, tile):
         comment='Ratio of water to dry plant matter.  '
         'Mean of top 40 matches from observed to simulated reflectance.'
     )
-    out.lfmc_mean.attrs.update(dict(long_name='LFMC Arithmetic Mean', **var_attrs))
-    out.lfmc_stdv.attrs.update(dict(long_name='LFMC Standard Deviation', **var_attrs))
+    out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean', **var_attrs))
+    out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation', **var_attrs))
     out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
     for d in (out.lfmc_mean, out.lfmc_stdv):
         d.encoding.update(dict(shuffle=True, zlib=True,
                           chunks=dict(x=400, y=400, time=6)))
 
     # Save the file!
-    out.to_netcdf('/g/data/ub8/au/FMC/c6/LFMC_{}_{}.nc'.format(year, tile))
+    out.to_netcdf('/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile))
 
 
 def get_validated_args():
