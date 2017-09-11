@@ -136,9 +136,12 @@ def main(year, tile):
     out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean', **var_attrs))
     out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation', **var_attrs))
     out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    for d in (out.lfmc_mean, out.lfmc_stdv):
-        d.encoding.update(dict(shuffle=True, zlib=True,
-                          chunks=dict(x=400, y=400, time=6)))
+    for d in (out.lvmc_mean, out.lvmc_stdv):
+        d.encoding.update(dict(
+            shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
+            # After compression, set fill to work around GSKY transparency bug
+            _FillValue=-999,
+        ))
 
     # Save the file!
     out.to_netcdf('/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile))
