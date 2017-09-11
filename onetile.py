@@ -37,9 +37,8 @@ def get_functor(veg_type, n=40):
     """
     # Get the lookup table
     merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
-    merged_lookup['ndii'] = (
-        (merged_lookup.nir1_780_900 - merged_lookup.swir1_1550_1750) /
-        (merged_lookup.nir1_780_900 + merged_lookup.swir1_1550_1750))
+    merged_lookup['ndii'] = difference_index(
+        merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
     table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
     vmat = table[bands_to_use].values
     vsmat = np.sqrt((vmat ** 2).sum(axis=1))
@@ -53,6 +52,11 @@ def get_functor(veg_type, n=40):
         return top_values.mean(axis=-1), top_values.std(axis=-1)
 
     return get_top_n
+
+
+def difference_index(a, b):
+    """A common pattern, eg NDVI, NDII, etc."""
+    return (a - b) / (a + b)
 
 
 def get_fmc(dataset, masks):
@@ -95,9 +99,8 @@ def main(year, tile):
     # Get the main dataset - demo is one tile for a year
     ds = xr.open_dataset(in_file, chunks=dict(time=1, y=800, x=800))
     ds.rename(modis_band_map, inplace=True)
-    ds['ndvi_ok_mask'] = 0.15 < ((ds.nir1_780_900 - ds.red_630_690) /
-                                 (ds.nir1_780_900 + ds.red_630_690))
-    ds['ndii'] = (ds.nir1_780_900 - ds.swir1_1550_1750) / (ds.nir1_780_900 + ds.swir1_1550_1750)
+    ds['ndvi_ok_mask'] = 0.15 < difference_index(ds.nir1_780_900, ds.red_630_690)
+    ds['ndii'] = difference_index(ds.nir1_780_900, ds.swir1_1550_1750)
 
     # Get the landcover masks
     lc = xr.open_dataarray(lc_file)
