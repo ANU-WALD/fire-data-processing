@@ -122,7 +122,7 @@ def main(year, tile):
         out['x'] = coord_ds.x
         out['y'] = coord_ds.y
 
-    with open('modis_prods/nc_metadata.json') as f:
+    with open('nc_metadata.json') as f:
         json_attrs = json.load(f)
 
     # Add metadata to the resulting file
