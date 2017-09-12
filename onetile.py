@@ -15,6 +15,7 @@ import glob
 import argparse
 import datetime
 
+import dask
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -72,19 +73,31 @@ def difference_index(a, b):
     return (a - b) / (a + b)
 
 
+@dask.delayed
+def apply_functor_for_vegtype(vegtype, condition, reflectance):
+    cond = condition.compute()
+    out = np.full((2,) + condition.shape, np.nan, 'float32')
+    vals = reflectance.values[:, cond]
+    if vals.size:
+        # Only calculate for and assign to the unmasked values
+        out[:, cond] = np.apply_along_axis(get_functor(vegtype), 0, vals)
+    return out
+
+
 def get_fmc(dataset, masks):
     """Get the mean and stdev of LFMC for the given Xarray dataset (one time-step)."""
     bands = xr.concat([dataset[b] for b in bands_to_use], dim='band')
-    ok = np.logical_and(dataset.ndvi_ok_mask, bands.notnull().all(dim='band'))
+    ok = dask.array.logical_and(dataset.ndvi_ok_mask,
+                                bands.notnull().all(dim='band'))
 
-    out = np.full((2,) + ok.shape, np.nan, dtype='float32')
+    out = dask.array.full((2,) + ok.shape, np.nan, dtype='float32',
+                          chunks=(2,) + ok.shape)
 
     for kind, mask in masks.items():
-        cond = np.logical_and(ok, mask[:bands.y.size, :bands.x.size]).values
-        vals = bands.values[:, cond]
-        if vals.size:
-            # Only calculate for and assign to the unmasked values
-            out[:,cond] = np.apply_along_axis(get_functor(kind), 0, vals)
+        result = dask.array.from_delayed(
+            apply_functor_for_vegtype(kind, mask, bands),
+            shape=out.shape, dtype=out.dtype)
+        out = dask.array.where(mask, result, out)
 
     data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
                      lvmc_stdv=(('y', 'x'), out[1]))
@@ -135,9 +148,16 @@ def add_sinusoidal_var(ds):
 
 
 def main(year, tile):
+    out_file = '/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile)
+    if os.path.isfile(out_file):
+        print(out_file, 'already exists!  Aborting...')
+        return
 
     lc_file = '/g/data/xc0/user/HatfieldDodds/FMC/landcover.{}.{}.nc' \
         .format(min(year, '2013'), tile)
+
+    with open('nc_metadata.json') as f:
+        json_attrs = json.load(f)
 
     # Get the main dataset - demo is one tile for a year
     ds = get_reflectance(year, tile)
@@ -163,9 +183,6 @@ def main(year, tile):
         out['x'] = coord_ds.x
         out['y'] = coord_ds.y
 
-    with open('nc_metadata.json') as f:
-        json_attrs = json.load(f)
-
     # Add metadata to the resulting file
     out.attrs.update(json_attrs)
     add_sinusoidal_var(out)
@@ -185,7 +202,7 @@ def main(year, tile):
         ))
 
     # Save the file!
-    out.to_netcdf('/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile))
+    out.to_netcdf(out_file)
 
 
 def get_validated_args():
@@ -214,5 +231,4 @@ def get_validated_args():
 
 if __name__ == '__main__':
     args = get_validated_args()
-    print(args)
     main(args.year, args.tile)

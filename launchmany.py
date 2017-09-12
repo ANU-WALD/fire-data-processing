@@ -6,7 +6,7 @@ with open('tiles.json') as f:
 
 for year in (2016, 2017):
     for tile in tiles:
-        fname = '/g/data/ub8/au/FMC/c6/LFMC_{}_{}.nc'.format(year, tile)
+        fname = '/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile)
         if os.path.isfile(fname):
             print('Already done:', fname)
             continue
