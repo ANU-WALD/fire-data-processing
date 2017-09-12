@@ -27,12 +27,11 @@ bands_to_use = ['red_630_690', 'nir1_780_900', 'green_530_610',
 
 
 @lru_cache()
-def get_functor(veg_type, n=40):
+def get_functor(veg_type):
     """Returns a function to get the mean and stdev of LFMC for the top n values.
 
-    Note that the function object is jitted with Numba if possible, and
-    therefore cached to maximise the benefit of jitting and avoid loading
-    the vmat and smat tables more than once.
+    Note that the function object is cached to avoid loading the vmat and smat
+    tables more than once per vegetation type.
     """
     # Get the lookup table
     merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
@@ -42,12 +41,12 @@ def get_functor(veg_type, n=40):
     vmat = table[bands_to_use].values
     vsmat = np.sqrt((vmat ** 2).sum(axis=1))
 
-    def get_top_n(mb, top_n=n, vmat=vmat, vsmat=vsmat, fmc=table.FMC.values):
+    def get_top_n(mb, vmat=vmat, vsmat=vsmat, fmc=table.FMC.values):
         spectral_angle = np.arccos(
             np.einsum('ij,j->i', vmat, mb) /
             (np.sqrt(np.einsum('i,i->', mb, mb)) * vsmat)
         )
-        top_values = fmc[np.argpartition(spectral_angle, top_n)[:top_n]]
+        top_values = fmc[np.argpartition(spectral_angle, 40)[:40]]
         return top_values.mean(axis=-1), top_values.std(axis=-1)
 
     return get_top_n
