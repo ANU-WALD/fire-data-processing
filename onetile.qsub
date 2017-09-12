@@ -6,6 +6,6 @@
 #PBS -l walltime=4:00:00
 #PBS -l other=gdata1
 
-source /g/data/xc0/software/miniconda3/bin/activate remote-sensing
+source /g/data/xc0/software/miniconda3/bin/activate rs2
 cd ~/fire-data-processing
 python onetile.py
