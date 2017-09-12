@@ -4,7 +4,6 @@ import json
 import glob
 import argparse
 from functools import lru_cache
-from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pandas as pd
@@ -37,9 +36,8 @@ def get_functor(veg_type, n=40):
     """
     # Get the lookup table
     merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
-    merged_lookup['ndii'] = (
-        (merged_lookup.nir1_780_900 - merged_lookup.swir1_1550_1750) /
-        (merged_lookup.nir1_780_900 + merged_lookup.swir1_1550_1750))
+    merged_lookup['ndii'] = difference_index(
+        merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
     table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
     vmat = table[bands_to_use].values
     vsmat = np.sqrt((vmat ** 2).sum(axis=1))
@@ -53,6 +51,11 @@ def get_functor(veg_type, n=40):
         return top_values.mean(axis=-1), top_values.std(axis=-1)
 
     return get_top_n
+
+
+def difference_index(a, b):
+    """A common pattern, eg NDVI, NDII, etc."""
+    return (a - b) / (a + b)
 
 
 def get_fmc(dataset, masks):
@@ -69,8 +72,8 @@ def get_fmc(dataset, masks):
             # Only calculate for and assign to the unmasked values
             out[:,cond] = np.apply_along_axis(get_functor(kind), 0, vals)
 
-    data_vars = dict(lfmc_mean=(('y', 'x'), out[0]),
-                     lfmc_stdv=(('y', 'x'), out[1]))
+    data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
+                     lvmc_stdv=(('y', 'x'), out[1]))
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
@@ -95,9 +98,8 @@ def main(year, tile):
     # Get the main dataset - demo is one tile for a year
     ds = xr.open_dataset(in_file, chunks=dict(time=1, y=800, x=800))
     ds.rename(modis_band_map, inplace=True)
-    ds['ndvi_ok_mask'] = 0.15 < ((ds.nir1_780_900 - ds.red_630_690) /
-                                 (ds.nir1_780_900 + ds.red_630_690))
-    ds['ndii'] = (ds.nir1_780_900 - ds.swir1_1550_1750) / (ds.nir1_780_900 + ds.swir1_1550_1750)
+    ds['ndvi_ok_mask'] = 0.15 < difference_index(ds.nir1_780_900, ds.red_630_690)
+    ds['ndii'] = difference_index(ds.nir1_780_900, ds.swir1_1550_1750)
 
     # Get the landcover masks
     lc = xr.open_dataarray(lc_file)
@@ -107,13 +109,11 @@ def main(year, tile):
         forest=sum((lc == i) for i in (1, 2, 3, 4, 5, 8, 9)).astype(bool)
     )
 
-    def makeslice(timestamp):
-        return get_fmc(ds.sel(time=timestamp), masks=masks)
-
     # Do the expensive bit
-    with ThreadPoolExecutor(28) as pool:
-        slices = list(pool.map(makeslice, ds.time))
-    out = xr.concat(slices, dim='time')
+    out = xr.concat(
+        [get_fmc(ds.sel(time=ts), masks=masks) for ts in ds.time],
+        dim='time',
+    )
 
     # Ugly hack because PyNIO dropped coords; add them in from another MODIS dataset
     with xr.open_dataset(glob.glob(
@@ -122,7 +122,7 @@ def main(year, tile):
         out['x'] = coord_ds.x
         out['y'] = coord_ds.y
 
-    with open('modis_prods/nc_metadata.json') as f:
+    with open('nc_metadata.json') as f:
         json_attrs = json.load(f)
 
     # Add metadata to the resulting file
@@ -133,15 +133,18 @@ def main(year, tile):
         comment='Ratio of water to dry plant matter.  '
         'Mean of top 40 matches from observed to simulated reflectance.'
     )
-    out.lfmc_mean.attrs.update(dict(long_name='LFMC Arithmetic Mean', **var_attrs))
-    out.lfmc_stdv.attrs.update(dict(long_name='LFMC Standard Deviation', **var_attrs))
+    out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean', **var_attrs))
+    out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation', **var_attrs))
     out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    for d in (out.lfmc_mean, out.lfmc_stdv):
-        d.encoding.update(dict(shuffle=True, zlib=True,
-                          chunks=dict(x=400, y=400, time=6)))
+    for d in (out.lvmc_mean, out.lvmc_stdv):
+        d.encoding.update(dict(
+            shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
+            # After compression, set fill to work around GSKY transparency bug
+            _FillValue=-999,
+        ))
 
     # Save the file!
-    out.to_netcdf('/g/data/ub8/au/FMC/c6/LFMC_{}_{}.nc'.format(year, tile))
+    out.to_netcdf('/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile))
 
 
 def get_validated_args():
