@@ -14,7 +14,6 @@ import json
 import glob
 import argparse
 import datetime
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
@@ -37,13 +36,17 @@ bands_to_use = ['red_630_690', 'nir1_780_900', 'green_530_610',
                 'swir1_1550_1750', 'swir2_2090_2350', 'ndii']
 
 
-@lru_cache()
+functor_cache = {}
+
+
 def get_functor(veg_type):
     """Returns a function to get the mean and stdev of LFMC for the top n values.
 
     Note that the function object is cached to avoid loading the vmat and smat
     tables more than once per vegetation type.
     """
+    if veg_type in functor_cache:
+        return functor_cache[veg_type]
     # Get the lookup table
     merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
     merged_lookup['ndii'] = difference_index(
@@ -60,6 +63,7 @@ def get_functor(veg_type):
         top_values = fmc[np.argpartition(spectral_angle, 40)[:40]]
         return top_values.mean(axis=-1), top_values.std(axis=-1)
 
+    functor_cache[veg_type] = get_top_n
     return get_top_n
 
 
