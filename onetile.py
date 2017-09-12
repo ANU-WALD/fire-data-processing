@@ -1,8 +1,19 @@
+"""
+Script to create one tile-year of LFMC data, from the original MODIS products.
+
+Likely to remain a (useful) work in progress for some time.
+
+Requires PyNIO to read MODIS .hdf files, and therefore Python 2 for now.
+Plus the functools backport for caching; other imports as written.
+
+"""
+
 import os
 import re
 import json
 import glob
 import argparse
+import datetime
 from functools import lru_cache
 
 import numpy as np
@@ -10,7 +21,7 @@ import pandas as pd
 import xarray as xr
 
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 modis_band_map = {
     'band1': 'red_630_690',
@@ -76,6 +87,38 @@ def get_fmc(dataset, masks):
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
+def get_reflectance(year, tile):
+    files = sorted(glob.glob(
+        '/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006/' +
+        '{year}.??.??/MCD43A4.A{year}???.{tile}.006.*.hdf'
+        .format(year=year, tile=tile)
+    ))
+    pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+.hdf')
+    dates = []
+    for f in files:
+        day, = pattern.match(os.path.basename(f)).groups()
+        dates.append(datetime.date(int(year), 1, 1) +
+                     datetime.timedelta(days=int(day) - 1))
+
+    dates = pd.to_datetime(dates)
+    dates.name = 'time'
+
+    ds = xr.concat([xr.open_dataset(fname, chunks=2400) for fname in files], dates)
+    out = xr.Dataset()
+    for i in map(str, range(1, 8)):
+        out[modis_band_map['band' + i]] = \
+            ds['Nadir_Reflectance_Band' + i].astype('f4')\
+            .where(ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0)
+    out['ndvi_ok_mask'] = 0.15 < difference_index(out.nir1_780_900, out.red_630_690)
+    out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
+
+    out.rename({'YDim:MOD_Grid_BRDF': 'y',
+                'XDim:MOD_Grid_BRDF': 'x'}, inplace=True)
+    out.time.encoding.update(dict(
+        units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
+    return out
+
+
 def add_sinusoidal_var(ds):
     with open('sinusoidal.json') as f:
         attrs = json.load(f)
@@ -89,16 +132,11 @@ def add_sinusoidal_var(ds):
 
 def main(year, tile):
 
-    in_file = '/g/data1/xc0/project/FMC_Australia/MCD43A4-collection-six/' + \
-        'MCD43A4.A{}.{}.006.nc'.format(year, tile)
     lc_file = '/g/data/xc0/user/HatfieldDodds/FMC/landcover.{}.{}.nc' \
         .format(min(year, '2013'), tile)
 
     # Get the main dataset - demo is one tile for a year
-    ds = xr.open_dataset(in_file, chunks=dict(time=1, y=800, x=800))
-    ds.rename(modis_band_map, inplace=True)
-    ds['ndvi_ok_mask'] = 0.15 < difference_index(ds.nir1_780_900, ds.red_630_690)
-    ds['ndii'] = difference_index(ds.nir1_780_900, ds.swir1_1550_1750)
+    ds = get_reflectance(year, tile)
 
     # Get the landcover masks
     lc = xr.open_dataarray(lc_file)
