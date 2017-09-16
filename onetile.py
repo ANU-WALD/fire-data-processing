@@ -123,6 +123,27 @@ def get_reflectance(year, tile):
     return out
 
 
+def get_masks(year, tile):
+    file, = glob.glob(
+        '/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006/' +
+        '{year}.??.??/MCD12Q1.A{year}???.{tile}.051.*.hdf'
+        .format(year=min(year, '2013'), tile=tile)
+    )
+    arr = xr.open_dataset(file).Land_Cover_Type_1
+    classes = {
+        'grass': (u'grasslands', u'croplands'),
+        'shrub': (u'closed shrubland', u'open shrublands'),
+        'forest': (
+            u'evergreen needleleaf forest', u'evergreen broadleaf forest',
+            u'deciduous needleleaf forest', u'deciduous broadleaf forest',
+            u'mixed forests', u'woody savannas', u'savannas'),
+    }
+    return {
+        k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
+        for k, v in classes.items()
+    }
+
+
 def add_sinusoidal_var(ds):
     with open('sinusoidal.json') as f:
         attrs = json.load(f)
@@ -135,20 +156,10 @@ def add_sinusoidal_var(ds):
 
 
 def main(year, tile):
-
-    lc_file = '/g/data/xc0/user/HatfieldDodds/FMC/landcover.{}.{}.nc' \
-        .format(min(year, '2013'), tile)
-
     # Get the main dataset - demo is one tile for a year
     ds = get_reflectance(year, tile)
-
     # Get the landcover masks
-    lc = xr.open_dataarray(lc_file)
-    masks = dict(
-        shrub=sum((lc == i) for i in (6, 7)).astype(bool),
-        grass=sum((lc == i) for i in (10, 12)).astype(bool),
-        forest=sum((lc == i) for i in (1, 2, 3, 4, 5, 8, 9)).astype(bool)
-    )
+    masks = get_masks(year, tile)
 
     # Do the expensive bit
     out = xr.concat(
