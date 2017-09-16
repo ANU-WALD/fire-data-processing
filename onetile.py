@@ -4,7 +4,9 @@ Script to create one tile-year of LFMC data, from the original MODIS products.
 Likely to remain a (useful) work in progress for some time.
 
 Requires PyNIO to read MODIS .hdf files, and therefore Python 2 for now.
-Plus the functools backport for caching; other imports as written.
+
+It's also a best-possible port of equations developed for MODIS C5 to C6 data;
+we plan to fully upgrade in future but that will require revalidation.
 
 """
 
@@ -23,13 +25,13 @@ import xarray as xr
 __version__ = '0.2.0'
 
 modis_band_map = {
-    'band1': 'red_630_690',
-    'band2': 'nir1_780_900',
-    'band3': 'blue_450_520',
-    'band4': 'green_530_610',
-    'band5': 'nir2_1230_1250',
-    'band6': 'swir1_1550_1750',
-    'band7': 'swir2_2090_2350',
+    'Nadir_Reflectance_Band1': 'red_630_690',
+    'Nadir_Reflectance_Band2': 'nir1_780_900',
+    'Nadir_Reflectance_Band3': 'blue_450_520',
+    'Nadir_Reflectance_Band4': 'green_530_610',
+    'Nadir_Reflectance_Band5': 'nir2_1230_1250',
+    'Nadir_Reflectance_Band6': 'swir1_1550_1750',
+    'Nadir_Reflectance_Band7': 'swir2_2090_2350',
 }
 
 bands_to_use = ['red_630_690', 'nir1_780_900', 'green_530_610',
@@ -110,9 +112,9 @@ def get_reflectance(year, tile):
     ds = xr.concat([xr.open_dataset(fname, chunks=2400) for fname in files], dates)
     out = xr.Dataset()
     for i in map(str, range(1, 8)):
-        out[modis_band_map['band' + i]] = \
-            ds['Nadir_Reflectance_Band' + i].astype('f4')\
-            .where(ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0)
+        key = 'Nadir_Reflectance_Band' + i
+        data_ok = ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0
+        out[modis_band_map[key]] = ds[key].astype('f4').where(data_ok)
     out['ndvi_ok_mask'] = 0.15 < difference_index(out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
