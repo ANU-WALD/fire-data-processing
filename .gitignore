@@ -1,5 +1,9 @@
+# NetCDF data files
+*.nc
+
 # Temporary files left by some editors
 *~
+*.crdownload
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
