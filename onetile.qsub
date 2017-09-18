@@ -8,4 +8,5 @@
 
 source /g/data/xc0/software/miniconda3/bin/activate rs2
 cd ~/fire-data-processing
+echo $FMC_YEAR $FMC_TILE
 python onetile.py
