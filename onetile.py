@@ -212,7 +212,7 @@ def get_validated_args():
         return val
 
     def check_tile(val):
-        """Validate that arg is an existing directory."""
+        """Validate that arg is tile string."""
         assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
         return val
 

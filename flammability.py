@@ -1,5 +1,5 @@
 """
-Script to create one tile-archive of flammability data, from the FMC products.
+Script to create one tile-year of flammability data, from the FMC products.
 
 """
 
@@ -61,31 +61,37 @@ def write_flammability(out, anomaly, diff, cover, fname):
     os.system('chmod a+rx ' + fname)
 
 
-def main(tile):
+def main(year, tile):
+    fname = '/g/data/ub8/au/FMC/c6/Flammability_{}_{}.nc'.format(year, tile)
+    if os.path.isfile(fname):
+        return
     data = xr.open_mfdataset('/g/data/ub8/au/FMC/c6/LVMC_20??_{}.nc'.format(tile),
                              chunks=dict(time=31))
     base = xr.open_dataset('/g/data/ub8/au/FMC/c6/mean_LVMC_{}.nc'.format(tile)).lvmc_mean
-    diffs = dict(data.lvmc_mean.diff('time').groupby('time.year'))
-    anomalies = dict((data.lvmc_mean - base).groupby('time.year'))
-    annual = dict(data.groupby('time.year'))
-    for year in range(2001, 2018):
-        print(year, end='...   ')
-        fname = '/g/data/ub8/au/FMC/c6/Flammability_{}_{}.nc'.format(year, tile)
-        if os.path.isfile(fname):
-            continue
-        cover = get_cover(year, tile, y=base.y, x=base.x)
-        write_flammability(annual[year], anomalies[year], diffs[year], cover, fname)
+    diff = dict(data.lvmc_mean.diff('time').groupby('time.year'))[year]
+    anomaly = dict((data.lvmc_mean - base).groupby('time.year'))[year]
+    annual = dict(data.groupby('time.year'))[year]
+    cover = get_cover(year, tile, y=base.y, x=base.x)
+    write_flammability(annual, anomaly, diff, cover, fname)
     print('Done!')
 
 
 def get_validated_args():
 
+    def check_year(val):
+        """Validate arg and transform glob pattern to file list."""
+        assert re.match(r'\A20\d\d\Z', val), repr(val)
+        return val
+
     def check_tile(val):
-        """Validate that arg is an existing directory."""
+        """Validate that arg is tile string."""
         assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
         return val
 
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--year', type=check_year, default=os.environ.get('FMC_YEAR'),
+        help='four-digit year to process')
     parser.add_argument(
         '--tile', type=check_tile, default=os.environ.get('FMC_TILE'),
         help='tile to process, "hXXvYY"')
@@ -95,4 +101,4 @@ def get_validated_args():
 if __name__ == '__main__':
     args = get_validated_args()
     print(args)
-    main(args.tile)
+    main(args.year, args.tile)
