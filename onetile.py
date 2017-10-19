@@ -129,7 +129,7 @@ def get_masks(year, tile):
     file, = glob.glob(
         '/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051/' +
         '{year}.??.??/MCD12Q1.A{year}???.{tile}.051.*.hdf'
-        .format(year=min(year, '2013'), tile=tile)
+        .format(year=min(int(year), 2013), tile=tile)
     )
     arr = xr.open_dataset(file).Land_Cover_Type_1
     classes = {

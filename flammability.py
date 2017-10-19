@@ -10,16 +10,7 @@ import re
 import numpy as np
 import xarray as xr
 
-
-def get_cover(year, tile, y, x):
-    cover = xr.open_dataset('/g/data/xc0/user/HatfieldDodds/FMC/landcover.{}.{}.nc'.format(max([year, 2013]), tile))
-    cover['y'] = y
-    cover['x'] = x
-    cover['grass'] = sum((cover.Land_Cover_Type_1 == i) for i in (10, 12)).astype(bool)
-    cover['shrub'] = sum((cover.Land_Cover_Type_1 == i) for i in (6, 7)).astype(bool)
-    cover['forest'] = sum((cover.Land_Cover_Type_1 == i) for i in (1, 2, 3, 4, 5, 8, 9)).astype(bool)
-    del cover['Land_Cover_Type_1']
-    return cover
+from onetile import get_masks
 
 
 def write_flammability(out, anomaly, diff, cover, fname):
@@ -36,27 +27,29 @@ def write_flammability(out, anomaly, diff, cover, fname):
     out.flammability_index.load()
     out.flammability_index[:] = np.nan
 
-    def fx(x):
-        return 1 / (1 + np.e ** - x)
     # Calculate flammability and insert into dataset
-    grass = fx(0.18 - 0.01 * out.lvmc_mean + 0.02 * diff - 0.02 * anomaly)
-    shrub = fx(5.66 - 0.09 * out.lvmc_mean + 0.005 * diff - 0.28 * anomaly)
-    forest = fx(1.51 - 0.03 * out.lvmc_mean + 0.02 * diff - 0.02 * anomaly)
+    grass = 0.18 - 0.01 * out.lvmc_mean + 0.02 * diff - 0.02 * anomaly
+    shrub = 5.66 - 0.09 * out.lvmc_mean + 0.005 * diff - 0.28 * anomaly
+    forest = 1.51 - 0.03 * out.lvmc_mean + 0.02 * diff - 0.02 * anomaly
     del out['lvmc_mean']
     since = -diff.time.size
     out.flammability_index.values[since:] = np.where(
-        cover.grass, grass, out.flammability_index[since:])
+        cover['grass'], grass, out.flammability_index[since:])
     out.flammability_index.values[since:] = np.where(
-        cover.shrub, shrub, out.flammability_index[since:])
+        cover['shrub'], shrub, out.flammability_index[since:])
     out.flammability_index.values[since:] = np.where(
-        cover.forest, forest, out.flammability_index[since:])
+        cover['forest'], forest, out.flammability_index[since:])
+
+    # Convert to [0..1] index with exponential equation
+    out.flammability_index.values[:] = \
+        1 / (1 + np.e ** - out.flammability_index.values)
+
     print('writing')
     out.flammability_index.encoding.update(dict(
         shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
         # After compression, set fill to work around GSKY transparency bug
         _FillValue=-999,
     ))
-    out.to_netcdf(fname)
     out.to_netcdf(fname)
     os.system('chmod a+rx ' + fname)
 
@@ -71,7 +64,7 @@ def main(year, tile):
     diff = dict(data.lvmc_mean.diff('time').groupby('time.year'))[year]
     anomaly = dict((data.lvmc_mean - base).groupby('time.year'))[year]
     annual = dict(data.groupby('time.year'))[year]
-    cover = get_cover(year, tile, y=base.y, x=base.x)
+    cover = get_masks(year, tile)
     write_flammability(annual, anomaly, diff, cover, fname)
     print('Done!')
 
