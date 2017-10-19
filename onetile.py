@@ -100,16 +100,20 @@ def get_reflectance(year, tile):
         .format(year=year, tile=tile)
     ))
     pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+.hdf')
-    dates = []
+    dates, parts = [], []
     for f in files:
-        day, = pattern.match(os.path.basename(f)).groups()
-        dates.append(datetime.date(int(year), 1, 1) +
-                     datetime.timedelta(days=int(day) - 1))
+        try:
+            parts.append(xr.open_dataset(f, chunks=2400))
+            day, = pattern.match(os.path.basename(f)).groups()
+            dates.append(datetime.date(int(year), 1, 1) +
+                         datetime.timedelta(days=int(day) - 1))
+        except:
+            print('Could not read from ' + f)
 
     dates = pd.to_datetime(dates)
     dates.name = 'time'
 
-    ds = xr.concat([xr.open_dataset(fname, chunks=2400) for fname in files], dates)
+    ds = xr.concat(parts, dates)
     out = xr.Dataset()
     for i in map(str, range(1, 8)):
         key = 'Nadir_Reflectance_Band' + i
