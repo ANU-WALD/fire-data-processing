@@ -81,7 +81,7 @@ def get_validated_args():
     def check_year(val):
         """Validate arg and transform glob pattern to file list."""
         assert re.match(r'\A20\d\d\Z', val), repr(val)
-        return val
+        return int(val)
 
     def check_tile(val):
         """Validate that arg is tile string."""
