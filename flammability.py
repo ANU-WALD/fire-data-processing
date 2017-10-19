@@ -51,6 +51,12 @@ def write_flammability(out, anomaly, diff, cover, fname):
     out.flammability_index.values[since:] = np.where(
         cover.forest, forest, out.flammability_index[since:])
     print('writing')
+    out.flammability_index.encoding.update(dict(
+        shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
+        # After compression, set fill to work around GSKY transparency bug
+        _FillValue=-999,
+    ))
+    out.to_netcdf(fname)
     out.to_netcdf(fname)
     os.system('chmod a+rx ' + fname)
 
