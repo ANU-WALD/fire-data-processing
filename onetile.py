@@ -202,7 +202,7 @@ def main(year, tile):
         ))
 
     # Save the file!
-    out_file = '/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile)
+    out_file = '/g/data/ub8/au/FMC/LVMC/LVMC_{}_{}.nc'.format(year, tile)
     out.to_netcdf(out_file)
     # Make it visible via Thredds
     os.system('chmod a+rx ' + out_file)

@@ -7,7 +7,7 @@ with open('tiles.json') as f:
 
 for tile, walltime in sorted(tiles.items(), key=lambda k: (k[1], k[0])):
     for year in range(2001, datetime.date.today().year + 1):
-        fname = '/g/data/ub8/au/FMC/c6/LVMC_{}_{}.nc'.format(year, tile)
+        fname = '/g/data/ub8/au/FMC/LVMC/LVMC_{}_{}.nc'.format(year, tile)
         if os.path.isfile(fname):
             print('Already done:', fname)
             continue

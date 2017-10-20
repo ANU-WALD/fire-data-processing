@@ -55,10 +55,10 @@ def write_flammability(out, anomaly, diff, cover, fname):
 
 
 def main(year, tile):
-    fname = '/g/data/ub8/au/FMC/c6/Flammability_{}_{}.nc'.format(year, tile)
+    fname = '/g/data/ub8/au/FMC/Flammability/Flammability_{}_{}.nc'.format(year, tile)
     if os.path.isfile(fname):
         return
-    data = xr.open_mfdataset('/g/data/ub8/au/FMC/c6/LVMC_20??_{}.nc'.format(tile),
+    data = xr.open_mfdataset('/g/data/ub8/au/FMC/LVMC/LVMC_20??_{}.nc'.format(tile),
                              chunks=dict(time=31))
     base = xr.open_dataset('/g/data/ub8/au/FMC/c6/mean_LVMC_{}.nc'.format(tile)).lvmc_mean
     diff = dict(data.lvmc_mean.diff('time').groupby('time.year'))[year]
