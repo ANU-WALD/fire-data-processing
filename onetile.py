@@ -249,13 +249,16 @@ def get_validated_args():
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
     parser.add_argument(
-        '--year', type=check_year, default=os.environ.get('FMC_YEAR'),
+        '--year', type=check_year,
+        default=os.environ.get('FMC_YEAR', str(datetime.date.today().year)),
         help='four-digit year to process')
     parser.add_argument(
-        '--tile', type=check_tile, default=os.environ.get('FMC_TILE'),
+        '--tile', type=check_tile,
+        default=os.environ.get('FMC_TILE', 'h31v10'),
         help='tile to process, "hXXvYY"')
     parser.add_argument(
-        '--output_path', type=change_output_path, default='/g/data/ub8/au/FMC/LVMC/',
+        '--output_path', type=change_output_path,
+        default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
         help='change output path')
     return parser.parse_args()
 
