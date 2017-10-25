@@ -12,6 +12,6 @@ for tile, walltime in sorted(tiles.items(), key=lambda k: (k[1], k[0])):
             continue
         print('Submitting job for', fname)
         os.system((
-            'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={fname}" '
+            'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
             '-l walltime={hours}:00:00 -N {year}{tile}-FMC onetile.qsub'
-        ).format(year=year, tile=tile, hours=walltime, fname=fname))
+        ).format(year=year, tile=tile, hours=walltime, path=path))
