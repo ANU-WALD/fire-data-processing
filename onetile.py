@@ -161,7 +161,7 @@ def add_sinusoidal_var(ds):
     ds['sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
 
 
-def main(year, tile):
+def main(year, tile, output_path):
     # Get the main dataset - demo is one tile for a year
     ds = get_reflectance(year, tile)
     # Get the landcover masks
@@ -202,7 +202,7 @@ def main(year, tile):
         ))
 
     # Save the file!
-    out_file = '/g/data/ub8/au/FMC/LVMC/LVMC_{}_{}.nc'.format(year, tile)
+    out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     out.to_netcdf(out_file)
     # Make it visible via Thredds
     os.system('chmod a+rx ' + out_file)
@@ -220,6 +220,11 @@ def get_validated_args():
         assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
         return val
 
+    def change_output_path(val):
+        """Validate that the directory exists """
+        assert os.path.isdir(val)
+        return val
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
@@ -229,10 +234,13 @@ def get_validated_args():
     parser.add_argument(
         '--tile', type=check_tile, default=os.environ.get('FMC_TILE'),
         help='tile to process, "hXXvYY"')
+    parser.add_argument(
+        '--output_path', type=change_output_path, default='/g/data/ub8/au/FMC/LVMC/',
+        help='change output path')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_validated_args()
     print(args)
-    main(args.year, args.tile)
+    main(args.year, args.tile, args.output_path)
