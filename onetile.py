@@ -161,6 +161,31 @@ def add_sinusoidal_var(ds):
     ds['sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
 
 
+def add_tile_coords(tile, dataset):
+    scale = 1111950.5196669996
+
+    # regex to match string
+    regex = re.compile('h\d+v\d+')
+    matches = regex.findall(tile)
+
+    # extract values from string
+    extract = re.compile('\d+')
+    h, v = extract.findall(matches[0])
+    h = int(h)
+    v = int(v)
+
+    # calculate start and end values
+    x_start = scale * (h - 18)
+    x_end = scale * (h - 17)
+
+    y_start = -scale * (v - 9)
+    y_end = -scale * (v - 8)
+
+    dataset['x'] = xr.IndexVariable('x', np.linspace(x_start, x_end, 2400))
+    dataset['y'] = xr.IndexVariable('y', np.linspace(y_start, y_end, 2400))
+    return dataset
+
+
 def main(year, tile, output_path):
     # Get the main dataset - demo is one tile for a year
     ds = get_reflectance(year, tile)
@@ -173,12 +198,7 @@ def main(year, tile, output_path):
         dim='time',
     )
 
-    # Ugly hack because PyNIO dropped coords; add them in from another MODIS dataset
-    with xr.open_dataset(glob.glob(
-            '/g/data/ub8/au/FMC/sinusoidal/MCD43A4.2001.{}.005.*_LFMC.nc'
-            .format(tile))[0]) as coord_ds:
-        out['x'] = coord_ds.x
-        out['y'] = coord_ds.y
+    add_tile_coords(tile, out)
 
     with open('nc_metadata.json') as f:
         json_attrs = json.load(f)
