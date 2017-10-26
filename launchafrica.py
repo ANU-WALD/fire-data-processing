@@ -1,7 +1,7 @@
 import os
 import datetime
 
-tiles = {'h19v11': 24, 'h20v11': 36, 'h21v11': 8, 'h19v12': 6, 'h19v12': 10}
+tiles = {'h19v11': 24, 'h20v11': 36, 'h21v11': 8, 'h19v12': 6, 'h20v12': 10}
 path = '/g/data/xc0/project/SouthAfrica_CSIR/'
 
 for tile, walltime in sorted(tiles.items(), key=lambda k: (k[1], k[0])):

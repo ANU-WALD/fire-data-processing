@@ -242,7 +242,7 @@ def get_validated_args():
 
     def change_output_path(val):
         """Validate that the directory exists """
-        assert os.path.isdir(val)
+        assert os.path.isdir(val), repr(val)
         return val
 
     parser = argparse.ArgumentParser()
