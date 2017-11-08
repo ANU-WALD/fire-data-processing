@@ -1,6 +1,5 @@
 import os
 import re
-import json
 import datetime
 import argparse
 
@@ -10,11 +9,12 @@ import onetile
 
 __version__ = '0.1.0'
 
+
 def main(tiles_list):
     for tile in tiles_list:
         masks = onetile.get_masks(2017, tile)
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
-        walltime = int(np.ceil(36 * elements / 2400 ** 2))
+        walltime = int(np.ceil(34 * elements / 2400. ** 2)) + 2
         for year in range(2001, datetime.date.today().year + 1):
             fname = '/g/data/ub8/au/FMC/LVMC/LVMC_{}_{}.nc'.format(year, tile)
             if os.path.isfile(fname):
@@ -28,15 +28,12 @@ def main(tiles_list):
 
 
 def cli_get_args():
-    shortcuts = {
-                "australia":
-                "h28v13,h29v11,h28v12,h29v10,h29v12,h32v10,h27v11, \
-                h31v11,h32v11,h30v11,h30v10,h27v12,h30v12,h31v12, \
-                h31v10,h29v13,h28v11",
-
-                "south_africa": #only capitalise first letter to pass
-                "h19v11,h20v11,h21v11,h19v12,h20v12"
-                }
+    shortcuts = dict(
+        australia=('h28v13,h29v11,h28v12,h29v10,h29v12,h32v10,h27v11,'
+                   'h31v11,h32v11,h30v11,h30v10,h27v12,h30v12,h31v12,'
+                   'h31v10,h29v13,h28v11'),
+        south_africa='h19v11,h20v11,h21v11,h19v12,h20v12',
+    )
 
     def check_valid_location(arg):
         arg = arg.lower()
@@ -71,4 +68,4 @@ def cli_get_args():
 if __name__ == '__main__':
     get_args = cli_get_args()
     print(get_args.tiles)
-    #main(get_args.tiles)
+    main(get_args.tiles)
