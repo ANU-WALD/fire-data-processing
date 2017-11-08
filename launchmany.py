@@ -9,22 +9,24 @@ import onetile
 
 __version__ = '0.1.0'
 
-
-def main(tiles_list):
+def main(tiles_list, path):
     for tile in tiles_list:
         masks = onetile.get_masks(2017, tile)
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
         walltime = int(np.ceil(34 * elements / 2400. ** 2)) + 2
+
+        print('Calculated walltime for tile:', tile, '=', walltime)
         for year in range(2001, datetime.date.today().year + 1):
-            fname = '/g/data/ub8/au/FMC/LVMC/LVMC_{}_{}.nc'.format(year, tile)
+
+            fname = os.path.join(path, 'LVMC_{}_{}.nc'.format(year, tile))
             if os.path.isfile(fname):
                 print('Already done:', fname)
                 continue
             print('Submitting job for', fname)
             os.system((
-                'qsub -v "FMC_YEAR={year},FMC_TILE={tile}" '
+                'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
                 '-l walltime={hours}:00:00 -N {year}{tile}-FMC onetile.qsub'
-            ).format(year=year, tile=tile, hours=walltime))
+            ).format(year=year, tile=tile, hours=walltime, path=path))
 
 
 def cli_get_args():
@@ -35,7 +37,11 @@ def cli_get_args():
         south_africa='h19v11,h20v11,h21v11,h19v12,h20v12',
     )
 
-    def check_valid_location(arg):
+    def load_in_tiles(arg):
+        '''
+        Load in tiles by comma separated tiles or shortcut, validate
+        that data exists within range.
+        '''
         arg = arg.lower()
 
         if arg in shortcuts.keys():
@@ -52,6 +58,12 @@ def cli_get_args():
 
         return generated_list
 
+    def change_output_path(val):
+        """Validate that the directory exists """
+        assert os.path.isdir(val), repr(val)
+        print('Output Path:', val)
+        return val
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-V', '--version',
                         action='version',
@@ -60,12 +72,16 @@ def cli_get_args():
                         metavar='<Australia, South_Africa, CSV>',
                         help='Location as comma separated tiles or shortcut',
                         default='australia',
-                        type=check_valid_location)
-
+                        type=load_in_tiles)
+    parser.add_argument('--output_path',
+                        metavar='<path>',
+                        help='change output path',
+                        default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
+                        type=change_output_path)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     get_args = cli_get_args()
-    print(get_args.tiles)
-    main(get_args.tiles)
+    print(get_args)
+    main(get_args.tiles, get_args.path)
