@@ -251,7 +251,7 @@ def main(year, tile, output_path):
     else:
         # otherwise, write next to final destination and move (atomic update)
         out.to_netcdf(out_file + '.new')
-        shutil.move(out_file)
+        shutil.move(out_file + '.new', out_file)
     # Make it visible via Thredds
     os.system('chmod a+rx ' + out_file)
 
