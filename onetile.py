@@ -94,12 +94,18 @@ def get_fmc(dataset, masks):
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
+reflectance_file_cache = []
+
+
 def get_reflectance(year, tile):
-    files = sorted(glob.glob(
-        '/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006/' +
-        '{year}.??.??/MCD43A4.A{year}???.{tile}.006.*.hdf'
-        .format(year=year, tile=tile)
-    ))
+    global reflectance_file_cache
+    if not reflectance_file_cache:
+        reflectance_file_cache[:] = sorted(glob.glob(
+            '/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006/' +
+            '{year}.??.??/MCD43A4.A{year}???.h??v??.006.*.hdf'
+            .format(year=year)
+        ))
+    files = [f for f in reflectance_file_cache if tile in os.path.basename(f)]
     pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+.hdf')
     dates, parts = [], []
     for f in files:
@@ -198,8 +204,8 @@ def main(year, tile, output_path):
     if os.path.isfile(out_file):
         # check if same number of timesteps and if equal on time dimension
         output_dataset = xr.open_dataset(out_file)
-        existing_time = output_dataset.time
-        if len(existing_time) == len(ds.time):
+        existing_times = output_dataset.time
+        if len(existing_times) == len(ds.time):
             print('No new input data')
             return
         assert np.all(ds.time[:len(existing_times)] == existing_times)
