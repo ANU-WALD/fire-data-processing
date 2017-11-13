@@ -20,8 +20,17 @@ def main(tiles_list, path):
 
             fname = os.path.join(path, 'LVMC_{}_{}.nc'.format(year, tile))
             if os.path.isfile(fname):
-                print('Already done:', fname)
-                continue
+                if year == datetime.date.today().year:
+                    reflectance = onetile.get_reflectance(year, tile)
+                    output_dataset = xr.open_dataset(fname)
+                    reflectance_times = reflectance.time[:len(existing_times)]
+                    if len(reflectance.time) == len(output_dataset.time):
+                        assert np.all(reflectance_times == existing_times)
+                        print('Already done:', fname)
+                        continue
+                else:
+                    print('Already done:', fname)
+                    continue
             print('Submitting job for', fname)
             os.system((
                 'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
