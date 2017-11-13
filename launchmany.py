@@ -45,6 +45,7 @@ def cli_get_args():
                    'h31v11,h32v11,h30v11,h30v10,h27v12,h30v12,h31v12,'
                    'h31v10,h29v13,h28v11'),
         south_africa='h19v11,h20v11,h21v11,h19v12,h20v12',
+        spain='h17v04,h17v05',
     )
 
     def load_in_tiles(arg):
@@ -54,7 +55,7 @@ def cli_get_args():
         '''
         arg = arg.lower()
 
-        if arg in shortcuts.keys():
+        if arg in shortcuts:
             print('Used the shortcut:', arg)
             arg = shortcuts[arg]
 
@@ -79,15 +80,19 @@ def cli_get_args():
                         action='version',
                         version=__version__)
     parser.add_argument('--tiles',
-                        metavar='<Australia, South_Africa, CSV>',
+                        metavar='tiles or ' + ', '.join(sorted(shortcuts)),
                         help='Location as comma separated tiles or shortcut',
                         default='australia',
                         type=load_in_tiles)
-    parser.add_argument('--output_path',
+    parser.add_argument('--output-path',
                         metavar='<path>',
                         help='change output path',
                         default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
                         type=change_output_path)
+    parser.add_argument('--start-year',
+                        help='Process start_year to current year, inclusive.',
+                        default=2001,
+                        type=int)
     return parser.parse_args()
 
 
