@@ -4,6 +4,7 @@ import datetime
 import argparse
 
 import numpy as np
+import xarray as xr
 
 import onetile
 
@@ -23,9 +24,9 @@ def main(tiles_list, path):
                 if year == datetime.date.today().year:
                     reflectance = onetile.get_reflectance(year, tile)
                     output_dataset = xr.open_dataset(fname)
-                    reflectance_times = reflectance.time[:len(existing_times)]
+                    reflectance_times = reflectance.time[:len(output_dataset.time)]
                     if len(reflectance.time) == len(output_dataset.time):
-                        assert np.all(reflectance_times == existing_times)
+                        assert np.all(reflectance_times == output_dataset.time)
                         print('Already done:', fname)
                         continue
                 else:
@@ -93,4 +94,4 @@ def cli_get_args():
 if __name__ == '__main__':
     get_args = cli_get_args()
     print(get_args)
-    main(get_args.tiles, get_args.path)
+    main(get_args.tiles, get_args.output_path)
