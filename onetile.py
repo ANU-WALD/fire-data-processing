@@ -14,6 +14,7 @@ import os
 import re
 import json
 import glob
+import shutil
 import argparse
 import datetime
 
@@ -187,13 +188,29 @@ def add_tile_coords(tile, dataset):
 
 
 def main(year, tile, output_path):
+    out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
+
     # Get the main dataset - demo is one tile for a year
     ds = get_reflectance(year, tile)
+
+    # check if file exists
+    output_dataset = None
+    if os.path.isfile(out_file):
+        # check if same number of timesteps and if equal on time dimension
+        output_dataset = xr.open_dataset(out_file)
+        existing_time = output_dataset.time
+        if len(existing_time) == len(ds.time):
+            print('No new input data')
+            return
+        assert np.all(ds.time[:len(existing_times)] == existing_times)
+        ds = ds.isel(time=slice(len(existing_times), None))
+
     # Get the landcover masks
     masks = get_masks(year, tile)
 
     # Do the expensive bit
     out = xr.concat(
+        [output_dataset] if output_dataset is not None else [] +
         [get_fmc(ds.sel(time=ts), masks=masks) for ts in ds.time],
         dim='time',
     )
@@ -222,8 +239,13 @@ def main(year, tile, output_path):
         ))
 
     # Save the file!
-    out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
-    out.to_netcdf(out_file)
+    if output_dataset is None:
+        # First time we've written this file
+        out.to_netcdf(out_file)
+    else:
+        # otherwise, write next to final destination and move (atomic update)
+        out.to_netcdf(out_file + '.new')
+        shutil.move(out_file)
     # Make it visible via Thredds
     os.system('chmod a+rx ' + out_file)
 
