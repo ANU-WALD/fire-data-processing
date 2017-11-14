@@ -211,11 +211,11 @@ def main(year, tile, output_path):
         if len(existing.time) == len(ds.time):
             print('No new input data')
             return
-        new_data = [get_fmc(ds.sel(time=ts), masks)
-                    for ts in ds.time[len(existing.time):]]
-        out = xr.concat([existing, new_data], dim='time')
-
-    add_tile_coords(tile, out)
+        new_data = xr.concat(
+            [get_fmc(ds.sel(time=ts), masks)
+             for ts in ds.time[len(existing.time):]], dim='time')
+        add_tile_coords(tile, new_data)
+        out = xr.merge([existing, new_data])
 
     with open('nc_metadata.json') as f:
         json_attrs = json.load(f)
