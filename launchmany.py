@@ -12,14 +12,14 @@ import onetile
 
 __version__ = '0.1.0'
 
-def main(tiles_list, path):
+def main(tiles_list, path, start_year):
     for tile in tiles_list:
         masks = onetile.get_masks(2017, tile)
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
         walltime = int(np.ceil(34 * elements / 2400. ** 2)) + 2
 
         print('Calculated walltime for tile:', tile, '=', walltime)
-        for year in range(2001, datetime.date.today().year + 1):
+        for year in range(start_year, datetime.date.today().year + 1):
 
             fname = os.path.join(path, 'LVMC_{}_{}.nc'.format(year, tile))
             if os.path.isfile(fname):
@@ -27,10 +27,15 @@ def main(tiles_list, path):
                     reflectance = onetile.get_reflectance(year, tile)
                     output_dataset = xr.open_dataset(fname)
                     reflectance_times = reflectance.time[:len(output_dataset.time)]
-                    if len(reflectance.time) == len(output_dataset.time):
-                        assert np.all(reflectance_times == output_dataset.time)
+                    new_obs = len(reflectance.time) - len(output_dataset.time)
+                    assert np.all(reflectance_times == output_dataset.time)
+                    if not new_obs:
                         print('Already done:', fname)
                         continue
+                    walltime = int(np.ceil(34 * elements * (new_obs / 90)
+                                           / 2400. ** 2 + 0.5))
+                    print('Update walltime: {}h for {} steps'
+                          .format(walltime, new_obs))
                 else:
                     print('Already done:', fname)
                     continue
@@ -101,4 +106,4 @@ def cli_get_args():
 if __name__ == '__main__':
     get_args = cli_get_args()
     print(get_args)
-    main(get_args.tiles, get_args.output_path)
+    main(get_args.tiles, get_args.output_path, get_args.start_year)

@@ -279,7 +279,7 @@ def get_validated_args():
         default=os.environ.get('FMC_TILE', 'h31v10'),
         help='tile to process, "hXXvYY"')
     parser.add_argument(
-        '--output_path', type=change_output_path,
+        '--output-path', type=change_output_path,
         default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
         help='change output path')
     return parser.parse_args()
