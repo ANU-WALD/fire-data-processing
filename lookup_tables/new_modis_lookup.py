@@ -16,7 +16,6 @@ def create_modis_data(filename):
 
     new_series = pd.Series(data_set['RSR'])
     new_series.index = data_set['Wavelength']
-    new_series.groupby(['Wavelength']).mean()
 
     lookup = new_series.groupby(lambda i: 5 * ((i + 2.5) // 5)).mean()
     lookup /= lookup.sum()
