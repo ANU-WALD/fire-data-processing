@@ -64,7 +64,7 @@ def get_functor(veg_type):
             (np.sqrt(np.einsum('i,i->', mb, mb)) * vsmat)
         )
         top_values = fmc[np.argpartition(spectral_angle, 40)[:40]]
-        return top_values.mean(axis=-1), top_values.std(axis=-1)
+        return np.median(top_values, axis=-1), top_values.std(axis=-1)
 
     functor_cache[veg_type] = get_top_n
     return get_top_n
