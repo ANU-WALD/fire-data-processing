@@ -223,19 +223,21 @@ def main(year, tile, output_path):
     # Add metadata to the resulting file
     out.attrs.update(json_attrs)
     add_sinusoidal_var(out)
-    var_attrs = dict(
-        units='%', grid_mapping='sinusoidal',
-        comment='Ratio of water to dry plant matter.  '
-        'Mean of top 40 matches from observed to simulated reflectance.'
-    )
-    out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean', **var_attrs))
-    out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation', **var_attrs))
-    out.time.encoding.update(dict(units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
+
+    out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean'))
+    out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation'))
+    out.time.encoding.update(dict(units='days since 1900-01-01',
+                                  calendar='gregorian', dtype='i4'))
     for d in (out.lvmc_mean, out.lvmc_stdv):
         d.encoding.update(dict(
             shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
             # After compression, set fill to work around GSKY transparency bug
-            _FillValue=-999,
+            _FillValue=-999, dtype='f4',
+        ))
+        d.attrs.update(dict(
+            units='%', grid_mapping='sinusoidal',
+            comment='Ratio of water to dry plant matter.  '
+            'Mean of top 40 matches from observed to simulated reflectance.'
         ))
 
     # Save the file!
