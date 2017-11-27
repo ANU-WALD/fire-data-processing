@@ -72,7 +72,7 @@ def get_functor(veg_type):
 
 def difference_index(a, b):
     """A common pattern, eg NDVI, NDII, etc."""
-    return (a - b) / (a + b)
+    return ((a - b) / (a + b)).astype('float32')
 
 
 def get_fmc(dataset, masks):
@@ -125,7 +125,7 @@ def get_reflectance(year, tile):
     for i in map(str, range(1, 8)):
         key = 'Nadir_Reflectance_Band' + i
         data_ok = ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0
-        out[modis_band_map[key]] = ds[key].astype('f4').where(data_ok)
+        out[modis_band_map[key]] = ds[key].where(data_ok).astype('f4')
     out['ndvi_ok_mask'] = 0.15 < difference_index(out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
