@@ -23,7 +23,7 @@ import pandas as pd
 import xarray as xr
 
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 modis_band_map = {
     'Nadir_Reflectance_Band1': 'red_630_690',
@@ -35,30 +35,46 @@ modis_band_map = {
     'Nadir_Reflectance_Band7': 'swir2_2090_2350',
 }
 
-bands_to_use = ['red_630_690', 'nir1_780_900', 'green_530_610',
-                'swir1_1550_1750', 'swir2_2090_2350', 'ndii']
+bands_to_use = {'MODIS':['red_630_690', 'nir1_780_900', 'green_530_610', 'swir1_1550_1750', 'swir2_2090_2350', 'ndii'],
+                'SPOT6':['band_0_blue', 'band_1_green', 'band_2_red', 'band_3_nir'],
+                'SPOT7':['band_0_blue', 'band_1_green', 'band_2_red', 'band_3_nir'],
+                }
 
 
 functor_cache = {}
 
 
-def get_functor(veg_type):
+def get_functor(veg_type, satellite):
     """Returns a function to get the mean and stdev of LFMC for the top n values.
 
     Note that the function object is cached to avoid loading the vmat and smat
     tables more than once per vegetation type.
     """
-    if veg_type in functor_cache:
-        return functor_cache[veg_type]
+    assert satellite in ['MODIS', 'SPOT6', 'SPOT7'], 'Satellite does not exist'
+
+    if (veg_type, satellite) in functor_cache:
+        return functor_cache[(veg_type, satellite)]
+
     # Get the lookup table
-    merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
-    merged_lookup['ndii'] = difference_index(
-        merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
-    table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
-    vmat = table[bands_to_use].values
+    if satellite == 'MODIS':
+        merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
+        merged_lookup['ndii'] = difference_index(
+            merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
+        table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
+    elif satellite == 'SPOT6':
+        merged_lookup = pd.read_csv('lookup_tables/SPOT6_lookup.csv')
+        table = merged_lookup.where(merged_lookup.landcover == veg_type)
+    elif satellite == 'SPOT7':
+        merged_lookup = pd.read_csv('lookup_tables/SPOT7_lookup.csv')
+        table = merged_lookup.where(merged_lookup.landcover == veg_type)
+
+    vmat = table[bands_to_use[satellite]].values
     vsmat = np.sqrt((vmat ** 2).sum(axis=1))
 
-    def get_top_n(mb, vmat=vmat, vsmat=vsmat, fmc=table.FMC.values):
+    print(satellite)
+    fmc = table['fmc' if 'SPOT' in satellite else 'FMC'].values
+
+    def get_top_n(mb, vmat=vmat, vsmat=vsmat, fmc=fmc):
         spectral_angle = np.arccos(
             np.einsum('ij,j->i', vmat, mb) /
             (np.sqrt(np.einsum('i,i->', mb, mb)) * vsmat)
@@ -66,7 +82,7 @@ def get_functor(veg_type):
         top_values = fmc[np.argpartition(spectral_angle, 40)[:40]]
         return np.median(top_values, axis=-1), top_values.std(axis=-1)
 
-    functor_cache[veg_type] = get_top_n
+    functor_cache[(veg_type, satellite)] = get_top_n
     return get_top_n
 
 
@@ -75,9 +91,12 @@ def difference_index(a, b):
     return ((a - b) / (a + b)).astype('float32')
 
 
-def get_fmc(dataset, masks):
+def get_fmc(dataset, masks, satellite='MODIS'):
     """Get the mean and stdev of LFMC for the given Xarray dataset (one time-step)."""
-    bands = xr.concat([dataset[b] for b in bands_to_use], dim='band')
+    if satellite == 'MODIS':
+        bands = xr.concat([dataset[b] for b in bands_to_use[satellite]], dim='band')
+    else:
+        bands=dataset.radiance
     ok = np.logical_and(dataset.ndvi_ok_mask, bands.notnull().all(dim='band'))
 
     out = np.full((2,) + ok.shape, np.nan, dtype='float32')
@@ -87,7 +106,7 @@ def get_fmc(dataset, masks):
         vals = bands.values[:, cond]
         if vals.size:
             # Only calculate for and assign to the unmasked values
-            out[:,cond] = np.apply_along_axis(get_functor(kind), 0, vals)
+            out[:,cond] = np.apply_along_axis(get_functor(kind, satellite), 0, vals)
 
     data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
                      lvmc_stdv=(('y', 'x'), out[1]))
