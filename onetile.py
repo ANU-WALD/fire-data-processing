@@ -170,10 +170,13 @@ def get_masks(year, tile):
             u'deciduous needleleaf forest', u'deciduous broadleaf forest',
             u'mixed forests', u'woody savannas', u'savannas'),
     }
-    return {
+    masks = {
         k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
         for k, v in classes.items()
     }
+    return {k: add_tile_coords(tile, v.rename({'YDim:MOD12Q1': 'y',
+                                               'XDim:MOD12Q1': 'x'}))
+            for k, v in masks.items()}
 
 
 def add_sinusoidal_var(ds):
