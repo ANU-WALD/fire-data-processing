@@ -40,6 +40,9 @@ def main(tiles_list, path, start_year):
                     print('Already done:', fname)
                     continue
             print('Submitting job for', fname)
+            if walltime > 48:
+                print('Capping walltime at maximum 48 hrs, was', walltime)
+                walltime = 48
             os.system((
                 'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
                 '-l walltime={hours}:00:00 -N {year}{tile}-FMC onetile.qsub'
