@@ -16,7 +16,7 @@ def main(tiles_list, path, start_year):
     for tile in tiles_list:
         masks = onetile.get_masks(2017, tile)
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
-        walltime = int(np.ceil(34 * elements / 2400. ** 2)) + 2
+        walltime = int(np.ceil(40 * elements / 2400. ** 2)) + 2
 
         print('Calculated walltime for tile:', tile, '=', walltime)
         for year in range(start_year, datetime.date.today().year + 1):
@@ -32,7 +32,7 @@ def main(tiles_list, path, start_year):
                     if not new_obs:
                         print('Already done:', fname)
                         continue
-                    walltime = int(np.ceil(34 * elements * (new_obs / 90)
+                    walltime = int(np.ceil(40 * elements * (new_obs / 90)
                                            / 2400. ** 2 + 0.5))
                     print('Update walltime: {}h for {} steps'
                           .format(walltime, new_obs))
