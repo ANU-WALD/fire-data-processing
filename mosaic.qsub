@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -P xc0
+#PBS -q expressbw
+#PBS -l ncpus=4
+#PBS -l mem=200GB
+#PBS -l walltime=6:00:00
+#PBS -l other=gdata1
+
+source /g/data/xc0/software/miniconda3/bin/activate rs3
+cd ~/fire-data-processing
+python LVMC-reprojection.py
