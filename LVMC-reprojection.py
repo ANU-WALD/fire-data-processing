@@ -172,7 +172,7 @@ def get_mean_LMVC():
 
 def calculate_flammability(ds, year=2017):
     """Add flammability variable to a dataset."""
-    ds = ds.astype('float32')
+    ds = ds.astype('float32').chunk(time=1)
     masks = get_landcover_masks(year=year)
     diff = ds.lvmc_mean.diff('time')
     anomaly = ds.lvmc_mean - get_mean_LMVC()
@@ -197,7 +197,7 @@ def calculate_flammability(ds, year=2017):
                       (masks.shrub, shrub),
                           (masks.forest, forest)]:
         ds.flammability_index.values[since:] = \
-            np.where(msk.values, vals, ds.flammability_index[since:])
+            xr.where(msk, vals, ds.flammability_index[since:])
 
     # Convert to [0..1] index with exponential equation
     ds.flammability_index.values[:] = 1 / (1 + np.e ** - ds.flammability_index.values)
@@ -229,6 +229,7 @@ def do_everything(year=2017):
         dim=big.time
     )
     print('projected lvmc_stdev ({})'.format(elapsed_time()))
+    out.to_netcdf(fname + '.no-flammability')
 
     final = calculate_flammability(out, year=year)
     print('calculated flammability ({})'.format(elapsed_time()))
