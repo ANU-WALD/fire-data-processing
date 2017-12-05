@@ -107,7 +107,7 @@ def project_array(array, geot):
     # Get new geotransform and create destination raster
     dest_arr = np.empty(new_shape)
     dest_arr[:] = np.nan
-    dest = array_to_raster(dest_arr, ll_geot, to_sr.ExportToWkt())
+    dest = array_to_raster(dest_arr, ll_geot)
 
     # Perform the projection/resampling
     gdal.ReprojectImage(
