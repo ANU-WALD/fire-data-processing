@@ -172,7 +172,7 @@ def get_mean_LMVC():
 
 def calculate_flammability(ds, year=2017):
     """Add flammability variable to a dataset."""
-    ds = ds.astype('float32').chunk(time=1)
+    ds = ds.astype('float32').chunk(dict(time=1))
     masks = get_landcover_masks(year=year)
     diff = ds.lvmc_mean.diff('time')
     anomaly = ds.lvmc_mean - get_mean_LMVC()
@@ -208,32 +208,39 @@ def calculate_flammability(ds, year=2017):
 
 def do_everything(year=2017):
     fname = '/g/data/ub8/au/FMC/australia_LVMC_{}.nc'.format(year)
+    partial_fname = fname + '.no-flammability'
 
-    # TODO: check that we're using the right input files
-    pattern = '/g/data/ub8/au/FMC/LVMC_new/LVMC_{}*.nc'.format(year)
-    files = glob.glob(pattern)
+    if os.path.isfile(partial_fname):
+        out = xr.open_dataset(partial_fname, chunks=dict(time=1))
+        print('Loading already-finished LVMC ({})'.format(elapsed_time()))
+    else:
+        # TODO: check that we're using the right input files
+        pattern = '/g/data/ub8/au/FMC/LVMC_new/LVMC_{}*.nc'.format(year)
+        files = glob.glob(pattern)
 
-    imgs = [xr.open_dataset(f, chunks=dict(time=1)) for f in files]
-    big = functools.reduce(xr.Dataset.combine_first, imgs)
-    geot = get_geot(big)
-    out = xr.Dataset()
+        imgs = [xr.open_dataset(f, chunks=dict(time=1)) for f in files]
+        big = functools.reduce(xr.Dataset.combine_first, imgs)
+        geot = get_geot(big)
+        out = xr.Dataset()
 
-    print('Opened all files, starting projection ({})'.format(elapsed_time()))
-    out['lvmc_mean'] = xr.concat(
-        [project_array(big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
-        dim=big.time
-    )
-    print('Projected lvmc_mean ({})'.format(elapsed_time()))
-    out['lvmc_stdv'] = xr.concat(
-        [project_array(big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
-        dim=big.time
-    )
-    print('projected lvmc_stdev ({})'.format(elapsed_time()))
-    out.to_netcdf(fname + '.no-flammability')
+        print('Opened all files, starting projection ({})'.format(elapsed_time()))
+        out['lvmc_mean'] = xr.concat(
+            [project_array(big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
+            dim=big.time
+        )
+        print('Projected lvmc_mean ({})'.format(elapsed_time()))
+        out['lvmc_stdv'] = xr.concat(
+            [project_array(big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
+            dim=big.time
+        )
+        print('projected lvmc_stdev ({})'.format(elapsed_time()))
+        out.to_netcdf(partial_fname)
 
     final = calculate_flammability(out, year=year)
     print('calculated flammability ({})'.format(elapsed_time()))
     final.to_netcdf(fname)
+    os.chmod(fname, 0o755)
+    os.remove(partial_fname)
     print('Finished! ({})'.format(elapsed_time()))
 
 
