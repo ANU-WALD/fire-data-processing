@@ -13,6 +13,7 @@ import math
 import os
 import sys
 
+import dask
 import numpy as np
 import xarray as xr
 
@@ -172,35 +173,37 @@ def get_mean_LMVC():
 
 def calculate_flammability(ds, year=2017):
     """Add flammability variable to a dataset."""
-    ds = ds.astype('float32').chunk(dict(time=1))
+    ds = ds.chunk(dict(time=1)).astype('float32')
     masks = get_landcover_masks(year=year)
     diff = ds.lvmc_mean.diff('time')
     anomaly = ds.lvmc_mean - get_mean_LMVC()
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
-    ds['flammability_index'] = ds.lvmc_mean.copy(deep=True).rename('flammability_index')
+    ds['flammability_index'] = xr.DataArray(
+        data=dask.array.full_like(ds.lvmc_mean.data, fill_value=np.nan),
+        coords=ds.lvmc_mean.coords,
+        dims=ds.lvmc_mean.dims,
+        name='flammability_index',
+    ).chunk(dict(time=1))
     ds.flammability_index.attrs = dict(
         comment='Unitless index of flammability',
         units='unitless',
         grid_mapping='sinusoidal',
         long_name='Flammability Index'
     )
-    ds.flammability_index[:] = np.nan
 
     # Calculate flammability and insert into dataset
     grass = 0.18 - 0.01 * ds.lvmc_mean + 0.02 * diff - 0.02 * anomaly
     shrub = 5.66 - 0.09 * ds.lvmc_mean + 0.005 * diff - 0.28 * anomaly
     forest = 1.51 - 0.03 * ds.lvmc_mean + 0.02 * diff - 0.02 * anomaly
     print('calculated flammability components ({})'.format(elapsed_time()))
-    since = -diff.time.size
     for msk, vals in [(masks.grass, grass),
                       (masks.shrub, shrub),
                           (masks.forest, forest)]:
-        ds.flammability_index.values[since:] = \
-            xr.where(msk, vals, ds.flammability_index[since:])
+        ds['flammability_index'] = xr.where(msk, vals, ds.flammability_index)
 
     # Convert to [0..1] index with exponential equation
-    ds.flammability_index.values[:] = 1 / (1 + np.e ** - ds.flammability_index.values)
+    ds['flammability_index'] = 1 / (1 + np.e ** - ds.flammability_index)
     print('done with flammability ({})'.format(elapsed_time()))
 
     return ds.astype('float32')
