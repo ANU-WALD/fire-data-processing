@@ -180,7 +180,12 @@ def calculate_flammability(ds, year=2017):
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
     ds['flammability_index'] = xr.DataArray(
-        data=dask.array.full_like(ds.lvmc_mean.data, fill_value=np.nan),
+        data=dask.array.full(
+            shape=ds.lvmc_mean.shape,
+            fill_value=np.nan,
+            dtype='float32',
+            chunks=(1,) + ds.lvmc_mean.shape[1:],
+        ),
         coords=ds.lvmc_mean.coords,
         dims=ds.lvmc_mean.dims,
         name='flammability_index',
