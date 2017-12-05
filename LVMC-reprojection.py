@@ -158,12 +158,14 @@ def get_mean_LMVC():
     """
     fname = '/g/data/ub8/au/FMC/c6/mean_LVMC_latlon.nc'
     if os.path.isfile(fname):
-        return xr.open_dataset(fname).lvmc_mean
+        return xr.open_dataarray(fname).astype('float32')
     base = functools.reduce(xr.DataArray.combine_first, [
-        xr.open_dataset('/g/data/ub8/au/FMC/c6/mean_LVMC_{}.nc'.format(tile)).lvmc_mean
+        xr.open_dataset(
+            '/g/data/ub8/au/FMC/c6/mean_LVMC_{}.nc'.format(tile)
+        ).lvmc_mean.astype('float32')
         for tile in tiles
     ])
-    proj = project_array(base.values, get_geot(base))
+    proj = project_array(base.values, get_geot(base)).astype('float32')
     proj.to_netcdf('/g/data/ub8/au/FMC/c6/mean_LVMC_latlon.nc')
     return proj
 
