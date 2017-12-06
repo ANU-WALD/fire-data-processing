@@ -193,7 +193,7 @@ def calculate_flammability(ds, year=2017):
     for msk, vals in [(masks.grass, grass),
                       (masks.shrub, shrub),
                       (masks.forest, forest)]:
-        flammability = dask.array.where(msk.data, vals.data, flammability.data)
+        flammability = dask.array.where(msk.data, vals.data, flammability)
     # Convert to [0..1] index with exponential equation
     flammability = 1 / (1 + np.e ** - flammability)
 
