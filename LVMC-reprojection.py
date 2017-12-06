@@ -179,27 +179,13 @@ def calculate_flammability(ds, year=2017):
     anomaly = ds.lvmc_mean - get_mean_LMVC()
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
-    # We model this off the shape and coords of the diff, which may or may not
-    # include the first observation of the year, to avoid shape mismatch later
-    ds['flammability_index'] = xr.DataArray(
-        data=dask.array.full(
-            shape=diff.shape,
-            fill_value=np.nan,
-            dtype='float32',
-            chunks=(1,) + ds.lvmc_mean.shape[1:],
-        ),
-        coords=diff.coords,
-        dims=diff.dims,
-        name='flammability_index',
-    ).chunk(dict(time=1))
-    ds.flammability_index.attrs = dict(
-        comment='Unitless index of flammability',
-        units='unitless',
-        grid_mapping='sinusoidal',
-        long_name='Flammability Index'
-    )
-
     # Calculate flammability and insert into dataset
+    flammability = dask.array.full(
+        shape=diff.shape,
+        fill_value=np.nan,
+        dtype='float32',
+        chunks=(1,) + ds.lvmc_mean.shape[1:],
+    )
     grass = 0.18 - 0.01 * ds.lvmc_mean + 0.02 * diff - 0.02 * anomaly
     shrub = 5.66 - 0.09 * ds.lvmc_mean + 0.005 * diff - 0.28 * anomaly
     forest = 1.51 - 0.03 * ds.lvmc_mean + 0.02 * diff - 0.02 * anomaly
@@ -207,10 +193,24 @@ def calculate_flammability(ds, year=2017):
     for msk, vals in [(masks.grass, grass),
                       (masks.shrub, shrub),
                       (masks.forest, forest)]:
-        ds['flammability_index'] = xr.where(msk, vals, ds.flammability_index)
-
+        flammability = dask.array.where(msk.data, vals.data, flammability.data)
     # Convert to [0..1] index with exponential equation
-    ds['flammability_index'] = 1 / (1 + np.e ** - ds.flammability_index)
+    flammability = 1 / (1 + np.e ** - flammability)
+
+    # We model this off the shape and coords of the diff, which may or may not
+    # include the first observation of the year, to avoid shape mismatch later
+    ds['flammability_index'] = xr.DataArray(
+        data=flammability,
+        coords=diff.coords,
+        dims=diff.dims,
+        name='flammability_index',
+    )
+    ds.flammability_index.attrs = dict(
+        comment='Unitless index of flammability',
+        units='unitless',
+        long_name='Flammability Index',
+    )
+
     print('done with flammability ({})'.format(elapsed_time()))
 
     return ds.astype('float32')
