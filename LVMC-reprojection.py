@@ -175,13 +175,13 @@ def calculate_flammability(ds, year=2017):
     """Add flammability variable to a dataset."""
     ds = ds.chunk(dict(time=1)).astype('float32')
     masks = get_landcover_masks(year=year)
-    diff = ds.lvmc_mean.diff('time')
+    diff = ds.lvmc_mean.diff('time')  # TODO: include last year for first day
     anomaly = ds.lvmc_mean - get_mean_LMVC()
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
     ds['flammability_index'] = xr.DataArray(
         data=dask.array.full(
-            shape=ds.lvmc_mean.shape,
+            shape=diff.shape,
             fill_value=np.nan,
             dtype='float32',
             chunks=(1,) + ds.lvmc_mean.shape[1:],
