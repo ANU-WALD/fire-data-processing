@@ -179,6 +179,8 @@ def calculate_flammability(ds, year=2017):
     anomaly = ds.lvmc_mean - get_mean_LMVC()
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
+    # We model this off the shape and coords of the diff, which may or may not
+    # include the first observation of the year, to avoid shape mismatch later
     ds['flammability_index'] = xr.DataArray(
         data=dask.array.full(
             shape=diff.shape,
@@ -186,8 +188,8 @@ def calculate_flammability(ds, year=2017):
             dtype='float32',
             chunks=(1,) + ds.lvmc_mean.shape[1:],
         ),
-        coords=ds.lvmc_mean.coords,
-        dims=ds.lvmc_mean.dims,
+        coords=diff.coords,
+        dims=diff.dims,
         name='flammability_index',
     ).chunk(dict(time=1))
     ds.flammability_index.attrs = dict(
@@ -204,7 +206,7 @@ def calculate_flammability(ds, year=2017):
     print('calculated flammability components ({})'.format(elapsed_time()))
     for msk, vals in [(masks.grass, grass),
                       (masks.shrub, shrub),
-                          (masks.forest, forest)]:
+                      (masks.forest, forest)]:
         ds['flammability_index'] = xr.where(msk, vals, ds.flammability_index)
 
     # Convert to [0..1] index with exponential equation
