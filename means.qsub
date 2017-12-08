@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -P xc0
 #PBS -q normalbw
-#PBS -l ncpus=28
+#PBS -l ncpus=4
 #PBS -l mem=128GB
-#PBS -l walltime=6:00:00
+#PBS -l walltime=8:00:00
 #PBS -l other=gdata1
 
 source /g/data/xc0/software/miniconda3/bin/activate remote-sensing
