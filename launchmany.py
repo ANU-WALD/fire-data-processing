@@ -11,6 +11,7 @@ import xarray as xr
 import onetile
 
 __version__ = '0.1.0'
+run_time = int(time.time())
 
 def main(tiles_list, path, start_year):
     for tile in tiles_list:
@@ -43,10 +44,15 @@ def main(tiles_list, path, start_year):
             if walltime > 48:
                 print('Capping walltime at maximum 48 hrs, was', walltime)
                 walltime = 48
+
+            logfile = '/g/data/xc0/user/HatfieldDodds/logs/LVMC/{year}{tile}-FMC-{time}' \
+                .format(year=year, tile=tile, time=run_time)
+
             os.system((
                 'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
                 '-l walltime={hours}:00:00 -N {year}{tile}-FMC onetile.qsub'
-            ).format(year=year, tile=tile, hours=walltime, path=path))
+                '-o {logfile}.out -e {logfile}.err'
+            ).format(year=year, tile=tile, hours=walltime, path=path, logfile=logfile))
 
 
 def cli_get_args():
