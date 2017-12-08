@@ -157,17 +157,17 @@ def get_mean_LMVC():
         (requires recalculation from tiles, not just projection)
 
     """
-    fname = '/g/data/ub8/au/FMC/c6/mean_LVMC_latlon.nc'
+    fname = '/g/data/ub8/au/FMC/mean_LVMC_latlon.nc'
     if os.path.isfile(fname):
         return xr.open_dataarray(fname).astype('float32')
     base = functools.reduce(xr.DataArray.combine_first, [
         xr.open_dataset(
-            '/g/data/ub8/au/FMC/c6/mean_LVMC_{}.nc'.format(tile)
+            '/g/data/ub8/au/FMC/mean_LVMC_{}.nc'.format(tile)
         ).lvmc_mean.astype('float32')
         for tile in tiles
     ])
     proj = project_array(base.values, get_geot(base)).astype('float32')
-    proj.to_netcdf('/g/data/ub8/au/FMC/c6/mean_LVMC_latlon.nc')
+    proj.to_netcdf(fname)
     return proj
 
 
@@ -255,4 +255,4 @@ def do_everything(year=2017):
 
 
 if __name__ == '__main__':
-    do_everything()
+    do_everything(year=int(os.environ.get('FMC_YEAR', '2017')))
