@@ -2,7 +2,7 @@
 #PBS -P xc0
 #PBS -q normalbw
 #PBS -l ncpus=2
-#PBS -l mem=100GB
+#PBS -l mem=200GB
 #PBS -l walltime=3:00:00
 #PBS -l other=gdata1
 
