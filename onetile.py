@@ -91,19 +91,30 @@ def difference_index(a, b):
     return ((a - b) / (a + b)).astype('float32')
 
 
-def get_fmc(dataset, masks, satellite='MODIS'):
+def get_fmc(dataset, masks=None, satellite='MODIS'):
     """Get the mean and stdev of LFMC for the given Xarray dataset (one time-step)."""
     if satellite == 'MODIS':
         bands = xr.concat([dataset[b] for b in bands_to_use[satellite]], dim='band')
     else:
         bands=dataset.radiance
+        if masks is None:
+            masks = dict(
+                # assume it's all forest in Namadgi, as no landcover layer
+                forest=np.ones((bands.y.size, bands.x.size), dtype=bool),
+            )
+        if not hasattr(dataset, 'ndvi_ok_mask'):
+            red = dataset.radiance.sel(band=3)
+            nir = dataset.radiance.sel(band=4)
+            dataset['ndvi_ok_mask'] = ((nir - red) / (nir + red)) > 0.15
+    assert masks is not None
     ok = np.logical_and(dataset.ndvi_ok_mask, bands.notnull().all(dim='band'))
 
     out = np.full((2,) + ok.shape, np.nan, dtype='float32')
 
+
     for kind, mask in masks.items():
         cond = np.logical_and(ok, mask[:bands.y.size, :bands.x.size]).values
-        vals = bands.values[:, cond]
+        vals = bands.transpose('band', 'y', 'x').values[:, cond]
         if vals.size:
             # Only calculate for and assign to the unmasked values
             out[:,cond] = np.apply_along_axis(get_functor(kind, satellite), 0, vals)
