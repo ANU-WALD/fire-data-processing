@@ -2,7 +2,7 @@
 
 # qsub -N SPOT-namadgi spot.qsub
 # or
-# qsub -v "FMC_SPOT_LOCATION=canberra" -l ncpus=8 -l walltime=5:00:00 -N SPOT-canberra spot.qsub
+# qsub -v "FMC_SPOT_LOCATION=canberra" -l walltime=20:00:00 -N SPOT-canberra spot.qsub
 
 import os
 from concurrent.futures import ProcessPoolExecutor
