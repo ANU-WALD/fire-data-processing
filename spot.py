@@ -5,11 +5,15 @@
 # qsub -v "FMC_SPOT_LOCATION=canberra" -l walltime=20:00:00 -N SPOT-canberra spot.qsub
 
 import os
-from concurrent.futures import ProcessPoolExecutor
+import datetime
 
 import xarray as xr
 
 import onetile
+
+
+def report(*args):
+    print('at {}:  {}'.format(datetime.datetime.now(), ' '.join(args)))
 
 
 def main():
@@ -18,19 +22,30 @@ def main():
     assert location in ('canberra', 'namadgi')
     fname = '/g/data/xc0/project/sensors2solutions/SPOT_{}.nc'.format(location)
 
-    ds = xr.open_dataset(fname)
+    ds = xr.open_dataset(fname).load()
     ds['time'] = ds.time.astype('M8')
+    report('data loaded')
 
-    def one_step(ts):
+    steps = []
+    for ts in ds.time:
+        date = str(ts.to_pandas())[:10]
+        step_fname = fname.rstrip('.nc') + '_{}_lvmc.nc'.format(date)
+        try:
+            steps.append(xr.open_dataset(step_fname))
+            report('already written', step_fname)
+            continue
+        except Exception:
+            pass
+        report('processing', date)
         satellite = str(ds.sel(time=ts).sensor.values)
-        return onetile.get_fmc(ds.sel(time=ts).load(), satellite=satellite)
-
-    workers = 6 if location == 'namadgi' else 8
-    with ProcessPoolExecutor(workers) as pool:
-        steps = pool.map(one_step, ds.time)
+        data = onetile.get_fmc(ds.sel(time=ts).load(), satellite=satellite)
+        steps.append(data)
+        data.to_netcdf(step_fname)
+        report('done', date)
     fmc = xr.concat(steps, dim=ds.time)
     fmc.to_netcdf(fname.rstrip('.nc') + '_lvmc.nc')
 
 
 if __name__ == '__main__':
+    report('starting')
     main()

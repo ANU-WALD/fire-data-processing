@@ -3,7 +3,7 @@
 #PBS -q normalbw
 #PBS -l ncpus=1
 #PBS -l mem=20GB
-#PBS -l walltime=12:00:00
+#PBS -l walltime=36:00:00
 #PBS -l other=gdata1
 
 source /g/data/xc0/software/miniconda3/bin/activate rs3
