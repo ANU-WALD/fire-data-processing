@@ -51,7 +51,7 @@ def main(tiles_list, path, start_year):
 
             os.system((
                 'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
-                '-l walltime={hours}:00:00 -N {year}{tile}-FMC'
+                '-l walltime={hours}:00:00 -N {year}{tile}-FMC '
                 '-o {logfile}.out -e {logfile}.err onetile.qsub'
             ).format(year=year, tile=tile, hours=walltime, path=path, logfile=logfile))
 
