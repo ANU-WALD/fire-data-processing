@@ -173,7 +173,14 @@ def get_mean_LMVC():
 
 
 def calculate_flammability(ds, year=2017):
-    """Add flammability variable to a dataset."""
+    """Add flammability variable to a dataset.
+
+    There are several reasons to leave the flammability out of tiles:
+        - redundant with mosaics but using storage
+        - requires baseline mean of tiles 2001-2015 (cyclic dependency)
+        - providing `diff` requires previous mosiac for timestep
+
+    """
     ds = ds.chunk(dict(time=1)).astype('float32')
     masks = get_landcover_masks(year=year)
     diff = ds.lvmc_mean.diff('time')  # TODO: include last year for first day
@@ -181,6 +188,7 @@ def calculate_flammability(ds, year=2017):
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
     # Calculate flammability and insert into dataset
+    # Note: Xarray now supports .where, so we could use higher level code here
     flammability = dask.array.full(
         shape=diff.shape,
         fill_value=np.nan,
