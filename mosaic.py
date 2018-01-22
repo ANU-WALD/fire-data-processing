@@ -236,8 +236,8 @@ def do_everything(year=2017):
         out = xr.open_dataset(partial_fname, chunks=dict(time=1))
         print('Loading already-finished LVMC ({})'.format(elapsed_time()))
     else:
-        # TODO: check that we're using the right input files
-        pattern = '/g/data/ub8/au/FMC/LVMC_new/LVMC_{}*.nc'.format(year)
+        # TODO: support reading from alternative input files
+        pattern = '/g/data/ub8/au/FMC/LVMC/LVMC_{}*.nc'.format(year)
         files = glob.glob(pattern)
 
         imgs = [xr.open_dataset(f, chunks=dict(time=1)) for f in files]
