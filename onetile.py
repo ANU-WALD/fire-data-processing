@@ -1,10 +1,6 @@
 """
 Script to create one tile-year of LFMC data, from the original MODIS products.
 
-Likely to remain a (useful) work in progress for some time.
-
-Requires PyNIO to read MODIS .hdf files, and therefore Python 2 for now.
-
 It's also a best-possible port of equations developed for MODIS C5 to C6 data;
 we plan to fully upgrade in future but that will require revalidation.
 
