@@ -14,6 +14,7 @@ import onetile
 __version__ = '0.1.0'
 run_time = int(time.time())
 
+
 def main(tiles_list, path, start_year):
     for tile in tiles_list:
         masks = onetile.get_masks(2017, tile)
@@ -28,7 +29,8 @@ def main(tiles_list, path, start_year):
                 if year == datetime.date.today().year:
                     reflectance = onetile.get_reflectance(year, tile)
                     output_dataset = xr.open_dataset(fname)
-                    reflectance_times = reflectance.time[:len(output_dataset.time)]
+                    reflectance_times = \
+                        reflectance.time[:len(output_dataset.time)]
                     new_obs = len(reflectance.time) - len(output_dataset.time)
                     assert np.all(reflectance_times == output_dataset.time)
                     if not new_obs:
@@ -46,14 +48,16 @@ def main(tiles_list, path, start_year):
                 print('Capping walltime at maximum 48 hrs, was', walltime)
                 walltime = 48
 
-            logfile = '/g/data/xc0/user/HatfieldDodds/logs/LVMC/{year}{tile}-FMC-{time}' \
-                .format(year=year, tile=tile, time=run_time)
+            logfile = (
+                '/g/data/xc0/user/HatfieldDodds/logs/LVMC/{year}{tile}-'
+                'FMC-{time}').format(year=year, tile=tile, time=run_time)
 
             os.system((
                 'qsub -v "FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}" '
                 '-l walltime={hours}:00:00 -N {year}{tile}-FMC '
                 '-o {logfile}.out -e {logfile}.err onetile.qsub'
-            ).format(year=year, tile=tile, hours=walltime, path=path, logfile=logfile))
+            ).format(year=year, tile=tile, hours=walltime, path=path,
+                     logfile=logfile))
 
 
 def cli_get_args():
@@ -104,7 +108,8 @@ def cli_get_args():
     parser.add_argument('--output-path',
                         metavar='<path>',
                         help='change output path',
-                        default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
+                        default=os.environ.get('FMC_PATH',
+                                               '/g/data/ub8/au/FMC/LVMC/'),
                         type=change_output_path)
     parser.add_argument('--start-year',
                         help='Process start_year to current year, inclusive.',
