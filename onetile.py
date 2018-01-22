@@ -14,6 +14,7 @@ import os
 import re
 import json
 import glob
+import modis
 import shutil
 import argparse
 import datetime
@@ -25,16 +26,6 @@ import xarray as xr
 
 __version__ = '0.3.0'
 
-modis_band_map = {
-    'Nadir_Reflectance_Band1': 'red_630_690',
-    'Nadir_Reflectance_Band2': 'nir1_780_900',
-    'Nadir_Reflectance_Band3': 'blue_450_520',
-    'Nadir_Reflectance_Band4': 'green_530_610',
-    'Nadir_Reflectance_Band5': 'nir2_1230_1250',
-    'Nadir_Reflectance_Band6': 'swir1_1550_1750',
-    'Nadir_Reflectance_Band7': 'swir2_2090_2350',
-}
-
 bands_to_use = {'MODIS': ['red_630_690', 'nir1_780_900', 'green_530_610',
                           'swir1_1550_1750', 'swir2_2090_2350', 'ndii'],
                 'SPOT6': ['band_0_blue', 'band_1_green', 'band_2_red',
@@ -42,7 +33,6 @@ bands_to_use = {'MODIS': ['red_630_690', 'nir1_780_900', 'green_530_610',
                 'SPOT7': ['band_0_blue', 'band_1_green', 'band_2_red',
                           'band_3_nir'],
                 }
-
 
 functor_cache = {}
 
@@ -63,7 +53,7 @@ def get_functor(veg_type, satellite):
     if satellite == 'MODIS':
         merged_lookup = pd.read_csv(
                         'lookup_tables/merged_lookup.csv', index_col='ID')
-        merged_lookup['ndii'] = difference_index(
+        merged_lookup['ndii'] = modis.difference_index(
             merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
         table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
     elif satellite == 'SPOT6':
@@ -89,11 +79,6 @@ def get_functor(veg_type, satellite):
 
     functor_cache[(veg_type, satellite)] = get_top_n
     return get_top_n
-
-
-def difference_index(a, b):
-    """A common pattern, eg NDVI, NDII, etc."""
-    return ((a - b) / (a + b)).astype('float32')
 
 
 def get_fmc(dataset, masks=None, satellite='MODIS'):
@@ -163,10 +148,10 @@ def get_reflectance(year, tile):
     for i in map(str, range(1, 8)):
         key = 'Nadir_Reflectance_Band' + i
         data_ok = ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0
-        out[modis_band_map[key]] = ds[key].where(data_ok).astype('f4')
-    out['ndvi_ok_mask'] = 0.15 < difference_index(
+        out[modis.modis_band_map[key]] = ds[key].where(data_ok).astype('f4')
+    out['ndvi_ok_mask'] = 0.15 < modis.difference_index(
                                         out.nir1_780_900, out.red_630_690)
-    out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
+    out['ndii'] = modis.difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
     out.rename({'YDim:MOD_Grid_BRDF': 'y',
                 'XDim:MOD_Grid_BRDF': 'x'}, inplace=True)
@@ -199,42 +184,6 @@ def get_masks(year, tile):
             for k, v in masks.items()}
 
 
-def add_sinusoidal_var(ds):
-    with open('sinusoidal.json') as f:
-        attrs = json.load(f)
-    attrs['GeoTransform'] = ' '.join(str(float(x)) for x in [
-        # Affine matrix - start/step/rotation, start/rotation/step - in 1D
-        ds.x[0], (ds.x[-1] - ds.x[0]) / ds.x.size, 0,
-        ds.y[0], 0, (ds.y[-1] - ds.y[0]) / ds.y.size
-    ])
-    ds['sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
-
-
-def add_tile_coords(tile, dataset):
-    scale = 1111950.5196669996
-
-    # regex to match string
-    regex = re.compile('h\d+v\d+')
-    matches = regex.findall(tile)
-
-    # extract values from string
-    extract = re.compile('\d+')
-    h, v = extract.findall(matches[0])
-    h = int(h)
-    v = int(v)
-
-    # calculate start and end values
-    x_start = scale * (h - 18)
-    x_end = scale * (h - 17)
-
-    y_start = -scale * (v - 9)
-    y_end = -scale * (v - 8)
-
-    dataset['x'] = xr.IndexVariable('x', np.linspace(x_start, x_end, 2400))
-    dataset['y'] = xr.IndexVariable('y', np.linspace(y_start, y_end, 2400))
-    return dataset
-
-
 def main(year, tile, output_path):
     out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
@@ -264,7 +213,6 @@ def main(year, tile, output_path):
 
     # Add metadata to the resulting file
     out.attrs.update(json_attrs)
-    add_sinusoidal_var(out)
 
     out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean'))
     out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation'))
