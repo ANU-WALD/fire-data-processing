@@ -14,7 +14,6 @@ import os
 import re
 import json
 import glob
-import modis
 import shutil
 import argparse
 import datetime
@@ -23,6 +22,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+import modis
 
 __version__ = '0.3.0'
 
@@ -179,9 +179,9 @@ def get_masks(year, tile):
         k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
         for k, v in classes.items()
     }
-    return {k: add_tile_coords(tile, v.rename({'YDim:MOD12Q1': 'y',
-                                               'XDim:MOD12Q1': 'x'}))
-            for k, v in masks.items()}
+    return {k: modis.add_tile_coords(tile, v.rename(
+                {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
+            )) for k, v in masks.items()}
 
 
 def main(year, tile, output_path):
@@ -205,7 +205,7 @@ def main(year, tile, output_path):
         new_data = xr.concat(
             [get_fmc(ds.sel(time=ts), masks)
              for ts in ds.time[len(existing.time):]], dim='time')
-        add_tile_coords(tile, new_data)
+        modis.add_tile_coords(tile, new_data)
         out = xr.merge([existing, new_data])
 
     with open('nc_metadata.json') as f:
