@@ -20,7 +20,7 @@ import xarray as xr
 from osgeo import gdal, gdal_array, osr
 
 sys.path.append(os.path.abspath('.'))
-import onetile
+import onetile  # noqa: E402
 
 
 # Start by setting up some utilities and constants for locations:
@@ -55,6 +55,7 @@ class aus:
     stop_lat = -44
     start_lon = 113
     stop_lon = 154
+
 
 out_res_degrees = 0.005
 
@@ -233,14 +234,17 @@ def do_everything(year=2017):
         geot = get_geot(big)
         out = xr.Dataset()
 
-        print('Opened all files, starting projection ({})'.format(elapsed_time()))
+        print('Opened all files, starting projection ({})'
+              .format(elapsed_time()))
         out['lvmc_mean'] = xr.concat(
-            [project_array(big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
+            [project_array(
+             big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
             dim=big.time
         )
         print('Projected lvmc_mean ({})'.format(elapsed_time()))
         out['lvmc_stdv'] = xr.concat(
-            [project_array(big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
+            [project_array(
+             big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
             dim=big.time
         )
         print('projected lvmc_stdev ({})'.format(elapsed_time()))

@@ -35,9 +35,12 @@ modis_band_map = {
     'Nadir_Reflectance_Band7': 'swir2_2090_2350',
 }
 
-bands_to_use = {'MODIS':['red_630_690', 'nir1_780_900', 'green_530_610', 'swir1_1550_1750', 'swir2_2090_2350', 'ndii'],
-                'SPOT6':['band_0_blue', 'band_1_green', 'band_2_red', 'band_3_nir'],
-                'SPOT7':['band_0_blue', 'band_1_green', 'band_2_red', 'band_3_nir'],
+bands_to_use = {'MODIS': ['red_630_690', 'nir1_780_900', 'green_530_610',
+                          'swir1_1550_1750', 'swir2_2090_2350', 'ndii'],
+                'SPOT6': ['band_0_blue', 'band_1_green', 'band_2_red',
+                          'band_3_nir'],
+                'SPOT7': ['band_0_blue', 'band_1_green', 'band_2_red',
+                          'band_3_nir'],
                 }
 
 
@@ -45,7 +48,8 @@ functor_cache = {}
 
 
 def get_functor(veg_type, satellite):
-    """Returns a function to get the mean and stdev of LFMC for the top n values.
+    """Returns a function to get the mean and stdev of LFMC for the top n
+    values.
 
     Note that the function object is cached to avoid loading the vmat and smat
     tables more than once per vegetation type.
@@ -57,7 +61,8 @@ def get_functor(veg_type, satellite):
 
     # Get the lookup table
     if satellite == 'MODIS':
-        merged_lookup = pd.read_csv('lookup_tables/merged_lookup.csv', index_col='ID')
+        merged_lookup = pd.read_csv(
+                        'lookup_tables/merged_lookup.csv', index_col='ID')
         merged_lookup['ndii'] = difference_index(
             merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
         table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
@@ -92,11 +97,13 @@ def difference_index(a, b):
 
 
 def get_fmc(dataset, masks=None, satellite='MODIS'):
-    """Get the mean and stdev of LFMC for the given Xarray dataset (one time-step)."""
+    """Get the mean and stdev of LFMC for the given Xarray dataset
+    (one time-step)."""
     if satellite == 'MODIS':
-        bands = xr.concat([dataset[b] for b in bands_to_use[satellite]], dim='band')
+        bands = xr.concat([dataset[b] for b in bands_to_use[satellite]],
+                          dim='band')
     else:
-        bands=dataset.radiance
+        bands = dataset.radiance
         if masks is None:
             masks = dict(
                 # assume it's all forest in Namadgi, as no landcover layer
@@ -111,13 +118,13 @@ def get_fmc(dataset, masks=None, satellite='MODIS'):
 
     out = np.full((2,) + ok.shape, np.nan, dtype='float32')
 
-
     for kind, mask in masks.items():
         cond = np.logical_and(ok, mask[:bands.y.size, :bands.x.size]).values
         vals = bands.transpose('band', 'y', 'x').values[:, cond]
         if vals.size:
             # Only calculate for and assign to the unmasked values
-            out[:,cond] = np.apply_along_axis(get_functor(kind, satellite), 0, vals)
+            out[:, cond] = np.apply_along_axis(
+                            get_functor(kind, satellite), 0, vals)
 
     data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
                      lvmc_stdv=(('y', 'x'), out[1]))
@@ -136,7 +143,8 @@ def get_reflectance(year, tile):
             .format(year=year)
         ))
     files = [f for f in reflectance_file_cache if tile in os.path.basename(f)]
-    pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+.hdf')
+    pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+'
+                         '.hdf')
     dates, parts = [], []
     for f in files:
         try:
@@ -144,7 +152,7 @@ def get_reflectance(year, tile):
             day, = pattern.match(os.path.basename(f)).groups()
             dates.append(datetime.date(int(year), 1, 1) +
                          datetime.timedelta(days=int(day) - 1))
-        except:
+        except Exception:
             print('Could not read from ' + f)
 
     dates = pd.to_datetime(dates)
@@ -156,7 +164,8 @@ def get_reflectance(year, tile):
         key = 'Nadir_Reflectance_Band' + i
         data_ok = ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0
         out[modis_band_map[key]] = ds[key].where(data_ok).astype('f4')
-    out['ndvi_ok_mask'] = 0.15 < difference_index(out.nir1_780_900, out.red_630_690)
+    out['ndvi_ok_mask'] = 0.15 < difference_index(
+                                        out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
     out.rename({'YDim:MOD_Grid_BRDF': 'y',
