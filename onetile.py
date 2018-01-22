@@ -184,17 +184,6 @@ def get_masks(year, tile):
             for k, v in masks.items()}
 
 
-def add_sinusoidal_var(ds):
-    with open('sinusoidal.json') as f:
-        attrs = json.load(f)
-    attrs['GeoTransform'] = ' '.join(str(float(x)) for x in [
-        # Affine matrix - start/step/rotation, start/rotation/step - in 1D
-        ds.x[0], (ds.x[-1] - ds.x[0]) / ds.x.size, 0,
-        ds.y[0], 0, (ds.y[-1] - ds.y[0]) / ds.y.size
-    ])
-    ds['sinusoidal'] = xr.DataArray(np.zeros((), 'S1'), attrs=attrs)
-
-
 def add_tile_coords(tile, dataset):
     scale = 1111950.5196669996
 
@@ -249,7 +238,6 @@ def main(year, tile, output_path):
 
     # Add metadata to the resulting file
     out.attrs.update(json_attrs)
-    add_sinusoidal_var(out)
 
     out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean'))
     out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation'))
