@@ -252,9 +252,8 @@ def do_everything(year=2017):
 
     final = calculate_flammability(out, year=year)
     print('calculated flammability ({})'.format(elapsed_time()))
-    final.to_netcdf(fname)
-    os.chmod(fname, 0o755)
-    # os.remove(partial_fname)  # had a failure that left nothing at all
+    onetile.save_for_thredds(final, fname)
+    os.remove(partial_fname)
     print('Finished! ({})'.format(elapsed_time()))
 
 
