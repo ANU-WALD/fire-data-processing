@@ -184,6 +184,19 @@ def get_masks(year, tile):
             )) for k, v in masks.items()}
 
 
+def save_for_thredds(ds, fname):
+    # Save the file!
+    if not os.path.isfile(fname):
+        # First time we've written this file
+        ds.to_netcdf(fname)
+    else:
+        # otherwise, write next to final destination and move (atomic update)
+        ds.to_netcdf(fname + '.new')
+        shutil.move(fname + '.new', fname)
+    # Make it visible via Thredds
+    os.chmod(fname, 0o755)
+
+
 def main(year, tile, output_path):
     out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
@@ -230,16 +243,7 @@ def main(year, tile, output_path):
             'Mean of top 40 matches from observed to simulated reflectance.'
         ))
 
-    # Save the file!
-    if not os.path.isfile(out_file):
-        # First time we've written this file
-        out.to_netcdf(out_file)
-    else:
-        # otherwise, write next to final destination and move (atomic update)
-        out.to_netcdf(out_file + '.new')
-        shutil.move(out_file + '.new', out_file)
-    # Make it visible via Thredds
-    os.system('chmod a+rx ' + out_file)
+    save_for_thredds(out, out_file)
 
 
 def get_validated_args():
