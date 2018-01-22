@@ -8,4 +8,4 @@
 
 source /g/data/xc0/software/miniconda3/bin/activate rs3
 cd ~/fire-data-processing
-python LVMC-reprojection.py
+python mosaic.py
