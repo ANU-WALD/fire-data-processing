@@ -172,7 +172,7 @@ def get_mean_LMVC():
     return proj
 
 
-def calculate_flammability(ds, year=2017):
+def calculate_flammability(ds, year=2017, diff=None):
     """Add flammability variable to a dataset.
 
     There are several reasons to leave the flammability out of tiles:
@@ -183,7 +183,8 @@ def calculate_flammability(ds, year=2017):
     """
     ds = ds.chunk(dict(time=1)).astype('float32')
     masks = get_landcover_masks(year=year)
-    diff = ds.lvmc_mean.diff('time')  # TODO: include last year for first day
+    if diff is None:
+        diff = ds.lvmc_mean.diff('time')
     anomaly = ds.lvmc_mean - get_mean_LMVC()
     print('loaded flammability inputs ({})'.format(elapsed_time()))
 
@@ -226,7 +227,9 @@ def calculate_flammability(ds, year=2017):
 
 
 def do_everything(year=2017):
-    fname = '/g/data/ub8/au/FMC/australia_LVMC_{}.nc'.format(year)
+    fname_pattern = '/g/data/ub8/au/FMC/australia_LVMC_{}.nc'
+    fname = fname_pattern.format(year)
+    prev_fname = fname_pattern.format(int(year) - 1)
     partial_fname = fname + '.no-flammability'
 
     if os.path.isfile(partial_fname):
@@ -258,7 +261,15 @@ def do_everything(year=2017):
         print('projected lvmc_stdev ({})'.format(elapsed_time()))
         out.to_netcdf(partial_fname)
 
-    final = calculate_flammability(out, year=year)
+    diff = None
+    try:
+        diff = xr.concat([
+            xr.open_dataset(prev_fname, chunks=dict(time=1)).lvmc_mean,
+            out.lvmc_mean
+        ], dim='time').diff('time').sel(time=str(year))
+    except Exception:
+        pass
+    final = calculate_flammability(out, year=year, diff=diff)
     print('calculated flammability ({})'.format(elapsed_time()))
     onetile.save_for_thredds(final, fname)
     os.remove(partial_fname)
