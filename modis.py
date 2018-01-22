@@ -4,6 +4,7 @@ import glob
 import datetime
 import xarray as xr
 import pandas as pd
+import numpy as np
 
 modis_band_map = {
     'Nadir_Reflectance_Band1': 'red_630_690',
@@ -14,6 +15,23 @@ modis_band_map = {
     'Nadir_Reflectance_Band6': 'swir1_1550_1750',
     'Nadir_Reflectance_Band7': 'swir2_2090_2350',
 }
+
+
+def add_tile_coords(tile, dataset):
+    scale = 1111950.5196669996
+    regex = re.compile('h\d+v\d+')
+    matches = regex.findall(tile)
+    extract = re.compile('\d+')
+    h, v = extract.findall(matches[0])
+    h = int(h)
+    v = int(v)
+    x_start = scale * (h - 18)
+    x_end = scale * (h - 17)
+    y_start = -scale * (v - 9)
+    y_end = -scale * (v - 8)
+    dataset['x'] = xr.IndexVariable('x', np.linspace(x_start, x_end, 2400))
+    dataset['y'] = xr.IndexVariable('y', np.linspace(y_start, y_end, 2400))
+    return dataset
 
 
 def difference_index(a, b):
@@ -59,4 +77,4 @@ def get_reflectance(year, tile):
                 'XDim:MOD_Grid_BRDF': 'x'}, inplace=True)
     out.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    return out
+    return add_tile_coords(out)

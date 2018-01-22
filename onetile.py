@@ -184,31 +184,6 @@ def get_masks(year, tile):
             for k, v in masks.items()}
 
 
-def add_tile_coords(tile, dataset):
-    scale = 1111950.5196669996
-
-    # regex to match string
-    regex = re.compile('h\d+v\d+')
-    matches = regex.findall(tile)
-
-    # extract values from string
-    extract = re.compile('\d+')
-    h, v = extract.findall(matches[0])
-    h = int(h)
-    v = int(v)
-
-    # calculate start and end values
-    x_start = scale * (h - 18)
-    x_end = scale * (h - 17)
-
-    y_start = -scale * (v - 9)
-    y_end = -scale * (v - 8)
-
-    dataset['x'] = xr.IndexVariable('x', np.linspace(x_start, x_end, 2400))
-    dataset['y'] = xr.IndexVariable('y', np.linspace(y_start, y_end, 2400))
-    return dataset
-
-
 def main(year, tile, output_path):
     out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
