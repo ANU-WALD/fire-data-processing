@@ -7,10 +7,12 @@ Still experimental.
 import collections
 import datetime
 import functools
+import argparse
 import glob
 import json
 import math
 import os
+import re
 import sys
 
 import dask
@@ -22,6 +24,7 @@ from osgeo import gdal, gdal_array, osr
 sys.path.append(os.path.abspath('.'))
 import onetile  # noqa: E402
 
+__version__ = '0.1.0'
 
 # Start by setting up some utilities and constants for locations:
 
@@ -226,8 +229,8 @@ def calculate_flammability(ds, year=2017, diff=None):
     return ds.astype('float32')
 
 
-def do_everything(year=2017):
-    fname_pattern = '/g/data/ub8/au/FMC/australia_LVMC_{}.nc'
+def do_everything(year, output_path):
+    fname_pattern = os.path.join(output_path, 'australia_LVMC_{}.nc')
     fname = fname_pattern.format(year)
     prev_fname = fname_pattern.format(int(year) - 1)
     partial_fname = fname + '.no-flammability'
@@ -277,4 +280,6 @@ def do_everything(year=2017):
 
 
 if __name__ == '__main__':
-    do_everything(year=int(os.environ.get('FMC_YEAR', '2017')))
+    args = onetile.get_arg_parser().parse_args()
+    print(args)
+    do_everything(year=args.year, output_path=args.output_path)

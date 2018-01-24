@@ -242,19 +242,20 @@ def main(year, tile, output_path):
     save_for_thredds(out, out_file)
 
 
-def get_validated_args():
+def valid_tile(val):
+    """Validate that arg is tile string."""
+    assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
+    return val
 
-    def check_year(val):
+
+def get_arg_parser(default_subdir=''):
+
+    def valid_year(val):
         """Validate arg and transform glob pattern to file list."""
         assert re.match(r'\A20\d\d\Z', val), repr(val)
         return val
 
-    def check_tile(val):
-        """Validate that arg is tile string."""
-        assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
-        return val
-
-    def change_output_path(val):
+    def valid_output_path(val):
         """Validate that the directory exists """
         assert os.path.isdir(val), repr(val)
         return val
@@ -263,21 +264,23 @@ def get_validated_args():
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
     parser.add_argument(
-        '--year', type=check_year,
+        '--year', type=valid_year,
         default=os.environ.get('FMC_YEAR', str(datetime.date.today().year)),
         help='four-digit year to process')
     parser.add_argument(
-        '--tile', type=check_tile,
-        default=os.environ.get('FMC_TILE', 'h31v10'),
-        help='tile to process, "hXXvYY"')
-    parser.add_argument(
-        '--output-path', type=change_output_path,
-        default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
+        '--output-path', type=valid_output_path,
+        default=os.environ.get('FMC_PATH',
+                               '/g/data/ub8/au/FMC/' + default_subdir),
         help='change output path')
-    return parser.parse_args()
+    return parser
 
 
 if __name__ == '__main__':
-    args = get_validated_args()
+    parser = get_arg_parser(default_subdir='LVMC')
+    parser.add_argument(
+        '--tile', type=valid_tile,
+        default=os.environ.get('FMC_TILE', 'h31v10'),
+        help='tile to process, "hXXvYY"')
+    args = parser.parse_args()
     print(args)
     main(args.year, args.tile, args.output_path)
