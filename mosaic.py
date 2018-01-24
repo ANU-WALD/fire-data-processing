@@ -279,33 +279,7 @@ def do_everything(year, output_path):
     print('Finished! ({})'.format(elapsed_time()))
 
 
-def get_validated_args():
-
-    def valid_year(val):
-        """Validate arg and transform glob pattern to file list."""
-        assert re.match(r'\A20\d\d\Z', val), repr(val)
-        return val
-
-    def valid_output_path(val):
-        """Validate that the directory exists """
-        assert os.path.isdir(val), repr(val)
-        return val
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-V', '--version', action='version', version=__version__)
-    parser.add_argument(
-        '--year', type=valid_year,
-        default=int(os.environ.get('FMC_YEAR', '2017')),
-        help='four-digit year to process')
-    parser.add_argument(
-        '--output-path', type=valid_output_path,
-        default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/'),
-        help='change output path')
-    return parser.parse_args()
-
-
 if __name__ == '__main__':
-    args = get_validated_args()
+    args = onetile.get_arg_parser().parse_args()
     print(args)
     do_everything(year=args.year, output_path=args.output_path)
