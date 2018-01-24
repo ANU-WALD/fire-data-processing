@@ -244,17 +244,17 @@ def main(year, tile, output_path):
 
 def get_validated_args():
 
-    def check_year(val):
+    def valid_year(val):
         """Validate arg and transform glob pattern to file list."""
         assert re.match(r'\A20\d\d\Z', val), repr(val)
         return val
 
-    def check_tile(val):
+    def valid_tile(val):
         """Validate that arg is tile string."""
         assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
         return val
 
-    def change_output_path(val):
+    def valid_output_path(val):
         """Validate that the directory exists """
         assert os.path.isdir(val), repr(val)
         return val
@@ -263,15 +263,15 @@ def get_validated_args():
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
     parser.add_argument(
-        '--year', type=check_year,
+        '--year', type=valid_year,
         default=os.environ.get('FMC_YEAR', str(datetime.date.today().year)),
         help='four-digit year to process')
     parser.add_argument(
-        '--tile', type=check_tile,
+        '--tile', type=valid_tile,
         default=os.environ.get('FMC_TILE', 'h31v10'),
         help='tile to process, "hXXvYY"')
     parser.add_argument(
-        '--output-path', type=change_output_path,
+        '--output-path', type=valid_output_path,
         default=os.environ.get('FMC_PATH', '/g/data/ub8/au/FMC/LVMC/'),
         help='change output path')
     return parser.parse_args()
