@@ -9,7 +9,6 @@ we plan to fully upgrade in future but that will require revalidation.
 import os
 import re
 import json
-import glob
 import shutil
 import argparse
 import datetime
@@ -112,74 +111,6 @@ def get_fmc(dataset, masks=None, satellite='MODIS'):
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
-reflectance_file_cache = []
-
-
-def get_reflectance(year, tile):
-    global reflectance_file_cache
-    if not reflectance_file_cache:
-        reflectance_file_cache[:] = sorted(glob.glob(
-            '/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006/' +
-            '{year}.??.??/MCD43A4.A{year}???.h??v??.006.*.hdf'
-            .format(year=year)
-        ))
-    files = [f for f in reflectance_file_cache if tile in os.path.basename(f)]
-    pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+'
-                         '.hdf')
-    dates, parts = [], []
-    for f in files:
-        try:
-            parts.append(xr.open_dataset(f, chunks=2400))
-            day, = pattern.match(os.path.basename(f)).groups()
-            dates.append(datetime.date(int(year), 1, 1) +
-                         datetime.timedelta(days=int(day) - 1))
-        except Exception:
-            print('Could not read from ' + f)
-
-    dates = pd.to_datetime(dates)
-    dates.name = 'time'
-
-    ds = xr.concat(parts, dates)
-    out = xr.Dataset()
-    for i in map(str, range(1, 8)):
-        key = 'Nadir_Reflectance_Band' + i
-        data_ok = ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0
-        out[modis.modis_band_map[key]] = ds[key].where(data_ok).astype('f4')
-    out['ndvi_ok_mask'] = 0.15 < modis.difference_index(
-                                        out.nir1_780_900, out.red_630_690)
-    out['ndii'] = modis.difference_index(out.nir1_780_900, out.swir1_1550_1750)
-
-    out.rename({'YDim:MOD_Grid_BRDF': 'y',
-                'XDim:MOD_Grid_BRDF': 'x'}, inplace=True)
-    out.time.encoding.update(dict(
-        units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    return out
-
-
-def get_masks(year, tile):
-    file, = glob.glob(
-        '/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051/' +
-        '{year}.??.??/MCD12Q1.A{year}???.{tile}.051.*.hdf'
-        .format(year=min(int(year), 2013), tile=tile)
-    )
-    arr = xr.open_dataset(file).Land_Cover_Type_1
-    classes = {
-        'grass': (u'grasslands', u'croplands'),
-        'shrub': (u'closed shrubland', u'open shrublands'),
-        'forest': (
-            u'evergreen needleleaf forest', u'evergreen broadleaf forest',
-            u'deciduous needleleaf forest', u'deciduous broadleaf forest',
-            u'mixed forests', u'woody savannas', u'savannas'),
-    }
-    masks = {
-        k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
-        for k, v in classes.items()
-    }
-    return {k: modis.add_tile_coords(tile, v.rename(
-                {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
-            )) for k, v in masks.items()}
-
-
 def save_for_thredds(ds, fname):
     # Save the file!
     if not os.path.isfile(fname):
@@ -196,9 +127,9 @@ def save_for_thredds(ds, fname):
 def main(year, tile, output_path):
     out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
-    masks = get_masks(year, tile)
+    masks = modis.get_masks(year, tile)
     # Get the main dataset - demo is one tile for a year
-    ds = get_reflectance(year, tile)
+    ds = modis.get_reflectance(year, tile)
 
     if not os.path.isfile(out_file):
         # Create all output data

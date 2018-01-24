@@ -39,6 +39,9 @@ def difference_index(a, b):
     return ((a - b) / (a + b)).astype('float32')
 
 
+reflectance_file_cache = []
+
+
 def get_reflectance(year, tile):
     global reflectance_file_cache
     if not reflectance_file_cache:
@@ -78,3 +81,27 @@ def get_reflectance(year, tile):
     out.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
     return add_tile_coords(out)
+
+
+def get_masks(year, tile):
+    file, = glob.glob(
+        '/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051/' +
+        '{year}.??.??/MCD12Q1.A{year}???.{tile}.051.*.hdf'
+        .format(year=min(int(year), 2013), tile=tile)
+    )
+    arr = xr.open_dataset(file).Land_Cover_Type_1
+    classes = {
+        'grass': (u'grasslands', u'croplands'),
+        'shrub': (u'closed shrubland', u'open shrublands'),
+        'forest': (
+            u'evergreen needleleaf forest', u'evergreen broadleaf forest',
+            u'deciduous needleleaf forest', u'deciduous broadleaf forest',
+            u'mixed forests', u'woody savannas', u'savannas'),
+    }
+    masks = {
+        k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
+        for k, v in classes.items()
+    }
+    return {k: add_tile_coords(tile, v.rename(
+                {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
+            )) for k, v in masks.items()}
