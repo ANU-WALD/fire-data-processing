@@ -80,7 +80,7 @@ def get_reflectance(year, tile):
                 'XDim:MOD_Grid_BRDF': 'x'}, inplace=True)
     out.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
-    return add_tile_coords(out)
+    return add_tile_coords(tile, out)
 
 
 def get_masks(year, tile):
