@@ -150,6 +150,8 @@ def main(year, tile, output_path):
 
     with open('nc_metadata.json') as f:
         json_attrs = json.load(f)
+    if 'x' not in out.coords or 'y' not in out.coords:
+        modis.add_tile_coords(tile, out)
 
     # Add metadata to the resulting file
     out.attrs.update(json_attrs)
