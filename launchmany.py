@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 import xarray as xr
 
-import onetile
+import modis
 
 __version__ = '0.1.0'
 run_time = int(time.time())
@@ -17,7 +17,7 @@ run_time = int(time.time())
 
 def main(tiles_list, path, start_year):
     for tile in tiles_list:
-        masks = onetile.get_masks(2017, tile)
+        masks = modis.get_masks(2013, tile)  # indicative year
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
         walltime = int(np.ceil(40 * elements / 2400. ** 2)) + 2
 
@@ -27,7 +27,7 @@ def main(tiles_list, path, start_year):
             fname = os.path.join(path, 'LVMC_{}_{}.nc'.format(year, tile))
             if os.path.isfile(fname):
                 if year == datetime.date.today().year:
-                    reflectance = onetile.get_reflectance(year, tile)
+                    reflectance = modis.get_reflectance(year, tile)
                     output_dataset = xr.open_dataset(fname)
                     reflectance_times = \
                         reflectance.time[:len(output_dataset.time)]
