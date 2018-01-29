@@ -263,6 +263,10 @@ def do_everything(year, output_path):
         )
         print('projected lvmc_stdev ({})'.format(elapsed_time()))
         out.to_netcdf(partial_fname)
+        # TODO: this line should reduce peak memory use - check on next run
+        # and, if it did, remove this if/else logic to save a partial file
+        # (added for debugging speed but now just reduces performance)
+        out = xr.open_dataset(partial_fname, chunks=dict(time=1))
 
     diff = None
     try:
