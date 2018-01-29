@@ -112,6 +112,9 @@ def get_fmc(dataset, masks=None, satellite='MODIS'):
 
 
 def save_for_thredds(ds, fname):
+    # Update time encoding, because Thredds can't handle int64 data.
+    ds.time.encoding.update(dict(
+        units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
     # Save the file!
     if not os.path.isfile(fname):
         # First time we've written this file
@@ -158,8 +161,6 @@ def main(year, tile, output_path):
 
     out.lvmc_mean.attrs.update(dict(long_name='LVMC Arithmetic Mean'))
     out.lvmc_stdv.attrs.update(dict(long_name='LVMC Standard Deviation'))
-    out.time.encoding.update(dict(units='days since 1900-01-01',
-                                  calendar='gregorian', dtype='i4'))
     for d in (out.lvmc_mean, out.lvmc_stdv):
         d.encoding.update(dict(
             shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
