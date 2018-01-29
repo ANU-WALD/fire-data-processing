@@ -164,8 +164,6 @@ def main(year, tile, output_path):
     for d in (out.lvmc_mean, out.lvmc_stdv):
         d.encoding.update(dict(
             shuffle=True, zlib=True, chunks=dict(x=400, y=400, time=6),
-            # After compression, set fill to work around GSKY transparency bug
-            _FillValue=-999, dtype='f4',
         ))
         d.attrs.update(dict(
             units='%', grid_mapping='sinusoidal',
