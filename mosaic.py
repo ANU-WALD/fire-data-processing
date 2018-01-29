@@ -274,6 +274,13 @@ def do_everything(year, output_path):
         pass
     final = calculate_flammability(out, year=year, diff=diff)
     print('calculated flammability ({})'.format(elapsed_time()))
+    # Set compression for variables
+    for var in final.data_vars.values():
+        var.encoding.update(dict(
+            shuffle=True, zlib=True,
+            chunks=dict(longitude=400, latitude=400, time=6)
+        ))
+    # Save output
     onetile.save_for_thredds(final, fname)
     os.remove(partial_fname)
     print('Finished! ({})'.format(elapsed_time()))
