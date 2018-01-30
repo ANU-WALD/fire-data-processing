@@ -18,7 +18,7 @@ def create_modis_data(filename):
     lookup = new_series.groupby(lambda i: 5 * ((i + 2.5) // 5)).mean()
     lookup /= lookup.sum()
 
-    weighted_sum = 0
+    weighted_sum = 0  # type: pd.Series
     for idx in lookup.index:
         weighted_sum += (lookup[idx] * continuous_lookup[str(int(idx))])
 
