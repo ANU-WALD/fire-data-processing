@@ -12,6 +12,7 @@ import json
 import math
 import os
 import sys
+import typing as t
 
 import dask
 import numpy as np
@@ -21,15 +22,15 @@ from osgeo import gdal, gdal_array, osr
 
 sys.path.append(os.path.abspath('.'))
 import onetile  # noqa: E402
+import modis  # noqa: E402
 
 __version__ = '0.1.0'
 
 # Start by setting up some utilities and constants for locations:
-
 start_time = datetime.datetime.now()
 
 
-def elapsed_time():
+def elapsed_time() -> str:
     return '{0:.2f} minutes'.format(
         (datetime.datetime.now() - start_time).total_seconds() / 60)
 
@@ -42,7 +43,7 @@ AffineGeoTransform = collections.namedtuple(
                      'origin_y', 'y_rot', 'pixel_height'])
 
 
-def get_geot(ds):
+def get_geot(ds: t.Union[xr.Dataset, xr.DataArray]) -> AffineGeoTransform:
     """Take an Xarray object with x and y coords; return geotransform."""
     return AffineGeoTransform(*map(float, (
         # Affine matrix - start/step/rotation, start/rotation/step - in 1D
@@ -76,20 +77,25 @@ ll_coords = dict(
 )
 
 with open('sinusoidal.json') as f:
-    wkt_str = json.load(f)['spatial_ref']
+    wkt_str = json.load(f)['spatial_ref']  # type: str
 
 
 # Next, define some generically useful functions:
 
 
-def project_array(array, geot):
+def project_array(array: xr.DataArray,
+                  geot: t.Optional[AffineGeoTransform]=None) -> xr.DataArray:
     """Reproject a tile from Modis Sinusoidal to WGS84 Lat/Lon coordinates.
     Metadata is handled by the calling function.
     """
+    if geot is None:
+        geot = get_geot(array)
     # Takes around seven seconds per layer for in-memory Australia mosaics
     assert isinstance(geot, AffineGeoTransform)
 
-    def array_to_raster(array, geot):
+    # TODO: use correct return type annotation
+    def array_to_raster(array: xr.DataArray,
+                        geot: AffineGeoTransform) -> t.Any:
         ysize, xsize = array.shape  # unintuitive order, but correct!
         dataset = gdal.GetDriverByName('MEM').Create(
             '', xsize, ysize,
@@ -124,7 +130,7 @@ def project_array(array, geot):
         coords=ll_coords)
 
 
-def get_landcover_masks(year=2017):
+def get_landcover_masks(year: int=2017) -> xr.Dataset:
     """Get, or calculate, the landcover masks for Australia."""
     year = int(year)
     year = min([year, 2013])
@@ -134,11 +140,11 @@ def get_landcover_masks(year=2017):
     if os.path.isfile(fname):
         return xr.open_dataset(fname)
 
-    masks = [onetile.get_masks(str(year), t) for t in tiles]
+    mask_list = [modis.get_masks(year, t) for t in tiles]
     forest, grass, shrub = [
         functools.reduce(
             xr.DataArray.combine_first,
-            [m[key] for m in masks]
+            [m[key] for m in mask_list]
         ).fillna(0).astype('?')
         for key in ['forest', 'grass', 'shrub']
     ]
@@ -152,7 +158,7 @@ def get_landcover_masks(year=2017):
     return masks
 
 
-def get_mean_LMVC():
+def get_mean_LMVC() -> xr.DataArray:
     """Get or calculate mean LVMC as lat/lon mosaic.
 
     TODO: recalculate this with c6/median (currently c6/mean).
@@ -173,7 +179,8 @@ def get_mean_LMVC():
     return proj
 
 
-def calculate_flammability(ds, year=2017, diff=None):
+def calculate_flammability(ds: xr.Dataset, year: int=2017,
+                           diff: t.Optional[xr.DataArray]=None) -> xr.Dataset:
     """Add flammability variable to a dataset.
 
     There are several reasons to leave the flammability out of tiles:
@@ -227,7 +234,7 @@ def calculate_flammability(ds, year=2017, diff=None):
     return ds.astype('float32')
 
 
-def do_everything(year, output_path):
+def do_everything(year: int, output_path: str) -> None:
     fname_pattern = os.path.join(output_path, 'australia_LVMC_{}.nc')
     fname = fname_pattern.format(year)
     prev_fname = fname_pattern.format(int(year) - 1)

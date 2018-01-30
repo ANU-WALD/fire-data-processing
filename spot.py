@@ -13,11 +13,11 @@ import xarray as xr
 import onetile
 
 
-def report(*args):
+def report(*args: str) -> None:
     print('at {}:  {}'.format(datetime.datetime.now(), ' '.join(args)))
 
 
-def main():
+def main() -> None:
     """Processes a SPOT cube.  Set env var FMC_SPOT_BIGGER for second file."""
     location = os.environ.get('FMC_SPOT_LOCATION', 'namadgi')
     assert location in ('canberra', 'namadgi')

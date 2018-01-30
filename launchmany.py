@@ -3,6 +3,7 @@
 import os
 import re
 import time
+import typing as t
 import datetime
 import argparse
 
@@ -15,7 +16,7 @@ __version__ = '0.1.0'
 run_time = int(time.time())
 
 
-def main(tiles_list, path, start_year):
+def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
     for tile in tiles_list:
         masks = modis.get_masks(2013, tile)  # indicative year
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
@@ -60,7 +61,7 @@ def main(tiles_list, path, start_year):
                      logfile=logfile))
 
 
-def cli_get_args():
+def cli_get_args() -> argparse.Namespace:
     shortcuts = dict(
         australia=('h28v13,h29v11,h28v12,h29v10,h29v12,h32v10,h27v11,'
                    'h31v11,h32v11,h30v11,h30v10,h27v12,h30v12,h31v12,'
@@ -69,7 +70,7 @@ def cli_get_args():
         spain='h17v04,h17v05',
     )
 
-    def load_in_tiles(arg):
+    def load_in_tiles(arg: str) -> t.List[str]:
         '''
         Load in tiles by comma separated tiles or shortcut, validate
         that data exists within range.
@@ -90,7 +91,7 @@ def cli_get_args():
 
         return generated_list
 
-    def change_output_path(val):
+    def change_output_path(val: str) -> str:
         """Validate that the directory exists """
         assert os.path.isdir(val), repr(val)
         print('Output Path:', val)

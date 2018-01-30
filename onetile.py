@@ -10,6 +10,7 @@ import os
 import re
 import json
 import shutil
+import typing as t
 import argparse
 import datetime
 
@@ -29,10 +30,11 @@ bands_to_use = {'MODIS': ['red_630_690', 'nir1_780_900', 'green_530_610',
                           'band_3_nir'],
                 }
 
-functor_cache = {}
+# TODO: make return type annotation more precise
+functor_cache = {}  # type: t.Dict[t.Tuple[str, str], t.Callable]
 
 
-def get_functor(veg_type, satellite):
+def get_functor(veg_type: str, satellite: str) -> t.Callable:
     """Returns a function to get the mean and stdev of LFMC for the top n
     values.
 
@@ -64,7 +66,10 @@ def get_functor(veg_type, satellite):
     print(satellite)
     fmc = table['fmc' if 'SPOT' in satellite else 'FMC'].values
 
-    def get_top_n(mb, vmat=vmat, vsmat=vsmat, fmc=fmc):
+    # TODO: more precise types may be possible via mypy/numpy extension?
+    def get_top_n(mb: np.ndarray, vmat: np.ndarray=vmat,
+                  vsmat: np.ndarray=vsmat, fmc: np.ndarray=fmc
+                  ) -> t.Tuple[float, float]:
         spectral_angle = np.arccos(
             np.einsum('ij,j->i', vmat, mb) /
             (np.sqrt(np.einsum('i,i->', mb, mb)) * vsmat)
@@ -76,7 +81,9 @@ def get_functor(veg_type, satellite):
     return get_top_n
 
 
-def get_fmc(dataset, masks=None, satellite='MODIS'):
+def get_fmc(dataset: xr.Dataset,
+            masks: t.Optional[t.Dict[str, xr.DataArray]]=None,
+            satellite: str='MODIS') -> xr.Dataset:
     """Get the mean and stdev of LFMC for the given Xarray dataset
     (one time-step)."""
     if satellite == 'MODIS':
@@ -111,7 +118,7 @@ def get_fmc(dataset, masks=None, satellite='MODIS'):
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
-def save_for_thredds(ds, fname):
+def save_for_thredds(ds: xr.Dataset, fname: str) -> None:
     # Update time encoding, because Thredds can't handle int64 data.
     ds.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
@@ -127,7 +134,7 @@ def save_for_thredds(ds, fname):
     os.chmod(fname, 0o755)
 
 
-def main(year, tile, output_path):
+def main(year: int, tile: str, output_path: str) -> None:
     out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
     masks = modis.get_masks(year, tile)
@@ -174,20 +181,20 @@ def main(year, tile, output_path):
     save_for_thredds(out, out_file)
 
 
-def valid_tile(val):
+def valid_tile(val: str) -> str:
     """Validate that arg is tile string."""
     assert re.match(r'\Ah\d\dv\d\d\Z', val), repr(val)
     return val
 
 
-def get_arg_parser(default_subdir=''):
+def get_arg_parser(default_subdir: str='') -> argparse.ArgumentParser:
 
-    def valid_year(val):
+    def valid_year(val: str) -> str:
         """Validate arg and transform glob pattern to file list."""
         assert re.match(r'\A20\d\d\Z', val), repr(val)
         return val
 
-    def valid_output_path(val):
+    def valid_output_path(val: str) -> str:
         """Validate that the directory exists """
         assert os.path.isdir(val), repr(val)
         return val

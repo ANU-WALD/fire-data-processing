@@ -2,9 +2,13 @@ import os
 import re
 import glob
 import datetime
+import typing as t
+
 import xarray as xr
 import pandas as pd
 import numpy as np
+
+xr_data_type = t.Union[xr.Dataset, xr.DataArray]
 
 modis_band_map = {
     'Nadir_Reflectance_Band1': 'red_630_690',
@@ -16,8 +20,10 @@ modis_band_map = {
     'Nadir_Reflectance_Band7': 'swir2_2090_2350',
 }
 
+xy_names = {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
 
-def add_tile_coords(tile, dataset):
+
+def add_tile_coords(tile: str, dataset: xr_data_type) -> xr_data_type:
     scale = 1111950.5196669996
     regex = re.compile('h\d+v\d+')
     matches = regex.findall(tile)
@@ -34,15 +40,15 @@ def add_tile_coords(tile, dataset):
     return dataset
 
 
-def difference_index(a, b):
+def difference_index(a: xr.DataArray, b: xr.DataArray) -> xr.DataArray:
     """A common pattern, eg NDVI, NDII, etc."""
     return ((a - b) / (a + b)).astype('float32')
 
 
-reflectance_file_cache = []
+reflectance_file_cache = []  # type: t.List[str]
 
 
-def get_reflectance(year, tile):
+def get_reflectance(year: int, tile: str) -> xr.Dataset:
     global reflectance_file_cache
     if not reflectance_file_cache:
         reflectance_file_cache[:] = sorted(glob.glob(
@@ -63,10 +69,10 @@ def get_reflectance(year, tile):
         except Exception:
             print('Could not read from ' + f)
 
-    dates = pd.to_datetime(dates)
-    dates.name = 'time'
+    date_series = pd.to_datetime(dates)
+    date_series.name = 'time'
 
-    ds = xr.concat(parts, dates)
+    ds = xr.concat(parts, date_series)
     out = xr.Dataset()
     for i in map(str, range(1, 8)):
         key = 'Nadir_Reflectance_Band' + i
@@ -76,14 +82,13 @@ def get_reflectance(year, tile):
                                         out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
-    out.rename({'YDim:MOD_Grid_BRDF': 'y',
-                'XDim:MOD_Grid_BRDF': 'x'}, inplace=True)
+    out.rename(xy_names, inplace=True)
     out.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
     return add_tile_coords(tile, out)
 
 
-def get_masks(year, tile):
+def get_masks(year: int, tile: str) -> t.Dict[str, xr.DataArray]:
     file, = glob.glob(
         '/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051/' +
         '{year}.??.??/MCD12Q1.A{year}???.{tile}.051.*.hdf'
@@ -97,11 +102,10 @@ def get_masks(year, tile):
             u'evergreen needleleaf forest', u'evergreen broadleaf forest',
             u'deciduous needleleaf forest', u'deciduous broadleaf forest',
             u'mixed forests', u'woody savannas', u'savannas'),
-    }
+    }  # type: t.Dict[str, t.Tuple[str, ...]]
     masks = {
         k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
         for k, v in classes.items()
     }
-    return {k: add_tile_coords(tile, v.rename(
-                {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
-            )) for k, v in masks.items()}
+    return {k: add_tile_coords(tile, v.rename(xy_names))
+            for k, v in masks.items()}
