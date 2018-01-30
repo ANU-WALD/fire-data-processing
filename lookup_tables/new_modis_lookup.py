@@ -6,7 +6,7 @@ import pandas as pd
 continuous_lookup = pd.read_csv('continuous_lookup.csv')
 
 
-def create_modis_data(filename):
+def create_modis_data(filename: str) -> pd.Series:
     data_set = pd.read_fwf('MODIS_Data/' + filename,
                            comment='#',
                            skiprows=range(7),
