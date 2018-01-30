@@ -7,3 +7,5 @@ install:
 script:
   - flake8 *.py **/*.py
   - mypy *.py **/*.py
+notifications:
+  email: false
