@@ -7,12 +7,10 @@ Still experimental.
 import collections
 import datetime
 import functools
-import argparse
 import glob
 import json
 import math
 import os
-import re
 import sys
 
 import dask
