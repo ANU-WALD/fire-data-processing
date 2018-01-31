@@ -4,8 +4,9 @@ python:
 install:
   - pip install flake8
   - pip install mypy
+  - pip install flake8-docstrings
 script:
-  - flake8 *.py **/*.py
+  - flake8
   - mypy *.py **/*.py
 notifications:
   email: false
