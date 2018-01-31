@@ -1,5 +1,5 @@
 """
-General purpose functions for manipulating MODIS data.
+General purpose functions for loading MODIS data.
 
 This script is used for loading reflectance and restoring physical coordinates
 to an array for a given tile.
@@ -49,7 +49,7 @@ def add_tile_coords(tile: str, dataset: xr_data_type) -> xr_data_type:
 
 
 def difference_index(a: xr.DataArray, b: xr.DataArray) -> xr.DataArray:
-    """Get difference index between dataset used in NDVI, NDII, etc."""
+    """Get difference index between bands used in NDVI, NDII, etc."""
     return ((a - b) / (a + b)).astype('float32')
 
 

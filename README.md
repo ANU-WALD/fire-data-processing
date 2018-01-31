@@ -8,20 +8,14 @@ This is a research initiative to provide quality spatial information on fire haz
 
 ### Authors
 ---
-##### Code
-*[Zac Hatfield Dodds](https://github.com/Zac-HD), [Dion Misic](https://github.com/kingdion)*
-
-##### Science
-*[Marta Yebra](https://researchers.anu.edu.au/researchers/yebra-m)*
+* *[Zac Hatfield Dodds](https://github.com/Zac-HD) and [Dion Misic](https://github.com/kingdion)* (code)
+* *[Marta Yebra](https://researchers.anu.edu.au/researchers/yebra-m)* (science)
 
 ### Important Links
 ---
 * [The Project](http://www.bnhcrc.com.au/research/understanding-mitigating-hazards/255)
-
 * [ANU Water and Landscape Dynamics Group](http://www.wenfo.org/wald/)
-
 * [Australian Flammability Monitoring System](http://wenfo.org/afms/)
-
 * [Australian Environment Explorer](http://wenfo.org/ausenv/)
 
 
@@ -32,8 +26,10 @@ All scripts accept a help argument which displays all input flags. Use "python s
 
 You must be in the following NCI project groups to perform certain tasks with these scripts;
 
-* **ub8** - Data Access
+* **ub8** - Data Access (**ub8_admin** for write permissions)
 * **xc0** - To schedule Raijin jobs & edit scripts
+
+Alternatively, you could edit the various *.qsub files to run under a different project's Raijin allocation.
 
 As a general use-case, you should be in the *root* directory of the repository to run scripts.
 
@@ -51,8 +47,7 @@ Launchmany is essentially a job queue system for the NCI Raijin super computer a
 
 As input, this script takes a comma separated list of sinusoidal tiles and schedules a set of jobs on Raijin (using the Raijin specific job handler). Automating this LFMC process is appealing as generating multiple tiles over many years can take some time.
 
-For ease of use, launchmany has a few tile shortcuts builtin for countries around the world, such as Australia, Spain and South Africa. The script also calculates a walltime for each tile for logging purposes.
-
+For ease of use, launchmany has a few tile shortcuts builtin for countries around the world, such as Australia, Spain and South Africa.
 
 #### modis.py
 This script provides general-purpose functions for manipulating MODIS data, including loading reflectance and restoring physical coordinates to an array for a given tile.
