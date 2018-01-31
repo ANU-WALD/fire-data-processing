@@ -39,8 +39,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                     if not new_obs:
                         print('Already done:', fname)
                         continue
-                    walltime = int(np.ceil(40 * elements * (new_obs / 90)
-                                           / 2400. ** 2 + 0.5))
+                    walltime = int(np.ceil(
+                        40 * elements * (new_obs / 90) / 2400. ** 2 + 0.5))
                     print('Update walltime: {}h for {} steps'
                           .format(walltime, new_obs))
                 else:

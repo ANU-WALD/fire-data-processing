@@ -49,7 +49,7 @@ def get_functor(veg_type: str, satellite: str) -> t.Callable:
     # Get the lookup table
     if satellite == 'MODIS':
         merged_lookup = pd.read_csv(
-                        'lookup_tables/merged_lookup.csv', index_col='ID')
+            'lookup_tables/merged_lookup.csv', index_col='ID')
         merged_lookup['ndii'] = modis.difference_index(
             merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
         table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
@@ -110,7 +110,7 @@ def get_fmc(dataset: xr.Dataset,
         if vals.size:
             # Only calculate for and assign to the unmasked values
             out[:, cond] = np.apply_along_axis(
-                            get_functor(kind, satellite), 0, vals)
+                get_functor(kind, satellite), 0, vals)
 
     data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
                      lvmc_stdv=(('y', 'x'), out[1]))

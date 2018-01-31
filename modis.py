@@ -88,7 +88,7 @@ def get_reflectance(year: int, tile: str) -> xr.Dataset:
         data_ok = ds['BRDF_Albedo_Band_Mandatory_Quality_Band' + i] == 0
         out[modis_band_map[key]] = ds[key].where(data_ok).astype('f4')
     out['ndvi_ok_mask'] = 0.15 < difference_index(
-                                        out.nir1_780_900, out.red_630_690)
+        out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
     out.rename(xy_names, inplace=True)

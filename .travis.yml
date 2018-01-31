@@ -6,7 +6,7 @@ install:
   - pip install mypy
   - pip install flake8-docstrings
 script:
-  - flake8 --ignore=D10
+  - flake8
   - mypy *.py **/*.py
 notifications:
   email: false
