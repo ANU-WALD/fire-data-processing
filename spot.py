@@ -4,6 +4,9 @@ Process LFMC data for a specific SPOT cube using onetile functions.
 The SPOT cube uses top of atmosphere radiance as opposed to corrected surface
 reflectance (which is used by MODIS).
 
+This cube was assembled from data provided by Airbus using the notebook
+SPOT-preprocessing.ipynb
+
 Spot.py is not covered by launchmany.py, therefore NCI Raijin job schedule
 commands are included below:
 

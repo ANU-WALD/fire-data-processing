@@ -1,5 +1,6 @@
 """Calculate mean LVMC between 2001 and 2015."""
 
+# BUG: Doesn't currently select the base period correctly
 # TODO: merge into mosaic.py.
 
 import json
