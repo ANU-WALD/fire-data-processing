@@ -1,3 +1,5 @@
+"""Derive a MODIS lookup table."""
+
 import pandas as pd
 
 # input files are downloaded from:
@@ -7,6 +9,7 @@ continuous_lookup = pd.read_csv('continuous_lookup.csv')
 
 
 def create_modis_data(filename: str) -> pd.Series:
+    """Use continuous_lookup to create modis data."""
     data_set = pd.read_fwf('MODIS_Data/' + filename,
                            comment='#',
                            skiprows=range(7),

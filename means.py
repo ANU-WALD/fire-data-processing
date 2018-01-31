@@ -1,3 +1,7 @@
+"""Calculate mean LVMC between 2001 and 2015."""
+
+# TODO: merge into mosaic.py.
+
 import json
 import xarray as xr
 
