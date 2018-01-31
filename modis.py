@@ -1,3 +1,10 @@
+"""
+General purpose functions for manipulating MODIS data.
+
+This script is used for loading reflectance and restoring physical coordinates
+to an array for a given tile.
+"""
+
 import os
 import re
 import glob
@@ -24,6 +31,7 @@ xy_names = {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
 
 
 def add_tile_coords(tile: str, dataset: xr_data_type) -> xr_data_type:
+    """Restore physical coordinates to dataset."""
     scale = 1111950.5196669996
     regex = re.compile('h\d+v\d+')
     matches = regex.findall(tile)
@@ -41,7 +49,7 @@ def add_tile_coords(tile: str, dataset: xr_data_type) -> xr_data_type:
 
 
 def difference_index(a: xr.DataArray, b: xr.DataArray) -> xr.DataArray:
-    """A common pattern, eg NDVI, NDII, etc."""
+    """Get difference index between dataset used in NDVI, NDII, etc."""
     return ((a - b) / (a + b)).astype('float32')
 
 
@@ -49,6 +57,7 @@ reflectance_file_cache = []  # type: t.List[str]
 
 
 def get_reflectance(year: int, tile: str) -> xr.Dataset:
+    """Load reflectance data for one tile-year."""
     global reflectance_file_cache
     if not reflectance_file_cache:
         reflectance_file_cache[:] = sorted(glob.glob(
@@ -89,6 +98,7 @@ def get_reflectance(year: int, tile: str) -> xr.Dataset:
 
 
 def get_masks(year: int, tile: str) -> t.Dict[str, xr.DataArray]:
+    """Get landcover masks for one tile-year."""
     file, = glob.glob(
         '/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051/' +
         '{year}.??.??/MCD12Q1.A{year}???.{tile}.051.*.hdf'

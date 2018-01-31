@@ -31,6 +31,7 @@ start_time = datetime.datetime.now()
 
 
 def elapsed_time() -> str:
+    """Return elapsed time."""
     return '{0:.2f} minutes'.format(
         (datetime.datetime.now() - start_time).total_seconds() / 60)
 
@@ -53,6 +54,8 @@ def get_geot(ds: t.Union[xr.Dataset, xr.DataArray]) -> AffineGeoTransform:
 
 
 class aus:
+    """Define Australia by lat/lon."""
+
     start_lat = -10
     stop_lat = -44
     start_lon = 113
@@ -85,7 +88,9 @@ with open('sinusoidal.json') as f:
 
 def project_array(array: xr.DataArray,
                   geot: t.Optional[AffineGeoTransform]=None) -> xr.DataArray:
-    """Reproject a tile from Modis Sinusoidal to WGS84 Lat/Lon coordinates.
+    """
+    Reproject a tile from MODIS Sinusoidal to WGS84 Lat/Lon coordinates.
+
     Metadata is handled by the calling function.
     """
     if geot is None:
@@ -235,6 +240,7 @@ def calculate_flammability(ds: xr.Dataset, year: int=2017,
 
 
 def do_everything(year: int, output_path: str) -> None:
+    """Perform the reprojection."""
     fname_pattern = os.path.join(output_path, 'australia_LVMC_{}.nc')
     fname = fname_pattern.format(year)
     prev_fname = fname_pattern.format(int(year) - 1)

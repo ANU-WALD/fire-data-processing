@@ -1,9 +1,19 @@
-# Super duper crude script to get quick results.  Sorry.
+"""
+Process LFMC data for a specific SPOT cube using onetile functions.
 
-# qsub -N SPOT-namadgi spot.qsub
-# or
-# qsub -v "FMC_SPOT_LOCATION=canberra" -l walltime=20:00:00 -N SPOT-canberra
-# spot.qsub
+The SPOT cube uses top of atmosphere radiance as opposed to corrected surface
+reflectance (which is used by MODIS).
+
+Spot.py is not covered by launchmany.py, therefore NCI Raijin job schedule
+commands are included below:
+
+qsub -N SPOT-namadgi spot.qsub
+
+or
+
+qsub -v "FMC_SPOT_LOCATION=canberra" -l walltime=20:00:00 -N SPOT-canberra
+spot.qsub
+"""
 
 import os
 import datetime
@@ -14,11 +24,12 @@ import onetile
 
 
 def report(*args: str) -> None:
+    """Print script status reports."""
     print('at {}:  {}'.format(datetime.datetime.now(), ' '.join(args)))
 
 
 def main() -> None:
-    """Processes a SPOT cube.  Set env var FMC_SPOT_BIGGER for second file."""
+    """Process a SPOT cube.  Set env var FMC_SPOT_BIGGER for second file."""
     location = os.environ.get('FMC_SPOT_LOCATION', 'namadgi')
     assert location in ('canberra', 'namadgi')
     fname = '/g/data/xc0/project/sensors2solutions/SPOT_{}.nc'.format(location)

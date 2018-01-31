@@ -1,4 +1,4 @@
-
+"""Create SPOT lookup table."""
 # coding: utf-8
 
 # In[111]:
