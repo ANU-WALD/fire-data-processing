@@ -200,18 +200,22 @@ def get_arg_parser(default_subdir: str='') -> argparse.ArgumentParser:
         assert os.path.isdir(val), repr(val)
         return val
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=(
+                                         argparse.RawDescriptionHelpFormatter))
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
     parser.add_argument(
         '--year', type=valid_year,
         default=os.environ.get('FMC_YEAR', str(datetime.date.today().year)),
-        help='four-digit year to process')
+        help='four-digit year to process',
+        metavar='<year>')
     parser.add_argument(
         '--output-path', type=valid_output_path,
         default=os.environ.get('FMC_PATH',
                                '/g/data/ub8/au/FMC/' + default_subdir),
-        help='change output path')
+        help='change output path',
+        metavar='<path>')
     return parser
 
 
@@ -220,7 +224,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--tile', type=valid_tile,
         default=os.environ.get('FMC_TILE', 'h31v10'),
-        help='tile to process, "hXXvYY"')
+        help='tile to process, "hXXvYY"',
+        metavar='<tile>')
     args = parser.parse_args()
     print(args)
     main(args.year, args.tile, args.output_path)
