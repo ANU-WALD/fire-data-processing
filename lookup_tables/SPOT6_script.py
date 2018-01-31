@@ -11,8 +11,9 @@ which_satellite = 'SPOT6'
 continuous_lookup = pd.read_csv('continuous_lookup.csv')
 data_set = pd.read_excel('SPOT_sensitivity.xlsx', sheetname=which_satellite,
                          index_col=0)
-modis_lookup = pd.DataFrame(continuous_lookup[
-                ['cab', 'chp', 'cm', 'cw', 'fcov', 'fmc', 'lai', 'landcover']])
+modis_lookup = pd.DataFrame(continuous_lookup
+                            [['cab', 'chp', 'cm', 'cw', 'fcov', 'fmc',
+                              'lai', 'landcover']])
 
 data_set.rename(columns={'B0(Blue)': 'band_0_blue',
                          'B1(Green)': 'band_1_green',

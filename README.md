@@ -29,7 +29,7 @@ You must be in the following NCI project groups to perform certain tasks with th
 * **ub8** - Data Access (**ub8_admin** for write permissions)
 * **xc0** - To schedule Raijin jobs & edit scripts
 
-Alternatively, you could edit the various *.qsub files to run under a different project's Raijin allocation.
+Alternatively, you could edit the various \*.qsub files to run under a different project's Raijin allocation.
 
 As a general use-case, you should be in the *root* directory of the repository to run scripts.
 
