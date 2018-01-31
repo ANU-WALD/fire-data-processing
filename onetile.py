@@ -35,8 +35,8 @@ functor_cache = {}  # type: t.Dict[t.Tuple[str, str], t.Callable]
 
 
 def get_functor(veg_type: str, satellite: str) -> t.Callable:
-    """Returns a function to get the mean and stdev of LFMC for the top n
-    values.
+    """
+    Return a function to get the mean and stdev of LFMC for the top n values.
 
     Note that the function object is cached to avoid loading the vmat and smat
     tables more than once per vegetation type.
@@ -49,7 +49,7 @@ def get_functor(veg_type: str, satellite: str) -> t.Callable:
     # Get the lookup table
     if satellite == 'MODIS':
         merged_lookup = pd.read_csv(
-                        'lookup_tables/merged_lookup.csv', index_col='ID')
+            'lookup_tables/merged_lookup.csv', index_col='ID')
         merged_lookup['ndii'] = modis.difference_index(
             merged_lookup.nir1_780_900, merged_lookup.swir1_1550_1750)
         table = merged_lookup.where(merged_lookup.VEGTYPE == veg_type)
@@ -84,8 +84,7 @@ def get_functor(veg_type: str, satellite: str) -> t.Callable:
 def get_fmc(dataset: xr.Dataset,
             masks: t.Optional[t.Dict[str, xr.DataArray]]=None,
             satellite: str='MODIS') -> xr.Dataset:
-    """Get the mean and stdev of LFMC for the given Xarray dataset
-    (one time-step)."""
+    """Get the mean and stdev of LFMC for the given Xarray dataset."""
     if satellite == 'MODIS':
         bands = xr.concat([dataset[b] for b in bands_to_use[satellite]],
                           dim='band')
@@ -111,7 +110,7 @@ def get_fmc(dataset: xr.Dataset,
         if vals.size:
             # Only calculate for and assign to the unmasked values
             out[:, cond] = np.apply_along_axis(
-                            get_functor(kind, satellite), 0, vals)
+                get_functor(kind, satellite), 0, vals)
 
     data_vars = dict(lvmc_mean=(('y', 'x'), out[0]),
                      lvmc_stdv=(('y', 'x'), out[1]))
@@ -119,6 +118,7 @@ def get_fmc(dataset: xr.Dataset,
 
 
 def save_for_thredds(ds: xr.Dataset, fname: str) -> None:
+    """Save the file and ensure it is visible to Thredds."""
     # Update time encoding, because Thredds can't handle int64 data.
     ds.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
@@ -135,6 +135,7 @@ def save_for_thredds(ds: xr.Dataset, fname: str) -> None:
 
 
 def main(year: int, tile: str, output_path: str) -> None:
+    """Process the LFMC data for one tile-year and save it."""
     out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
     masks = modis.get_masks(year, tile)
@@ -188,14 +189,14 @@ def valid_tile(val: str) -> str:
 
 
 def get_arg_parser(default_subdir: str='') -> argparse.ArgumentParser:
-
+    """Create a universal argument parser."""
     def valid_year(val: str) -> str:
         """Validate arg and transform glob pattern to file list."""
         assert re.match(r'\A20\d\d\Z', val), repr(val)
         return val
 
     def valid_output_path(val: str) -> str:
-        """Validate that the directory exists """
+        """Validate that the directory exists."""
         assert os.path.isdir(val), repr(val)
         return val
 

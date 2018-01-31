@@ -1,4 +1,4 @@
-
+"""Create continuous lookup table."""
 # coding: utf-8
 
 # In[1]:

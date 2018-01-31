@@ -1,7 +1,4 @@
-"""
-This script merges the currently-used lookup tables and renames columns.
-
-"""
+"""This script merges the currently-used lookup tables and renames columns."""
 
 import pandas as pd
 

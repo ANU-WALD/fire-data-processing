@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Distribute a collection of tiles to produce LFMC using Raijin jobs."""
 
 import os
 import re
@@ -17,6 +18,7 @@ run_time = int(time.time())
 
 
 def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
+    """Queue a job for each individual tile specified."""
     for tile in tiles_list:
         masks = modis.get_masks(2013, tile)  # indicative year
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
@@ -37,8 +39,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                     if not new_obs:
                         print('Already done:', fname)
                         continue
-                    walltime = int(np.ceil(40 * elements * (new_obs / 90)
-                                           / 2400. ** 2 + 0.5))
+                    walltime = int(np.ceil(
+                        40 * elements * (new_obs / 90) / 2400. ** 2 + 0.5))
                     print('Update walltime: {}h for {} steps'
                           .format(walltime, new_obs))
                 else:
@@ -48,7 +50,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
             if walltime > 48:
                 print('Capping walltime at maximum 48 hrs, was', walltime)
                 walltime = 48
-
+            # note // should we change the log output directory?
             logfile = (
                 '/g/data/xc0/user/HatfieldDodds/logs/LVMC/{year}{tile}-'
                 'FMC-{time}').format(year=year, tile=tile, time=run_time)
@@ -62,6 +64,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
 
 
 def cli_get_args() -> argparse.Namespace:
+    """Get command line arguments."""
     shortcuts = dict(
         australia=('h28v13,h29v11,h28v12,h29v10,h29v12,h32v10,h27v11,'
                    'h31v11,h32v11,h30v11,h30v10,h27v12,h30v12,h31v12,'
@@ -71,10 +74,11 @@ def cli_get_args() -> argparse.Namespace:
     )
 
     def load_in_tiles(arg: str) -> t.List[str]:
-        '''
-        Load in tiles by comma separated tiles or shortcut, validate
-        that data exists within range.
-        '''
+        """
+        Load in tiles by comma separated tiles or shortcut.
+
+        Also validate that data exists within range.
+        """
         arg = arg.lower()
 
         if arg in shortcuts:
@@ -92,7 +96,7 @@ def cli_get_args() -> argparse.Namespace:
         return generated_list
 
     def change_output_path(val: str) -> str:
-        """Validate that the directory exists """
+        """Validate that the directory exists."""
         assert os.path.isdir(val), repr(val)
         print('Output Path:', val)
         return val
