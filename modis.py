@@ -91,7 +91,10 @@ def get_reflectance(year: int, tile: str) -> xr.Dataset:
         out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
-    out.rename(xy_names, inplace=True)
+    try:
+        out.rename(xy_names, inplace=True)
+    except ValueError:
+        pass
     out.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
     return add_tile_coords(tile, out)
