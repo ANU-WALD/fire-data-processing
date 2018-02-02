@@ -20,6 +20,15 @@ This is a research initiative to provide quality spatial information on fire haz
 
 ### Scripts
 ---
+
+To create or update the archive, run the following bash commands:
+
+    cd ~/fire-data-processing
+    git pull
+    source activate rs3
+    python launchmany.py
+
+
 #### General Usage
 All scripts accept a help argument which displays all input flags. Use "python script.py --help" on the respective script to display help.
 
