@@ -38,7 +38,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
        means, and the mosiac for last year.
 
     """
-    jobs = dict()  # type: t.Dict[t.Any, str]
+    jobs = dict()
     log_dir = '/g/data/xc0/project/FMC_Australia/logs/'
 
     # part 1: launch tiles
@@ -111,7 +111,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
             '-W', f'depend=afterok:{means_depend}',
             'means.qsub'
         ]
-        jobs['means'] = subprocess.run(
+        jobs[(0, 'means')] = subprocess.run(
             args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
         ).stdout.strip()
         print(f'Submitted job for means')
@@ -122,7 +122,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
         fname = os.path.join(path, f'australia_LVMC_{year}.nc')
         if os.path.isfile(fname) and (year != THIS_YEAR or not depends_on):
             continue
-        for key in ['means', (year - 1, 'mosaic')]:
+        for key in [(0, 'means'), (year - 1, 'mosaic')]:
             if key in jobs:
                 depends_on.append(jobs[key])
         logfile = f'{log_dir}{run_time}-mosiac{year}-FMC'
