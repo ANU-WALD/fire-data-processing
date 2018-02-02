@@ -1,9 +1,16 @@
 """
-Script to create one tile-year of LFMC data, from the original MODIS products.
+Create one tile-year of LFMC data from the original MODIS products.
 
-It's also a best-possible port of equations developed for MODIS C5 to C6 data;
-we plan to fully upgrade in future but that will require revalidation.
+Currently, this script supports the MODIS sinusoidal projection therefore
+all tiles are required to be in the respective format. LFMC data can
+also be created for SPOT satellites using functions in this script, see
+spot.py.
 
+This script is also a best-possible port of equations developed for MODIS C5 to
+C6 data; we plan to fully upgrade in future but that will require revalidation.
+
+For more comprehensive information, view:
+https://github.com/ANU-WALD/fire-data-processing
 """
 
 import os
@@ -188,7 +195,8 @@ def valid_tile(val: str) -> str:
     return val
 
 
-def get_arg_parser(default_subdir: str='') -> argparse.ArgumentParser:
+def get_arg_parser(dunder_doc: str,
+                   default_subdir: str='') -> argparse.ArgumentParser:
     """Create a universal argument parser."""
     def valid_year(val: str) -> str:
         """Validate arg and transform glob pattern to file list."""
@@ -200,9 +208,9 @@ def get_arg_parser(default_subdir: str='') -> argparse.ArgumentParser:
         assert os.path.isdir(val), repr(val)
         return val
 
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=(
-                                         argparse.RawDescriptionHelpFormatter))
+    parser = argparse.ArgumentParser(
+        description=dunder_doc,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         '-V', '--version', action='version', version=__version__)
     parser.add_argument(
@@ -220,12 +228,16 @@ def get_arg_parser(default_subdir: str='') -> argparse.ArgumentParser:
 
 
 if __name__ == '__main__':
-    parser = get_arg_parser(default_subdir='LVMC')
+    parser = get_arg_parser(__doc__, default_subdir='LVMC')
+
     parser.add_argument(
         '--tile', type=valid_tile,
-        default=os.environ.get('FMC_TILE', 'h31v10'),
+        default=os.environ.get('FMC_TILE'),
         help='tile to process, "hXXvYY"',
         metavar='<tile>')
     args = parser.parse_args()
     print(args)
+    if args.tile is None:
+        raise ValueError('Tile must be given as an argument, or set as the '
+                         'environment variable $FMC_TILE.')
     main(args.year, args.tile, args.output_path)

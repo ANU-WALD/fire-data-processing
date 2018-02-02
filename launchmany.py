@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
-Distribute a collection of tiles to produce LFMC using Raijin jobs.
+Distribute a group of MODIS sinusoidal tiles to produce LFMC using Raijin jobs.
 
+Use a comma-separated list for tiles: e.g, h28v13,h29v11 ...
 Tile shortcuts include: [Australia, South Africa, Spain]
 """
 
@@ -105,9 +106,9 @@ def cli_get_args() -> argparse.Namespace:
         print('Output Path:', val)
         return val
 
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=(
-                                         argparse.RawDescriptionHelpFormatter))
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-V', '--version',
                         action='version',
                         version=__version__)
