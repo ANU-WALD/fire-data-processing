@@ -1,15 +1,19 @@
 """Calculate mean LVMC between 2001 and 2015."""
 
-# BUG: Doesn't currently select the base period correctly
-# TODO: merge into mosaic.py.
+# TODO: add cmd-line to select input data, output dir, etc.
 
-import json
 import xarray as xr
 
-with open('tiles.json') as f:
-    tiles = list(json.load(f))
+from launchmany import shortcuts
 
-for tile in tiles:
-    infile = '/g/data/ub8/au/FMC/LVMC_new/LVMC_20??_{}.nc'.format(tile)
-    outfile = '/g/data/ub8/au/FMC/mean_LVMC_{}.nc'.format(tile)
-    xr.open_mfdataset(infile).mean(dim='time').to_netcdf(outfile)
+base_dir = '/g/data/ub8/au/FMC'
+
+if __name__ == '__main__':
+    for tile in shortcuts['australia'].split(','):
+        infile = f'{base_dir}/LVMC/LVMC_20??_{tile}.nc'
+        outfile = f'{base_dir}/mean_LVMC_{tile}.nc'
+        period = slice('2001', '2015')  # type: ignore
+        xr.open_mfdataset(infile, chunks=dict(time=12))\
+            .sel(time=period)\
+            .mean(dim='time')\
+            .to_netcdf(outfile)
