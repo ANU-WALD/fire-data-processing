@@ -1,5 +1,4 @@
-##### Fire Data Processing Repository
-# ANU-WALD
+## Fire Data Processing -- ANU-WALD
 
 The Fire Data Processing repository is a collection of scripts used to produce the fuel moisture and flammability data for usage on the online interactive [Australian Flammability Monitoring system (AFMS)](http://wenfo.org/afms/).
 
@@ -32,6 +31,17 @@ You must be in the following NCI project groups to perform certain tasks with th
 Alternatively, you could edit the various \*.qsub files to run under a different project's Raijin allocation.
 
 As a general use-case, you should be in the *root* directory of the repository to run scripts.
+
+#### Dependencies
+These scripts rely on a range of scientific packages not included in the Python standard library.
+If you are a member of the xc0 group on NCI, simply run "source activate rs3" to activate an environment with all the requirements.
+(If this does not work, see /g/data/xc0/software/README.xc0-miniconda)
+
+To create your own environment, run the command:
+
+    conda create --name rs3 --channel conda-forge python=3 xarray>=0.10 pynio jupyter
+
+If that doesn't work (eg due to package updates), install from `environment.yml` to get *exactly* the same packages.
 
 ---
 
