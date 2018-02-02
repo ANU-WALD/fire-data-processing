@@ -29,6 +29,13 @@ shortcuts = dict(
 )
 
 
+def qsub(*args):
+    """Sumbit a PBS jub and return the numeric ID as a string."""
+    return subprocess.run(
+        args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
+    ).stdout.strip().split('.')[0]
+
+
 def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
     """Queue all the jobs we need to get a complete updated archive.
 
@@ -75,7 +82,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
             # note // should we change the log output directory?
             logfile = f'{log_dir}{run_time}-{year}{tile}-FMC'
 
-            args = [
+            jobs[(year, tile)] = qsub(
                 'qsub',
                 '-v', f'"FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path}"',
                 '-l', f'walltime={walltime}:00:00',
@@ -83,10 +90,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                 '-o', f'{logfile}.out',
                 '-e', f'{logfile}.err',
                 'onetile.qsub'
-            ]
-            jobs[(year, tile)] = subprocess.run(
-                args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
-            ).stdout.strip()
+            )
             print(f'Submitted job for {year}{tile}')
 
     if tiles_list != load_in_tiles(shortcuts['australia']):
@@ -103,17 +107,14 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
     means_depend = ':'.join(j for (yr, _), j in jobs.items() if yr <= 2015)
     if means_depend:
         logfile = f'{log_dir}{run_time}-means-FMC'
-        args = [
+        jobs[(0, 'means')] = qsub(
             'qsub',
             '-N', f'means-FMC',
             '-o', f'{logfile}.out',
             '-e', f'{logfile}.err',
             '-W', f'depend=afterok:{means_depend}',
             'means.qsub'
-        ]
-        jobs[(0, 'means')] = subprocess.run(
-            args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
-        ).stdout.strip()
+        )
         print(f'Submitted job for means')
 
     # part 3: launch mosaics
@@ -127,17 +128,14 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                 depends_on.append(jobs[key])
         logfile = f'{log_dir}{run_time}-mosiac{year}-FMC'
         depends = ':'.join(depends_on)
-        args = [
+        jobs[(year, 'mosaic')] = qsub(
             'qsub',
             '-N', f'{year}mosiac-FMC',
             '-o', f'{logfile}.out',
             '-e', f'{logfile}.err',
             '-W', f'depend=afterok:{depends}',
             'means.qsub'
-        ]
-        jobs[(year, 'mosaic')] = subprocess.run(
-            args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
-        ).stdout.strip()
+        )
         print(f'Submitted job for {year} mosaic')
 
 
