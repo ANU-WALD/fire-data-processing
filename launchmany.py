@@ -54,9 +54,9 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
         walltime = int(np.ceil(40 * elements / 2400. ** 2)) + 2
 
-        print(f'Calculated walltime for tile: {tile} = {walltime}')
+        if start_year != THIS_YEAR:
+            print(f'Calculated walltime for tile: {tile} = {walltime}')
         for year in range(start_year, THIS_YEAR + 1):
-
             fname = os.path.join(path, 'LVMC', f'LVMC_{year}_{tile}.nc')
             if os.path.isfile(fname):
                 if year == THIS_YEAR:
@@ -73,13 +73,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                         40 * elements * (new_obs / 90) / 2400. ** 2 + 0.5))
                     print(f'Update walltime: {walltime}h for {new_obs} steps')
                 else:
-                    print('Already done:', fname)
                     continue
             print('Submitting job for', fname)
-            if walltime > 48:
-                print('Capping walltime at maximum 48 hrs, was', walltime)
-                walltime = 48
-            # note // should we change the log output directory?
             logfile = f'{log_dir}{run_time}-{year}{tile}-FMC'
 
             jobs[(year, tile)] = qsub(
@@ -134,7 +129,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
             '-o', f'{logfile}.out',
             '-e', f'{logfile}.err',
             '-W', f'depend=afterok:{depends}',
-            'means.qsub'
+            'mosaic.qsub'
         )
         print(f'Submitted job for {year} mosaic')
 
