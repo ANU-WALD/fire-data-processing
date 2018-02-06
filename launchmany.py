@@ -180,24 +180,28 @@ def cli_get_args() -> argparse.Namespace:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('-V', '--version',
-                        action='version',
-                        version=__version__)
-    parser.add_argument('--tiles',
-                        metavar='<tile>',
-                        help='location as comma separated tiles or shortcut',
-                        default='australia',
-                        type=load_in_tiles)
-    parser.add_argument('--output-path',
-                        metavar='<path>',
-                        help='change output path',
-                        default='/g/data/ub8/au/FMC/',
-                        type=change_output_path)
-    parser.add_argument('--start-year',
-                        metavar='<year>',
-                        help='process start_year to current year, inclusive.',
-                        default=2001,
-                        type=check_year)
+    parser.add_argument(
+        '-V', '--version',
+        action='version',
+        version=__version__)
+    parser.add_argument(
+        '--tiles',
+        metavar='<tile>',
+        help='location as comma separated tiles or shortcut',
+        default='australia',
+        type=load_in_tiles)
+    parser.add_argument(
+        '--output-path',
+        metavar='<path>',
+        help='change output path',
+        default='/g/data/ub8/au/FMC/',
+        type=change_output_path)
+    parser.add_argument(
+        '--start-year',
+        metavar='<year>',
+        help='process start_year to current year, inclusive.',
+        default=2001,
+        type=check_year)
     return parser.parse_args()
 
 
