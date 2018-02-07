@@ -34,7 +34,7 @@ shortcuts = dict(
 )
 
 
-def qsub(*args):
+def qsub(*args: str) -> t.Any:
     """Sumbit a PBS jub and return the numeric ID as a string."""
     return subprocess.run(
         args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
