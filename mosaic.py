@@ -302,6 +302,6 @@ def do_everything(year: int, output_path: str) -> None:
 
 
 if __name__ == '__main__':
-    args = onetile.get_arg_parser().parse_args()
+    args = onetile.get_arg_parser(__doc__).parse_args()
     print(args)
     do_everything(year=args.year, output_path=args.output_path)

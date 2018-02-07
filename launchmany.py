@@ -1,5 +1,10 @@
 #!/usr/bin/env python
-"""Distribute a collection of tiles to produce LFMC using Raijin jobs."""
+"""
+Distribute a group of MODIS sinusoidal tiles to produce LFMC using Raijin jobs.
+
+Use a comma-separated list for tiles: e.g, h28v13,h29v11 ...
+Tile shortcuts include: [Australia, South Africa, Spain]
+"""
 
 import os
 import re
@@ -29,7 +34,7 @@ shortcuts = dict(
 )
 
 
-def qsub(*args):
+def qsub(*args: str) -> t.Any:
     """Sumbit a PBS jub and return the numeric ID as a string."""
     return subprocess.run(
         args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
@@ -171,24 +176,32 @@ def cli_get_args() -> argparse.Namespace:
         assert 2001 <= year <= THIS_YEAR
         return year
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-V', '--version',
-                        action='version',
-                        version=__version__)
-    parser.add_argument('--tiles',
-                        metavar='tiles or ' + ', '.join(sorted(shortcuts)),
-                        help='Location as comma separated tiles or shortcut',
-                        default='australia',
-                        type=load_in_tiles)
-    parser.add_argument('--output-path',
-                        metavar='<path>',
-                        help='change output path',
-                        default='/g/data/ub8/au/FMC/',
-                        type=change_output_path)
-    parser.add_argument('--start-year',
-                        help='Process start_year to current year, inclusive.',
-                        default=2001,
-                        type=check_year)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument(
+        '-V', '--version',
+        action='version',
+        version=__version__)
+    parser.add_argument(
+        '--tiles',
+        metavar='<tile>',
+        help='location as comma separated tiles or shortcut',
+        default='australia',
+        type=load_in_tiles)
+    parser.add_argument(
+        '--output-path',
+        metavar='<path>',
+        help='change output path',
+        default='/g/data/ub8/au/FMC/',
+        type=change_output_path)
+    parser.add_argument(
+        '--start-year',
+        metavar='<year>',
+        help='process start_year to current year, inclusive.',
+        default=2001,
+        type=check_year)
     return parser.parse_args()
 
 
