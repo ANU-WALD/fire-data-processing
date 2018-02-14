@@ -91,7 +91,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                 '-e', f'{logfile}.err',
                 'onetile.qsub'
             )
-            print(f'Submitted job for {year}{tile}')
+            job_id = jobs[(year, tile)]
+            print(f'Submitted job {job_id} for {year}{tile}')
 
     if tiles_list != load_in_tiles(shortcuts['australia']):
         print('Can only create mosaics for Australia')
