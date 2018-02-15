@@ -184,7 +184,7 @@ def get_mean_LMVC() -> xr.DataArray:
     return proj
 
 
-def calculate_flammability(ds: xr.Dataset, year: int=2017,
+def calculate_flammability(ds: xr.Dataset, year: int=2018,
                            diff: t.Optional[xr.DataArray]=None) -> xr.Dataset:
     """Add flammability variable to a dataset.
 
