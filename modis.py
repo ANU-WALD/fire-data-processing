@@ -27,8 +27,6 @@ modis_band_map = {
     'Nadir_Reflectance_Band7': 'swir2_2090_2350',
 }
 
-xy_names = {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
-
 
 def add_tile_coords(tile: str, dataset: xr_data_type) -> xr_data_type:
     """Restore physical coordinates to dataset."""
@@ -91,6 +89,8 @@ def get_reflectance(year: int, tile: str) -> xr.Dataset:
         out.nir1_780_900, out.red_630_690)
     out['ndii'] = difference_index(out.nir1_780_900, out.swir1_1550_1750)
 
+    xy_names = {'YDim:MOD_Grid_BRDF': 'y', 'XDim:MOD_Grid_BRDF': 'x'}
+
     try:
         out.rename(xy_names, inplace=True)
     except ValueError:
@@ -120,5 +120,8 @@ def get_masks(year: int, tile: str) -> t.Dict[str, xr.DataArray]:
         k: np.sum((arr == arr.attrs[name]) for name in v).astype(bool)
         for k, v in classes.items()
     }
+
+    xy_names = {'YDim:MOD12Q1': 'y', 'XDim:MOD12Q1': 'x'}
+
     return {k: add_tile_coords(tile, v.rename(xy_names))
             for k, v in masks.items()}
