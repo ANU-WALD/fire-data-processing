@@ -24,6 +24,7 @@ __version__ = '0.1.0'
 run_time = int(time.time())
 
 THIS_YEAR = datetime.date.today().year
+OBS_PER_YEAR = 90
 
 shortcuts = dict(
     australia=(
@@ -75,7 +76,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                         print(f'Already done: {fname}')
                         continue
                     walltime = int(np.ceil(
-                        40 * elements * (new_obs / 90) / 2400. ** 2 + 0.5))
+                        40 * elements * (new_obs / OBS_PER_YEAR)
+                        / 2400. ** 2 + 0.5)) + 2
                     print(f'Update walltime: {walltime}h for {new_obs} steps')
                 else:
                     continue
@@ -84,7 +86,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
 
             jobs[(year, tile)] = qsub(
                 'qsub',
-                '-v', f'FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={fname}',
+                '-v', f'FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path+"/LVMC"}',
                 '-l', f'walltime={walltime}:00:00',
                 '-N', f'{year}{tile}-FMC',
                 '-o', f'{logfile}.out',
