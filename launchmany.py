@@ -24,7 +24,7 @@ __version__ = '0.1.0'
 run_time = int(time.time())
 
 THIS_YEAR = datetime.date.today().year
-OBS_PER_YEAR = 90
+OBS_PER_YEAR = 90 #Approx number of observations per year
 
 shortcuts = dict(
     australia=(
@@ -77,7 +77,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                         continue
                     walltime = int(np.ceil(
                         40 * elements * (new_obs / OBS_PER_YEAR)
-                        / 2400. ** 2 + 0.5)) + 2
+                        / 2400. ** 2 + 1))  
                     print(f'Update walltime: {walltime}h for {new_obs} steps')
                 else:
                     continue
