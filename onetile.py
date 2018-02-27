@@ -24,6 +24,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import xarray as xr
+from pathlib import Path
 
 import modis
 
@@ -124,32 +125,32 @@ def get_fmc(dataset: xr.Dataset,
     return xr.Dataset(data_vars=data_vars, coords=dataset.coords)
 
 
-def save_for_thredds(ds: xr.Dataset, fname: str) -> None:
+def save_for_thredds(ds: xr.Dataset, fname: Path) -> None:
     """Save the file and ensure it is visible to Thredds."""
     # Update time encoding, because Thredds can't handle int64 data.
     ds.time.encoding.update(dict(
         units='days since 1900-01-01', calendar='gregorian', dtype='i4'))
     # Save the file!
-    if not os.path.isfile(fname):
+    if not fname.is_file():
         # First time we've written this file
         ds.to_netcdf(fname)
     else:
         # otherwise, write next to final destination and move (atomic update)
-        ds.to_netcdf(fname + '.new')
-        shutil.move(fname + '.new', fname)
+        ds.to_netcdf(fname.with_suffix(''.join(fname.suffixes) + '.new'))
+        shutil.move(fname.with_suffix(''.join(fname.suffixes) + '.new'), fname)
     # Make it visible via Thredds
     os.chmod(fname, 0o755)
 
 
-def main(year: int, tile: str, output_path: str) -> None:
+def main(year: int, tile: str, output_path: Path) -> None:
     """Process the LFMC data for one tile-year and save it."""
-    out_file = os.path.join(output_path, 'LVMC_{}_{}.nc'.format(year, tile))
+    out_file = output_path.joinpath('LVMC_{}_{}.nc'.format(year, tile))
     # Get the landcover masks
     masks = modis.get_masks(year, tile)
     # Get the main dataset - demo is one tile for a year
     ds = modis.get_reflectance(year, tile)
 
-    if not os.path.isfile(out_file):
+    if not out_file.is_file():
         # Create all output data
         out = xr.concat(
             [get_fmc(ds.sel(time=ts), masks) for ts in ds.time], dim='time')
@@ -203,10 +204,11 @@ def get_arg_parser(dunder_doc: str,
         assert re.match(r'\A20\d\d\Z', val), repr(val)
         return val
 
-    def valid_output_path(val: str) -> str:
+    def valid_output_path(val: str) -> Path:
         """Validate that the directory exists."""
-        assert os.path.isdir(val), repr(val)
-        return val
+        output = Path(val)
+        assert output.is_dir(), repr(val)
+        return output
 
     parser = argparse.ArgumentParser(
         description=dunder_doc,
