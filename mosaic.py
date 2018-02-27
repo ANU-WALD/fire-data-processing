@@ -18,6 +18,7 @@ import dask
 import numpy as np
 import xarray as xr
 
+from pathlib import Path
 from osgeo import gdal, gdal_array, osr
 
 sys.path.append(os.path.abspath('.'))
@@ -141,8 +142,8 @@ def get_landcover_masks(year: int=2017) -> xr.Dataset:
     year = min([year, 2013])
     assert year >= 2001
 
-    fname = '/g/data/ub8/au/FMC/{}_latlon_masks.nc'.format(year)
-    if os.path.isfile(fname):
+    fname = Path('/g/data/ub8/au/FMC/{}_latlon_masks.nc'.format(year))
+    if fname.is_file():
         return xr.open_dataset(fname)
 
     mask_list = [modis.get_masks(year, t) for t in tiles]
@@ -170,8 +171,8 @@ def get_mean_LMVC() -> xr.DataArray:
         (requires recalculation from tiles, not just projection)
 
     """
-    fname = '/g/data/ub8/au/FMC/mean_LVMC_latlon.nc'
-    if os.path.isfile(fname):
+    fname = Path('/g/data/ub8/au/FMC/mean_LVMC_latlon.nc')
+    if fname.is_file():
         return xr.open_dataarray(fname).astype('float32')
     base = functools.reduce(xr.DataArray.combine_first, [
         xr.open_dataset(
@@ -239,14 +240,15 @@ def calculate_flammability(ds: xr.Dataset, year: int=2018,
     return ds.astype('float32')
 
 
-def do_everything(year: int, output_path: str) -> None:
+def do_everything(year: int, output_path: Path) -> None:
     """Perform the reprojection."""
-    fname_pattern = os.path.join(output_path, 'australia_LVMC_{}.nc')
-    fname = fname_pattern.format(year)
-    prev_fname = fname_pattern.format(int(year) - 1)
-    partial_fname = fname + '.no-flammability'
+    fname = output_path.joinpath('australia_LVMC_{}.nc'.format(year))
+    prev_fname = output_path.joinpath(
+        'australia_LVMC_{}.nc'.format(int(year) - 1))
+    partial_fname = output_path.joinpath(
+        'australia_LVMC_{}.nc.no-flammability'.format(year))
 
-    if os.path.isfile(partial_fname):
+    if partial_fname.is_file():
         out = xr.open_dataset(partial_fname, chunks=dict(time=1))
         print('Loading already-finished LVMC ({})'.format(elapsed_time()))
     else:
