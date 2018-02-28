@@ -6,7 +6,6 @@ Use a comma-separated list for tiles: e.g, h28v13,h29v11 ...
 Tile shortcuts include: [Australia, South Africa, Spain]
 """
 
-import os
 import re
 import sys
 import time
@@ -14,6 +13,7 @@ import typing as t
 import datetime
 import argparse
 import subprocess
+from pathlib import Path
 
 import numpy as np
 import xarray as xr
@@ -24,7 +24,7 @@ __version__ = '0.1.0'
 run_time = int(time.time())
 
 THIS_YEAR = datetime.date.today().year
-OBS_PER_YEAR = 90 #Approx number of observations per year
+OBS_PER_YEAR = 90  # Approx number of observations per year
 
 shortcuts = dict(
     australia=(
@@ -42,7 +42,7 @@ def qsub(*args: str) -> t.Any:
     ).stdout.strip().split('.')[0]
 
 
-def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
+def main(tiles_list: t.List[str], path: Path, start_year: int) -> None:
     """Queue all the jobs we need to get a complete updated archive.
 
     1. Queue all tiles that don't exist + updates for this year
@@ -63,8 +63,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
         if start_year != THIS_YEAR:
             print(f'Calculated walltime for tile: {tile} = {walltime}')
         for year in range(start_year, THIS_YEAR + 1):
-            fname = os.path.join(path, 'LVMC', f'LVMC_{year}_{tile}.nc')
-            if os.path.isfile(fname):
+            fname = path.joinpath('LVMC', f'LVMC_{year}_{tile}.nc')
+            if path.is_file():
                 if year == THIS_YEAR:
                     reflectance = modis.get_reflectance(year, tile)
                     output_dataset = xr.open_dataset(fname)
@@ -76,8 +76,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
                         print(f'Already done: {fname}')
                         continue
                     walltime = int(np.ceil(
-                        40 * elements * (new_obs / OBS_PER_YEAR)
-                        / 2400. ** 2 + 1))  
+                        40 * elements * (new_obs / OBS_PER_YEAR) /
+                        2400. ** 2 + 1))
                     print(f'Update walltime: {walltime}h for {new_obs} steps')
                 else:
                     continue
@@ -86,7 +86,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
 
             jobs[(year, tile)] = qsub(
                 'qsub',
-                '-v', f'FMC_YEAR={year},FMC_TILE={tile},FMC_PATH={path+"/LVMC"}',
+                '-v', f'FMC_YEAR={year},FMC_TILE={tile}, \
+                        FMC_PATH={path.joinpath("/LVMC")}',
                 '-l', f'walltime={walltime}:00:00',
                 '-N', f'{year}{tile}-FMC',
                 '-o', f'{logfile}.out',
@@ -101,7 +102,7 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
         sys.exit(1)
     # TODO: support this!  Requires upgrades to input location handling
     #       in all scripts and output location in means.py
-    if path != '/g/data/ub8/au/FMC/':
+    if path != Path('/g/data/ub8/au/FMC/'):
         print('ERROR: launchmany does not currently support non-default paths'
               ' for mosaics etc.')
         sys.exit(1)
@@ -123,8 +124,8 @@ def main(tiles_list: t.List[str], path: str, start_year: int) -> None:
     # part 3: launch mosaics
     for year in range(start_year, THIS_YEAR + 1):
         depends_on = [job for (yr, _), job in jobs.items() if yr == year]
-        fname = os.path.join(path, f'australia_LVMC_{year}.nc')
-        if os.path.isfile(fname) and (year != THIS_YEAR or not depends_on):
+        fname = path.joinpath(f'australia_LVMC_{year}.nc')
+        if path.is_file() and (year != THIS_YEAR or not depends_on):
             continue
         for key in [(0, 'means'), (year - 1, 'mosaic')]:
             if key in jobs:
@@ -167,11 +168,12 @@ def load_in_tiles(arg: str) -> t.List[str]:
 
 def cli_get_args() -> argparse.Namespace:
     """Get command line arguments."""
-    def change_output_path(val: str) -> str:
+    def change_output_path(val: str) -> Path:
         """Validate that the directory exists."""
-        assert os.path.isdir(val), repr(val)
+        output = Path(val)
+        assert output.is_dir(), repr(val)
         print('Output Path:', val)
-        return val
+        return output
 
     def check_year(val: str) -> int:
         """Validate the given year."""
