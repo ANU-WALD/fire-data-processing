@@ -87,7 +87,7 @@ def main(tiles_list: t.List[str], path: Path, start_year: int) -> None:
             jobs[(year, tile)] = qsub(
                 'qsub',
                 '-v', f'FMC_YEAR={year},FMC_TILE={tile}, \
-                        FMC_PATH={path.joinpath("/LVMC")}',
+                        FMC_PATH={path.joinpath("LVMC")}',
                 '-l', f'walltime={walltime}:00:00',
                 '-N', f'{year}{tile}-FMC',
                 '-o', f'{logfile}.out',
