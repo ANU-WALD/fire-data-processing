@@ -63,14 +63,14 @@ def get_reflectance(year: int, tile: str) -> xr.Dataset:
             '{year}.??.??/MCD43A4.A{year}???.h??v??.006.*.hdf'
             .format(year=year)
         ))
-    files = [f for f in reflectance_file_cache if tile in Path(f).stem]
+    files = [f for f in reflectance_file_cache if tile in Path(f).name]
     pattern = re.compile(r'MCD43A4.A\d{4}(?P<day>\d{3}).h\d\dv\d\d.006.\d+'
                          '.hdf')
     dates, parts = [], []
     for f in files:
         try:
             parts.append(xr.open_dataset(f, chunks=2400))
-            day, = pattern.match(Path(f).stem).groups()
+            day, = pattern.match(Path(f).name).groups()
             dates.append(datetime.date(int(year), 1, 1) +
                          datetime.timedelta(days=int(day) - 1))
         except Exception:
