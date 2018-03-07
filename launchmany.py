@@ -1,4 +1,4 @@
-/LVMC")}',/LVMC")}',#!/usr/bin/env python
+#!/usr/bin/env python
 """
 Distribute a group of MODIS sinusoidal tiles to produce LFMC using Raijin jobs.
 
