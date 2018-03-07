@@ -64,7 +64,7 @@ def main(tiles_list: t.List[str], path: Path, start_year: int) -> None:
             print(f'Calculated walltime for tile: {tile} = {walltime}')
         for year in range(start_year, THIS_YEAR + 1):
             fname = path.joinpath('LVMC', f'LVMC_{year}_{tile}.nc')
-            if path.is_file():
+            if fname.is_file():
                 if year == THIS_YEAR:
                     reflectance = modis.get_reflectance(year, tile)
                     output_dataset = xr.open_dataset(fname)
