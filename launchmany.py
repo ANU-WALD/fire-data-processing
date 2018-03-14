@@ -125,7 +125,7 @@ def main(tiles_list: t.List[str], path: Path, start_year: int) -> None:
     for year in range(start_year, THIS_YEAR + 1):
         depends_on = [job for (yr, _), job in jobs.items() if yr == year]
         fname = path / f'australia_LVMC_{year}.nc'
-        if path.is_file() and (year != THIS_YEAR or not depends_on):
+        if fname.is_file() and (year != THIS_YEAR or not depends_on):
             continue
         for key in [(0, 'means'), (year - 1, 'mosaic')]:
             if key in jobs:
