@@ -271,7 +271,7 @@ def do_everything(year: int, output_path: Path) -> None:
         print('Projected lvmc_mean ({})'.format(elapsed_time()))
         out['lvmc_stdv'] = xr.concat(
             [project_array(
-             big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
+             big.lvmc_stdv.sel(time=ts).values, geot) for ts in big.time],
             dim=big.time
         )
         print('projected lvmc_stdev ({})'.format(elapsed_time()))
