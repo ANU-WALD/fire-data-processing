@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -P xc0
-#PBS -q normalbw
+#PBS -q normal
 #PBS -l ncpus=1
 #PBS -l mem=20GB
 #PBS -l walltime=6:00:00
