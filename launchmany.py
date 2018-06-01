@@ -31,12 +31,12 @@ shortcuts = dict(
         'h28v13,h29v11,h28v12,h29v10,h29v12,h32v10,h27v11,h31v11,h32v11,'
         'h30v11,h30v10,h27v12,h30v12,h31v12,h31v10,h29v13,h28v11'),
     south_africa='h19v11,h20v11,h21v11,h19v12,h20v12',
-    spain='h17v04,h17v05',
+    spain='h17v04,h17v05,h18v05,h18v04',
 )
 
 
 def qsub(*args: str) -> t.Any:
-    """Sumbit a PBS jub and return the numeric ID as a string."""
+    """Submit a PBS job and return the numeric ID as a string."""
     return subprocess.run(
         args, check=True, stdout=subprocess.PIPE, encoding='utf-8'
     ).stdout.strip().split('.')[0]
