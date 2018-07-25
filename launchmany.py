@@ -58,7 +58,7 @@ def main(tiles_list: t.List[str], path: Path, start_year: int) -> None:
     for tile in tiles_list:
         masks = modis.get_masks(2013, tile)  # indicative year
         elements = np.sum(masks['forest'] | masks['shrub'] | masks['grass'])
-        walltime = int(np.ceil(40 * elements / 2400. ** 2)) + 2
+        walltime = int(np.ceil(80 * elements / 2400. ** 2)) + 2
 
         if start_year != THIS_YEAR:
             print(f'Calculated walltime for tile: {tile} = {walltime}')
@@ -76,7 +76,7 @@ def main(tiles_list: t.List[str], path: Path, start_year: int) -> None:
                         print(f'Already done: {fname}')
                         continue
                     walltime = int(np.ceil(
-                        40 * elements * (new_obs / OBS_PER_YEAR) /
+                        60 * elements * (new_obs / OBS_PER_YEAR) /
                         2400. ** 2 + 1))
                     print(f'Update walltime: {walltime}h for {new_obs} steps')
                 else:
