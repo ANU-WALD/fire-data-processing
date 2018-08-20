@@ -1,11 +1,12 @@
 #!/bin/bash
 #PBS -P xc0
+#PBS -a 1900
 #PBS -q normalbw
 #PBS -l ncpus=2
 #PBS -l mem=200GB
 #PBS -l walltime=3:00:00
 #PBS -l other=gdata1
 
-source /g/data/xc0/software/miniconda3/bin/activate rs3
-cd ~/fire-data-processing
-python mosaic.py
+cd ~/github/fire-data-processing
+/g/data/xc0/software/conda-envs/rs3/bin/python mosaic.py
+qsub mosaic.qsub
