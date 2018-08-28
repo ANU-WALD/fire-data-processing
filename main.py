@@ -3,7 +3,7 @@ from osgeo import gdal
 import numpy as np
 import argparse
 from glob import glob
-from utils import get_top_n_functor, get_fmc_functor
+from utils import get_top_n_functor, get_fmc_functor, pack_data
 from datetime import datetime
 import xarray as xr
 
@@ -68,7 +68,6 @@ def get_vegmask(h, v, tile_date):
             
             return veg_mask
     
-
     return None
 
 
@@ -107,10 +106,17 @@ if __name__ == "__main__":
     v = int(fname_parts[2][4:6])
     
     veg_type = get_vegmask(h, v, im_date)
-    print("A")
-
     ref_stack, q_mask = get_reflectances(modis_tile)
-    
-    mean, std = get_fmc(ref_stack, q_mask, veg_type)
+    mean, stdv = get_fmc(ref_stack, q_mask, veg_type)
 
-    #pack_data(modis_tile, mean, stdv, destination)
+    pack_data(modis_tile, mean, stdv, destination)
+
+    """
+    drv = gdal.GetDriverByName("GTiff")
+    ds = drv.Create("test_h{}v{}_{}.tif".format(h, v, modis_tile.split("/")[-2]), tile_size, tile_size, 2, gdal.GDT_Float32)
+    band = ds.GetRasterBand(1)
+    band.WriteArray(mean)
+    band = ds.GetRasterBand(2)
+    band.WriteArray(std)
+    ds = None
+    """
