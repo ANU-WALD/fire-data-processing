@@ -14,7 +14,6 @@ tile_size = 2400
 def get_fmc(raster_stack, q_mask, veg_type):
     ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
 
-    print(ndvi_raster[:, 1], veg_type[:, 1])
     # In case the mask doesn't exist
     if q_mask is None:
         q_mask = np.ones((tile_size, tile_size), dtype=bool)
@@ -27,7 +26,8 @@ def get_fmc(raster_stack, q_mask, veg_type):
     
     for i in range(tile_size):
         for j in range(tile_size):
-            if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and q_mask[j, i]:
+            #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and q_mask[j, i]:
+            if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15:
                 top_40 = get_top_n(raster_stack[j, i, :], veg_type[j, i], 40)
                 mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
 
@@ -36,10 +36,9 @@ def get_fmc(raster_stack, q_mask, veg_type):
 
 def get_vegmask(h, v, tile_date):
     dates = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
-    print(dates)
+
     for d in dates:
         msk_date =  datetime.strptime(d.split("/")[-1], '%Y.%m.%d')
-        print(msk_date)
         if msk_date > tile_date:
             continue
            
@@ -99,6 +98,9 @@ if __name__ == "__main__":
 
     modis_tile = args.modis_tile
     destination = args.destination
+
+    if not os.path.exists(destination):
+        os.makedirs(destination)
     
     im_date =  datetime.strptime(modis_tile.split("/")[-2], '%Y.%m.%d')
     fname_parts = modis_tile.split("/")[-1].split(".")
@@ -109,14 +111,4 @@ if __name__ == "__main__":
     ref_stack, q_mask = get_reflectances(modis_tile)
     mean, stdv = get_fmc(ref_stack, q_mask, veg_type)
 
-    pack_data(modis_tile, mean, stdv, destination)
-
-    """
-    drv = gdal.GetDriverByName("GTiff")
-    ds = drv.Create("test_h{}v{}_{}.tif".format(h, v, modis_tile.split("/")[-2]), tile_size, tile_size, 2, gdal.GDT_Float32)
-    band = ds.GetRasterBand(1)
-    band.WriteArray(mean)
-    band = ds.GetRasterBand(2)
-    band.WriteArray(std)
-    ds = None
-    """
+    pack_data(modis_tile, mean, stdv, q_mask, destination)
