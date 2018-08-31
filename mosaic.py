@@ -1,21 +1,10 @@
-"""
-Create a lat/lon mosaic of MODIS-derived fuel moisture for Australia.
-"""
-
-import datetime
-import glob
-import json
-import math
-import os
-import sys
-
+from datetime import datetime
+from matplotlib import pyplot as plt
 import numpy as np
-import xarray as xr
-
 from osgeo import gdal, osr
 
 au_tiles = ["h27v11", "h27v12", "h28v11", "h28v12", "h28v13", "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", "h32v10", "h32v11"]
-
+wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
 lat0 = -10.
 lat1 = -44.
@@ -24,209 +13,24 @@ lon1 = 154.
 res = 0.005
 
 x_size = int((lon1 - lon0)/res)
-y_size = int((lat1 - lat0)/res)
-geot = [113., .005, 0., -10., 0., -.005]
+y_size = int((lat1 - lat0)/(-1*res))
+lats = np.linspace(lat0, lat1+res, num=y_size)
+lons = np.linspace(lon0, lon1-res, num=x_size)
 
-wkt_str = 'PROJCS["unnamed",GEOGCS["Unknown datum based upon the custom spheroid",DATUM["Not specified (based on custom spheroid)",SPHEROID["Custom spheroid",6371007.181,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Sinusoidal"],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
+def get_lfmc_mosaic(param, d):
 
-ds = gdal.GetDriverByName('MEM').Create('', x_size, y_size,)
+    dst = gdal.GetDriverByName('MEM').Create('', x_size, y_size,)
+    geot = [lon0, res, 0., lat0, 0., -1*res]
+    dst.SetGeoTransform(geot)
+    dst.SetProjection(wgs84_wkt)
 
-ds = gdal.GetDriverByName('MEM').Create('', x_size, y_size,)
-ds.SetGeoTransform(geot)
-ds.SetProjection(wkt_str)
-ds.GetRasterBand(1).WriteArray(array)
+    for au_tile in au_tiles:
+        src = gdal.Open('NETCDF:"/g/data/ub8/au/FMC/2018/{0}/MCD43A4.A{1}{2:03d}.{3}.006.LFMC.nc":{4}'.format(d.strftime('%Y.%m.%d'), d.year, d.timetuple().tm_yday, au_tile, param))
+        print(src)
 
-    # Set up the reference systems and transformation
-    from_sr = osr.SpatialReference()
-    from_sr.ImportFromWkt(wkt_str)
-    to_sr = osr.SpatialReference()
-    to_sr.SetWellKnownGeogCS("WGS84")
+        gdal.ReprojectImage(src, dst, None, None, gdal.GRA_NearestNeighbour)
 
-    # Get new geotransform and create destination raster
-    dest_arr = np.empty(new_shape)
-    dest_arr[:] = np.nan
-    dest = array_to_raster(dest_arr, ll_geot)
+    return dst.ReadAsArray()
 
-    # Perform the projection/resampling
-    gdal.ReprojectImage(
-        input_data, dest,
-        wkt_str, to_sr.ExportToWkt(),
-        gdal.GRA_NearestNeighbour)
+plt.imsave("out.png", get_lfmc_mosaic("lfmc_mean", datetime(2018, 8, 17)))
 
-    return xr.DataArray(
-        dest.GetRasterBand(1).ReadAsArray(),
-        dims=('latitude', 'longitude'),
-        coords=ll_coords)
-
-
-def get_landcover_masks(year: int=2017) -> xr.Dataset:
-    """Get, or calculate, the landcover masks for Australia."""
-    year = int(year)
-    year = min([year, 2013])
-    assert year >= 2001
-
-    fname = Path('/g/data/ub8/au/FMC/{}_latlon_masks.nc'.format(year))
-    if fname.is_file():
-        return xr.open_dataset(fname)
-
-    mask_list = [modis.get_masks(year, t) for t in tiles]
-    forest, grass, shrub = [
-        functools.reduce(
-            xr.DataArray.combine_first,
-            [m[key] for m in mask_list]
-        ).fillna(0).astype('?')
-        for key in ['forest', 'grass', 'shrub']
-    ]
-    geot = get_geot(forest)
-    masks = xr.Dataset()
-    masks['forest'] = project_array(forest.astype('uint8').values, geot)
-    masks['grass'] = project_array(grass.astype('uint8').values, geot)
-    masks['shrub'] = project_array(shrub.astype('uint8').values, geot)
-    masks = masks.fillna(0).astype('?')
-    masks.to_netcdf(fname)
-    return masks
-
-
-def get_mean_LMVC() -> xr.DataArray:
-    """Get or calculate mean LVMC as lat/lon mosaic.
-
-    TODO: recalculate this with c6/median (currently c6/mean).
-        (requires recalculation from tiles, not just projection)
-
-    """
-    fname = Path('/g/data/ub8/au/FMC/mean_LVMC_latlon.nc')
-    if fname.is_file():
-        return xr.open_dataarray(fname).astype('float32')
-    base = functools.reduce(xr.DataArray.combine_first, [
-        xr.open_dataset(
-            '/g/data/ub8/au/FMC/mean_LVMC_{}.nc'.format(tile)
-        ).lvmc_mean.astype('float32')
-        for tile in tiles
-    ])
-    proj = project_array(base.values, get_geot(base)).astype('float32')
-    proj.to_netcdf(fname)
-    return proj
-
-
-def calculate_flammability(ds: xr.Dataset, year: int=2018,
-                           diff: t.Optional[xr.DataArray]=None) -> xr.Dataset:
-    """Add flammability variable to a dataset.
-
-    There are several reasons to leave the flammability out of tiles:
-        - redundant with mosaics but using storage
-        - requires baseline mean of tiles 2001-2015 (cyclic dependency)
-        - providing `diff` requires previous mosiac for timestep
-
-    """
-    ds = ds.chunk(dict(time=1)).astype('float32')
-    masks = get_landcover_masks(year=year)
-    if diff is None:
-        diff = ds.lvmc_mean.diff('time')
-    anomaly = ds.lvmc_mean - get_mean_LMVC()
-    print('loaded flammability inputs ({})'.format(elapsed_time()))
-
-    # Calculate flammability and insert into dataset
-    # Note: Xarray now supports .where, so we could use higher level code here
-    flammability = dask.array.full(
-        shape=diff.shape,
-        fill_value=np.nan,
-        dtype='float32',
-        chunks=(1,) + ds.lvmc_mean.shape[1:],
-    )
-    grass = 0.18 - 0.01 * ds.lvmc_mean + 0.02 * diff - 0.02 * anomaly
-    shrub = 5.66 - 0.09 * ds.lvmc_mean + 0.005 * diff - 0.28 * anomaly
-    forest = 1.51 - 0.03 * ds.lvmc_mean + 0.02 * diff - 0.02 * anomaly
-    print('calculated flammability components ({})'.format(elapsed_time()))
-    for msk, vals in [(masks.grass, grass),
-                      (masks.shrub, shrub),
-                      (masks.forest, forest)]:
-        flammability = dask.array.where(msk.data, vals.data, flammability)
-    # Convert to [0..1] index with exponential equation
-    flammability = 1 / (1 + np.e ** - flammability)
-
-    # We model this off the shape and coords of the diff, which may or may not
-    # include the first observation of the year, to avoid shape mismatch later
-    ds['flammability_index'] = xr.DataArray(
-        data=flammability,
-        coords=diff.coords,
-        dims=diff.dims,
-        name='flammability_index',
-    )
-    ds.flammability_index.attrs = dict(
-        comment='Unitless index of flammability',
-        units='unitless',
-        long_name='Flammability Index',
-    )
-
-    print('done with flammability ({})'.format(elapsed_time()))
-
-    return ds.astype('float32')
-
-
-def do_everything(year: int, output_path: Path) -> None:
-    """Perform the reprojection."""
-    fname = output_path.joinpath('australia_LVMC_{}.nc'.format(year))
-    prev_fname = output_path.joinpath(
-        'australia_LVMC_{}.nc'.format(int(year) - 1))
-    partial_fname = output_path.joinpath(
-        'australia_LVMC_{}.nc.no-flammability'.format(year))
-
-    if partial_fname.is_file():
-        out = xr.open_dataset(partial_fname, chunks=dict(time=1))
-        print('Loading already-finished LVMC ({})'.format(elapsed_time()))
-    else:
-        # TODO: support reading from alternative input files
-        pattern = '/g/data/ub8/au/FMC/LVMC/LVMC_{}*.nc'.format(year)
-        files = glob.glob(pattern)
-
-        imgs = [xr.open_dataset(f, chunks=dict(time=1)) for f in files]
-        big = functools.reduce(xr.Dataset.combine_first, imgs)
-        geot = get_geot(big)
-        out = xr.Dataset()
-
-        print('Opened all files, starting projection ({})'
-              .format(elapsed_time()))
-        out['lvmc_mean'] = xr.concat(
-            [project_array(
-             big.lvmc_mean.sel(time=ts).values, geot) for ts in big.time],
-            dim=big.time
-        )
-        print('Projected lvmc_mean ({})'.format(elapsed_time()))
-        out['lvmc_stdv'] = xr.concat(
-            [project_array(
-             big.lvmc_stdv.sel(time=ts).values, geot) for ts in big.time],
-            dim=big.time
-        )
-        print('projected lvmc_stdev ({})'.format(elapsed_time()))
-        out.to_netcdf(partial_fname)
-        # TODO: this line should reduce peak memory use - check on next run
-        # and, if it did, remove this if/else logic to save a partial file
-        # (added for debugging speed but now just reduces performance)
-        out = xr.open_dataset(partial_fname, chunks=dict(time=1))
-
-    diff = None
-    try:
-        diff = xr.concat([
-            xr.open_dataset(prev_fname, chunks=dict(time=1)).lvmc_mean,
-            out.lvmc_mean
-        ], dim='time').diff('time').sel(time=str(year))
-    except Exception:
-        pass
-    final = calculate_flammability(out, year=year, diff=diff)
-    print('calculated flammability ({})'.format(elapsed_time()))
-    # Set compression for variables
-    for var in final.data_vars.values():
-        var.encoding.update(dict(
-            shuffle=True, zlib=True,
-            chunks=dict(longitude=400, latitude=400, time=6)
-        ))
-    # Save output
-    onetile.save_for_thredds(final, fname)
-    os.remove(partial_fname)
-    print('Finished! ({})'.format(elapsed_time()))
-
-
-if __name__ == '__main__':
-    args = onetile.get_arg_parser(__doc__).parse_args()
-    print(args)
-    do_everything(year=args.year, output_path=args.output_path)

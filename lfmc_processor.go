@@ -1,20 +1,41 @@
 package main
 
 import (
-	"fmt"
-	"os/exec"
-	"os"
+	"bufio"
 	"flag"
-	"sync"
 	"log"
+	"os"
+	"time"
+	"os/exec"
 	"runtime"
 	"strings"
-	"bufio"
+	"sync"
 )
 
-var iFlag = flag.String("i", "./input.txt", "Input file with commands.")
+var conc = flag.Int("c", runtime.NumCPU(), "Number of processors.")
+var srcPath = flag.String("i", "files.txt", "Source path for Flint output files.")
 
-func task_gen(filePath string) <-chan string {
+type concLimiter struct {
+	*sync.WaitGroup
+	Pool chan struct{}
+}
+
+func (c *concLimiter) Increase() {
+	c.Add(1)
+	c.Pool <- struct{}{}
+}
+
+func (c *concLimiter) Decrease() {
+	c.Done()
+	<-c.Pool
+}
+
+func NewConcLimiter(cLevel int) *concLimiter {
+	var wg sync.WaitGroup
+	return &concLimiter{&wg, make(chan struct{}, cLevel)}
+}
+
+func lfmc_gen(filePath string) chan string {
 
 	out := make(chan string)
 
@@ -22,60 +43,46 @@ func task_gen(filePath string) <-chan string {
 		defer close(out)
 
 		file, err := os.Open(filePath)
-	    if err != nil {
-	        log.Fatal(err)
-	    }
-	    defer file.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
 
-	    scanner := bufio.NewScanner(file)
-	    for scanner.Scan() {
-	        out <- scanner.Text()
-	    }
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			out <- scanner.Text()
+		}
 
-	    if err := scanner.Err(); err != nil {
-	        log.Fatal(err)
-	    }
-
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
 	}()
 
 	return out
 }
 
-func task_processor(tasks <-chan string) {
-
-	for task := range tasks {
-		args := strings.Split(task, " ")
-		fmt.Println(args)
-
-		var cmd *exec.Cmd
-		cmd = exec.Command(args[0], args[1:]...)
-
-		out, err := cmd.Output()
-		if err != nil {
-			fmt.Println(err)
-		} 
-
-		fmt.Println(string(out))
-
-	}
-
-}
-
-
 func main() {
 	flag.Parse()
-	tasks := task_gen(*iFlag)
-	var wg sync.WaitGroup
-	numWorkers := runtime.NumCPU()
-	wg.Add(numWorkers)
-	
-	for i := 0; i < numWorkers; i++ {
-		go func() {
-			task_processor(tasks)
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	
+	cl := NewConcLimiter(*conc)
 
+	tasks := lfmc_gen(*srcPath)
+
+	for task := range tasks {
+		cl.Increase()
+		go func(t string) {
+			log.Println("Processing:", t)
+			args := strings.Split(t, " ")
+			for i:=0; i<3; i++ {
+				cmd := exec.Command(args[0], args[1:]...)
+				_, err := cmd.Output()
+				if err == nil {
+					break
+				}
+				log.Printf("%v Retry %s: %d\n", err, t, i+1)
+				time.Sleep(time.Duration(4 * (i+1)) * time.Second)
+			}
+			cl.Decrease()
+		}(task)
+	}
+	cl.Wait()
 }
