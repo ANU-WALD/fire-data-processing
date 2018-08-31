@@ -1,117 +1,40 @@
 """
 Create a lat/lon mosaic of MODIS-derived fuel moisture for Australia.
-
-Still experimental.
 """
 
-import collections
 import datetime
-import functools
 import glob
 import json
 import math
 import os
 import sys
-import typing as t
 
-import dask
 import numpy as np
 import xarray as xr
 
-from pathlib import Path
-from osgeo import gdal, gdal_array, osr
+from osgeo import gdal, osr
 
-sys.path.append(os.path.abspath('.'))
-import onetile  # noqa: E402
-import modis  # noqa: E402
-
-__version__ = '0.1.0'
-
-# Start by setting up some utilities and constants for locations:
-start_time = datetime.datetime.now()
+au_tiles = ["h27v11", "h27v12", "h28v11", "h28v12", "h28v13", "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", "h32v10", "h32v11"]
 
 
-def elapsed_time() -> str:
-    """Return elapsed time."""
-    return '{0:.2f} minutes'.format(
-        (datetime.datetime.now() - start_time).total_seconds() / 60)
+lat0 = -10.
+lat1 = -44.
+lon0 = 113.
+lon1 = 154.
+res = 0.005
 
+x_size = int((lon1 - lon0)/res)
+y_size = int((lat1 - lat0)/res)
+geot = [113., .005, 0., -10., 0., -.005]
 
-tiles = ('h28v13,h29v11,h28v12,h29v10,h29v12,h32v10,h27v11,h31v11,h32v11,'
-         'h30v11,h30v10,h27v12,h30v12,h31v12,h31v10,h29v13,h28v11').split(',')
+wkt_str = 'PROJCS["unnamed",GEOGCS["Unknown datum based upon the custom spheroid",DATUM["Not specified (based on custom spheroid)",SPHEROID["Custom spheroid",6371007.181,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Sinusoidal"],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
-AffineGeoTransform = collections.namedtuple(
-    'GeoTransform', ['origin_x', 'pixel_width', 'x_rot',
-                     'origin_y', 'y_rot', 'pixel_height'])
+ds = gdal.GetDriverByName('MEM').Create('', x_size, y_size,)
 
-
-def get_geot(ds: t.Union[xr.Dataset, xr.DataArray]) -> AffineGeoTransform:
-    """Take an Xarray object with x and y coords; return geotransform."""
-    return AffineGeoTransform(*map(float, (
-        # Affine matrix - start/step/rotation, start/rotation/step - in 1D
-        ds.x[0], (ds.x[-1] - ds.x[0]) / ds.x.size, 0,
-        ds.y[0], 0, (ds.y[-1] - ds.y[0]) / ds.y.size
-    )))
-
-
-class aus:
-    """Define Australia by lat/lon."""
-
-    start_lat = -10
-    stop_lat = -44
-    start_lon = 113
-    stop_lon = 154
-
-
-out_res_degrees = 0.005
-
-ll_geot = AffineGeoTransform(
-    origin_x=aus.start_lon, pixel_width=out_res_degrees, x_rot=0,
-    origin_y=aus.start_lat, y_rot=0, pixel_height=-out_res_degrees
-)
-
-new_shape = (
-    math.ceil((aus.start_lat - aus.stop_lat) / out_res_degrees),
-    math.ceil((aus.stop_lon - aus.start_lon) / out_res_degrees),
-)
-
-ll_coords = dict(
-    latitude=np.arange(new_shape[0]) * ll_geot.pixel_height + ll_geot.origin_y,
-    longitude=np.arange(new_shape[1]) * ll_geot.pixel_width + ll_geot.origin_x,
-)
-
-with open('sinusoidal.json') as f:
-    wkt_str = json.load(f)['spatial_ref']  # type: str
-
-
-# Next, define some generically useful functions:
-
-
-def project_array(array: xr.DataArray,
-                  geot: t.Optional[AffineGeoTransform]=None) -> xr.DataArray:
-    """
-    Reproject a tile from MODIS Sinusoidal to WGS84 Lat/Lon coordinates.
-
-    Metadata is handled by the calling function.
-    """
-    if geot is None:
-        geot = get_geot(array)
-    # Takes around seven seconds per layer for in-memory Australia mosaics
-    assert isinstance(geot, AffineGeoTransform)
-
-    # TODO: use correct return type annotation
-    def array_to_raster(array: xr.DataArray,
-                        geot: AffineGeoTransform) -> t.Any:
-        ysize, xsize = array.shape  # unintuitive order, but correct!
-        dataset = gdal.GetDriverByName('MEM').Create(
-            '', xsize, ysize,
-            eType=gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype))
-        dataset.SetGeoTransform(geot)
-        dataset.SetProjection(wkt_str)
-        dataset.GetRasterBand(1).WriteArray(array)
-        return dataset
-
-    input_data = array_to_raster(array, geot)
+ds = gdal.GetDriverByName('MEM').Create('', x_size, y_size,)
+ds.SetGeoTransform(geot)
+ds.SetProjection(wkt_str)
+ds.GetRasterBand(1).WriteArray(array)
 
     # Set up the reference systems and transformation
     from_sr = osr.SpatialReference()
