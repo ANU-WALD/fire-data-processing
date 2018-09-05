@@ -9,7 +9,6 @@ import numpy as np
 import os.path
 import os
 
-
 def tile_dates(tiles):
     dates = []
 
@@ -19,10 +18,9 @@ def tile_dates(tiles):
     return dates
 
 
-def list_year_tiles(tile, year):
+def list_year_tiles(root_path, tile, year):
     year_tiles = []
-    #id = os.path.basename(os.path.normpath(infoldername))
-    for root, dirs, files in os.walk("/g/data/ub8/au/FMC/2018"):
+    for root, dirs, files in os.walk(root_path):
         if int(root.split("/")[-1].split(".")[0]) == year:
             for f in files:
                 if f.split(".")[2] == tile:
@@ -31,7 +29,7 @@ def list_year_tiles(tile, year):
     return sorted(year_tiles)
 
 
-def pack(tiles):
+def pack(tiles, out_name):
     proj_wkt = None
     geot = None
         
@@ -66,7 +64,7 @@ def pack(tiles):
     timestamps = tile_dates(tiles)
     print(timestamps)
 
-    with netCDF4.Dataset("test.nc", 'w', format='NETCDF4') as dest:
+    with netCDF4.Dataset(out_name, 'w', format='NETCDF4') as dest:
         with open('nc_metadata.json') as data_file:
             attrs = json.load(data_file)
             for key in attrs:
@@ -134,13 +132,13 @@ def pack(tiles):
 
 
 if __name__ == "__main__":
-    #parser = argparse.ArgumentParser(description="Modis Vegetation Analysis NetCDF aggregator.")
-    #parser.add_argument(dest="infoldername", type=str, help="Input folder to pack.")
-    #parser.add_argument(dest="outfoldername", type=str, help="Output folder to write.")
-    #args = parser.parse_args()
+    parser = argparse.ArgumentParser(description="Modis Vegetation Analysis NetCDF aggregator.")
+    parser.add_argument("-y", "--year", type=int, default=2017, required=False, help="Year to pack.")
+    parser.add_argument("-t", "--tile_id", type=str, default="h29v12", required=False, help="Tile identifier.")
+    parser.add_argument("-i", "--in_path", type=str, default="/g/data/ub8/au/FMC/2018", required=False, help="Input folder with FMC tiles.")
+    parser.add_argument("-o", "--out_path", type=str, default="/g/data/ub8/au/FMC/2018", required=False, help="Output folder to write.")
+    args = parser.parse_args()
 
-    tiles = list_year_tiles("h29v11", 2018)
+    tiles = list_year_tiles(args.in_path, args.tile_id, args.year)
     print(tile_dates(tiles))
-    pack(tiles[:10])
-    #pack(infoldername, outfoldername, args.version, False, update_file=args.update_file)
-    #pack(infoldername, outfoldername, args.version, True, update_file=args.update_file)
+    pack(tiles, args.out_path + "/MCD43A4.A{}.{}.006.LFMC.nc".format(args.year, args.tile_id))
