@@ -11,7 +11,7 @@ mcd43a4_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
 mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
 tile_size = 2400
 
-def get_fmc(raster_stack, q_mask, veg_type):
+def fmc(raster_stack, q_mask, veg_type):
     ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
 
     # In case the mask doesn't exist
@@ -109,6 +109,6 @@ if __name__ == "__main__":
     
     veg_type = get_vegmask(h, v, im_date)
     ref_stack, q_mask = get_reflectances(modis_tile)
-    mean, stdv = get_fmc(ref_stack, q_mask, veg_type)
+    mean, stdv = fmc(ref_stack, q_mask, veg_type)
 
     pack_data(modis_tile, mean, stdv, q_mask, destination)
