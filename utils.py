@@ -28,8 +28,16 @@ def pack_data(hdf_file, mean_arr, std_arr, q_mask, dest):
         proj_wkt = ds.GetProjection()
         geot = ds.GetGeoTransform()
         
+        t_dim = dest.createDimension("time", 1)
         x_dim = dest.createDimension("x", ds.RasterXSize)
         y_dim = dest.createDimension("y", ds.RasterYSize)
+
+        var = dest.createVariable("time", "f8", ("time",))
+        var.units = "seconds since 1970-01-01 00:00:00.0"
+        var.calendar = "standard"
+        var.long_name = "Time, unix time-stamp"
+        var.standard_name = "time"
+        var[:] = netCDF4.date2num([datetime.datetime(2018)], units="seconds since 1970-01-01 00:00:00.0", calendar="standard")
 
         var = dest.createVariable("x", "f8", ("x",))
         var.units = "m"
@@ -43,23 +51,23 @@ def pack_data(hdf_file, mean_arr, std_arr, q_mask, dest):
         var.standard_name = "projection_y_coordinate"
         var[:] = np.linspace(geot[3], geot[3]+(geot[5]*ds.RasterYSize), ds.RasterYSize)
         
-        var = dest.createVariable("lfmc_mean", 'f4', ("y", "x"), fill_value=.0)
+        var = dest.createVariable("lfmc_mean", 'f4', ("time:", "y", "x"), fill_value=.0)
         var.long_name = "LFMC Arithmetic Mean"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
-        var[:] = mean_arr
+        var[:] = mean_arr[None,...]
         
-        var = dest.createVariable("lfmc_stdv", 'f4', ("y", "x"), fill_value=.0)
+        var = dest.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=.0)
         var.long_name = "LFMC Standard Deviation"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
-        var[:] = std_arr
+        var[:] = std_arr[None,...]
         
-        var = dest.createVariable("quality_mask", 'i1', ("y", "x"), fill_value=0)
+        var = dest.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
         var.long_name = "Combined Bands Quality Mask"
         var.units = 'Cat'
         var.grid_mapping = "sinusoidal"
-        var[:] = q_mask.astype(np.int8)
+        var[:] = q_mask.astype(np.int8)[None,...]
 
         var = dest.createVariable("sinusoidal", 'S1', ())
         var.grid_mapping_name = "sinusoidal"
@@ -141,7 +149,11 @@ def get_top_n_functor():
         vmat = mat[idx[0]:idx[1], :]
         vsmat = smat[idx[0]:idx[1]]
 
-        err = np.arccos(np.einsum('ij,j->i', vmat, mb)/(np.einsum('i,i->', mb, mb)**.5*vsmat))
+        # arccos is an always decreasing function. Because we only need a relative order
+        # it can be replaced by a linear decreasing function -1*
+        # This change alone results in more than x2 improvement in speed!
+        # err = np.arccos(np.einsum('ij,j->i', vmat, mb)/(np.einsum('i,i->', mb, mb)**.5*vsmat))
+        err = -1*np.einsum('ij,j->i', vmat, mb)/(np.einsum('i,i->', mb, mb)**.5*vsmat)
 
         idxs = np.argpartition(err, top_n)[:top_n] + idx[0]
 
