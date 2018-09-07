@@ -20,12 +20,17 @@ def tile_dates(tiles):
 
 def list_year_tiles(root_path, tile, year):
     year_tiles = []
-    for root, dirs, files in os.walk(root_path):
-        if int(root.split("/")[-1].split(".")[0]) == year:
-            for f in files:
-                if f.split(".")[2] == tile:
-                    year_tiles.append(os.path.join(root, f))
 
+    dirs = [x[0] for x in os.walk(root_path)]
+
+    for d in dirs:
+        d_name = d.split("/")[-1]
+        if len(d_name.split(".")) == 3 and int(d_name.split(".")[0]) == year:
+            files = [x[2] for x in os.walk(d)]
+            for f in files[0]:
+                if f.split(".")[2] == tile:
+                    year_tiles.append(os.path.join(d, f))
+    
     return sorted(year_tiles)
 
 
@@ -59,10 +64,7 @@ def pack(tiles, out_name):
     assert stdv_stack is not None
     assert mask_stack is not None
  
-    print(proj_wkt, geot)
-
     timestamps = tile_dates(tiles)
-    print(timestamps)
 
     with netCDF4.Dataset(out_name, 'w', format='NETCDF4') as dest:
         with open('nc_metadata.json') as data_file:
@@ -107,12 +109,6 @@ def pack(tiles, out_name):
         var.grid_mapping = "sinusoidal"
         var[:] = stdv_stack
         
-        var = dest.createVariable("flammability", 'f4', ("time", "y", "x"), fill_value=.0, zlib=True, chunksizes=(1, 240, 240))
-        var.long_name = "Flammability index"
-        var.units = '%'
-        var.grid_mapping = "sinusoidal"
-        var[:] = stdv_stack
-
         var = dest.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0, zlib=True, chunksizes=(1, 240, 240))
         var.long_name = "Quality Mask"
         var.units = 'Cat'
@@ -135,10 +131,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Modis Vegetation Analysis NetCDF aggregator.")
     parser.add_argument("-y", "--year", type=int, default=2017, required=False, help="Year to pack.")
     parser.add_argument("-t", "--tile_id", type=str, default="h29v12", required=False, help="Tile identifier.")
-    parser.add_argument("-i", "--in_path", type=str, default="/g/data/ub8/au/FMC/2018", required=False, help="Input folder with FMC tiles.")
-    parser.add_argument("-o", "--out_path", type=str, default="/g/data/ub8/au/FMC/2018", required=False, help="Output folder to write.")
+    parser.add_argument("-i", "--in_path", type=str, default="/g/data/fj4/scratch/2018", required=False, help="Input folder with FMC tiles.")
+    parser.add_argument("-o", "--out_path", type=str, default="/g/data/fj4/scratch/2018", required=False, help="Output folder to write.")
     args = parser.parse_args()
 
     tiles = list_year_tiles(args.in_path, args.tile_id, args.year)
-    print(tile_dates(tiles))
     pack(tiles, args.out_path + "/MCD43A4.A{}.{}.006.LFMC.nc".format(args.year, args.tile_id))
