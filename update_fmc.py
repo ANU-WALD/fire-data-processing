@@ -118,9 +118,10 @@ def get_mcd43_dates(year, tile):
     return np.sort(np.array(paths, dtype=np.datetime64))
 
 
-def update_fmc(modis_tile, dst):
+def update_fmc(modis_path, dst):
 
-    date = datetime.strptime(modis_tile.split("/")[-2], '%Y.%m.%d')
+    date = datetime.strptime(modis_path.split("/")[-2], '%Y.%m.%d')
+    tile_id = modis_tile.split("/")[-1].split(".")[2]
 
     veg_type = get_vegmask(tile_id, date)
     ref_stack, q_mask = get_reflectances(modis_path)
@@ -151,7 +152,7 @@ if __name__ == "__main__":
     if len(args.date) == 8:
         d = datetime.strptime(args.date, "%Y%m%d")
         if np.datetime64(d) in comp_dates:
-            print("Tile already exists in destination file.")
+            print("Time layer already exists in destination file.")
             sys.exit(0)
 
         modis_glob = "{}/{}/MCD43A4.A{}{}.{}.006.*.hdf".format(mcd43_root, d.strftime("%Y.%m.%d"), d.year, d.timetuple().tm_yday, args.tile)
