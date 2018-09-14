@@ -11,7 +11,6 @@ import shutil
 import sys
 
 mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
-#modis_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006/{}/MCD43A4.A{}{}.{}.006.*.hdf"
 mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
 tile_size = 2400
 
@@ -99,9 +98,9 @@ def get_fmc_stack_dates(f_path):
         ds = xr.open_dataset(f_path)
         return ds.time.data
         
-    return None
+    return []
 
-def get_mcd43_paths(year, tile, comp_tiles):
+def get_mcd43_paths(year, tile, file_dates):
     paths = []
 
     dirs = glob(mcd43_root + "/*")
@@ -111,7 +110,7 @@ def get_mcd43_paths(year, tile, comp_tiles):
         if len(tile_date.split(".")) != 3 or int(tile_date.split(".")[0]) != year:
             continue
         d = datetime.strptime(tile_date, '%Y.%m.%d')
-        if comp_dates is not None and np.datetime64(d) not in comp_dates and d.year == year:
+        if np.datetime64(d) not in file_dates and d.year == year:
             files = glob(tile_dir + "/*.hdf")
             for f in files:
                 f_parts = os.path.basename(f).split(".")
@@ -121,7 +120,7 @@ def get_mcd43_paths(year, tile, comp_tiles):
     return sorted(paths)
 
 
-def update_fmc(modis_path, dst):
+def update_fmc(modis_path, dst, tmp, comp):
 
     date = datetime.strptime(modis_path.split("/")[-2], '%Y.%m.%d')
     tile_id = modis_tile.split("/")[-1].split(".")[2]
@@ -129,40 +128,43 @@ def update_fmc(modis_path, dst):
     veg_type = get_vegmask(tile_id, date)
     ref_stack, q_mask = get_reflectances(modis_path)
     mean, stdv = fmc(ref_stack, q_mask, veg_type)
-    tmp_file = uuid.uuid4().hex + ".nc"
+    tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
 
     pack_data(modis_path, date, mean, stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
-        os.system("cdo mergetime {} {}".format(tmp_file, dst))
+        shutil.move(tmp_file, dst)
     else:
-        tmp_file2 = uuid.uuid4().hex + ".nc"
-        print("cdo mergetime to", tmp_file2)
+        tmp_file2 = os.path.join(tmp, uuid.uuid4().hex + ".nc")
         os.system("cdo mergetime {} {} {}".format(tmp_file, dst, tmp_file2))
-        tmp_file3 = uuid.uuid4().hex + ".nc"
-        # In case the UNLIMITED time dimension is causing problems. nccopy has: 
-        # [-u] convert unlimited dimensions to fixed size in output
-        print("nccopy to", tmp_file3)
-        os.system("nccopy -d 4 -c 'time/4,y/240,x/240' {} {}".format(tmp_file2, tmp_file3))
-        os.remove(tmp_file2)
-        print("mv", tmp_file3, dst)
-        shutil.move(tmp_file3, dst)
-    os.remove(tmp_file)
+        os.remove(tmp_file)
+        if comp:
+            print("compressing")
+            # In case the UNLIMITED time dimension is causing problems. nccopy has: 
+            # [-u] convert unlimited dimensions to fixed size in output
+            tmp_file3 = os.path.join(tmp, uuid.uuid4().hex + ".nc")
+            os.system("nccopy -d 4 -c 'time/4,y/240,x/240' {} {}".format(tmp_file2, tmp_file3))
+            os.remove(tmp_file2)
+            shutil.move(tmp_file3, dst)
+        else: 
+            shutil.move(tmp_file2, dst)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Modis Vegetation Analysis argument parser""")
     parser.add_argument('-t', '--tile', type=str, required=True, help="Modis tile in hXXvXX format.")
     parser.add_argument('-d', '--date', type=str, required=True, help="Date with format YYYYMMDD or YYYY to update with latest data.")
+    parser.add_argument('-c', '--compression', action='store_true', help="Apply compression to destination netCDF4.")
     parser.add_argument('-dst', '--destination', required=True, type=str, help="Full path to destination.")
+    parser.add_argument('-tmp', '--tmp', required=True, type=str, help="Full path to destination.")
     args = parser.parse_args()
 
-    comp_dates = get_fmc_stack_dates(args.destination)
+    file_dates = get_fmc_stack_dates(args.destination)
 
     modis_tiles = []
     if len(args.date) == 8:
         d = datetime.strptime(args.date, "%Y%m%d")
-        if comp_dates is not None and np.datetime64(d) in comp_dates:
+        if file_dates is not None and np.datetime64(d) in file_dates:
             print("Time layer already exists in destination file.")
             sys.exit(0)
         modis_glob = "{}/{}/MCD43A4.A{}{:03d}.{}.006.*.hdf".format(mcd43_root, d.strftime("%Y.%m.%d"), d.year, d.timetuple().tm_yday, args.tile)
@@ -170,9 +172,11 @@ if __name__ == "__main__":
         if len(modis_tiles) != 1:
             sys.exit(1)
     elif len(args.date) == 4:
-        modis_tiles = get_mcd43_paths(int(args.date), args.tile, comp_dates)
+        modis_tiles = get_mcd43_paths(int(args.date), args.tile, file_dates)
     else:
         sys.exit(1)
 
+    print("AAAA", args.compression)
+
     for modis_tile in modis_tiles:
-        update_fmc(modis_tile, args.destination)
+        update_fmc(modis_tile, args.destination, args.tmp, args.compression)
