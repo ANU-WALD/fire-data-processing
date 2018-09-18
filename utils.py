@@ -1,67 +1,104 @@
 from osgeo import gdal
 import numpy as np
 import netCDF4
-#import pyproj
+from glob import glob
 import json
 import os
-import datetime
+from datetime import datetime
+import xarray as xr
 
-def pack_data(hdf_file, date, mean_arr, std_arr, q_mask, dest):
+mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
+
+def get_vegmask(tile_id, tile_date):
+    dates = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
+
+    for d in dates:
+        msk_date =  datetime.strptime(d.split("/")[-1], '%Y.%m.%d')
+        if msk_date > tile_date:
+            continue
+           
+        files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(d, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
+        if len(files) == 1:
+            veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
+
+            veg_mask[veg_mask == 1] = 3
+            veg_mask[veg_mask == 2] = 3
+            veg_mask[veg_mask == 3] = 3
+            veg_mask[veg_mask == 4] = 3
+            veg_mask[veg_mask == 5] = 3
+            veg_mask[veg_mask == 6] = 2
+            veg_mask[veg_mask == 7] = 2
+            veg_mask[veg_mask == 8] = 3
+            veg_mask[veg_mask == 9] = 3
+            veg_mask[veg_mask == 10] = 1
+            veg_mask[veg_mask == 11] = 0
+            veg_mask[veg_mask == 12] = 1
+            veg_mask[veg_mask == 13] = 0
+            veg_mask[veg_mask == 14] = 0
+            veg_mask[veg_mask == 15] = 0
+            veg_mask[veg_mask == 16] = 0
+            veg_mask[veg_mask == 254] = 0
+            veg_mask[veg_mask == 255] = 0
+            
+            return veg_mask
     
-    with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as dest:
+    return None
+
+def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
+    
+    with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
             attrs = json.load(data_file)
             for key in attrs:
-                setattr(dest, key, attrs[key])
-        setattr(dest, "date_created", datetime.datetime.now().strftime("%Y%m%dT%H%M%S"))
+                setattr(ds, key, attrs[key])
+        setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
         
-        ds = gdal.Open('HDF4_EOS:EOS_GRID:"{}":MOD_Grid_BRDF:Nadir_Reflectance_Band1'.format(hdf_file))
-        proj_wkt = ds.GetProjection()
-        geot = ds.GetGeoTransform()
+        rast = gdal.Open('HDF4_EOS:EOS_GRID:"{}":MOD_Grid_BRDF:Nadir_Reflectance_Band1'.format(hdf_file))
+        proj_wkt = rast.GetProjection()
+        geot = rast.GetGeoTransform()
         
-        t_dim = dest.createDimension("time", 1)
-        x_dim = dest.createDimension("x", ds.RasterXSize)
-        y_dim = dest.createDimension("y", ds.RasterYSize)
+        t_dim = ds.createDimension("time", 1)
+        x_dim = ds.createDimension("x", rast.RasterXSize)
+        y_dim = ds.createDimension("y", rast.RasterYSize)
 
-        var = dest.createVariable("time", "f8", ("time",))
+        var = ds.createVariable("time", "f8", ("time",))
         var.units = "seconds since 1970-01-01 00:00:00.0"
         var.calendar = "standard"
         var.long_name = "Time, unix time-stamp"
         var.standard_name = "time"
         var[:] = netCDF4.date2num([date], units="seconds since 1970-01-01 00:00:00.0", calendar="standard")
 
-        var = dest.createVariable("x", "f8", ("x",))
+        var = ds.createVariable("x", "f8", ("x",))
         var.units = "m"
         var.long_name = "x coordinate of projection"
         var.standard_name = "projection_x_coordinate"
-        var[:] = np.linspace(geot[0], geot[0]+(geot[1]*ds.RasterXSize), ds.RasterXSize)
+        var[:] = np.linspace(geot[0], geot[0]+(geot[1]*rast.RasterXSize), rast.RasterXSize)
         
-        var = dest.createVariable("y", "f8", ("y",))
+        var = ds.createVariable("y", "f8", ("y",))
         var.units = "m"
         var.long_name = "y coordinate of projection"
         var.standard_name = "projection_y_coordinate"
-        var[:] = np.linspace(geot[3], geot[3]+(geot[5]*ds.RasterYSize), ds.RasterYSize)
+        var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
         
-        var = dest.createVariable("lfmc_mean", 'f4', ("time", "y", "x"), fill_value=.0)
+        var = ds.createVariable("lfmc_mean", 'f4', ("time", "y", "x"), fill_value=.0)
         var.long_name = "LFMC Arithmetic Mean"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = mean_arr[None,...]
 
-        
-        var = dest.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=.0)
+        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=.0)
         var.long_name = "LFMC Standard Deviation"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = std_arr[None,...]
         
-        var = dest.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
+        var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
         var.long_name = "Combined Bands Quality Mask"
         var.units = 'Cat'
         var.grid_mapping = "sinusoidal"
         var[:] = q_mask.astype(np.int8)[None,...]
 
-        var = dest.createVariable("sinusoidal", 'S1', ())
+        var = ds.createVariable("sinusoidal", 'S1', ())
         var.grid_mapping_name = "sinusoidal"
         var.false_easting = 0.0
         var.false_northing = 0.0
@@ -72,6 +109,62 @@ def pack_data(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         var.spatial_ref = proj_wkt
         var.GeoTransform = "{} {} {} {} {} {} ".format(*[geot[i] for i in range(6)])
 
+
+def pack_flammability(fmc_file, date, flam, dest):
+    
+    with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
+        with open('nc_metadata.json') as data_file:
+            attrs = json.load(data_file)
+            for key in attrs:
+                setattr(ds, key, attrs[key])
+        setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
+        
+        rast = gdal.Open('NETCDF:"{}":lfmc_mean'.format(fmc_file))
+        proj_wkt = rast.GetProjection()
+        geot = rast.GetGeoTransform()
+        
+        t_dim = ds.createDimension("time", 1)
+        x_dim = ds.createDimension("x", rast.RasterXSize)
+        y_dim = ds.createDimension("y", rast.RasterYSize)
+
+        var = ds.createVariable("time", "f8", ("time",))
+        var.units = "seconds since 1970-01-01 00:00:00.0"
+        var.calendar = "standard"
+        var.long_name = "Time, unix time-stamp"
+        var.standard_name = "time"
+        var[:] = netCDF4.date2num([date], units="seconds since 1970-01-01 00:00:00.0", calendar="standard")
+
+        var = ds.createVariable("x", "f8", ("x",))
+        var.units = "m"
+        var.long_name = "x coordinate of projection"
+        var.standard_name = "projection_x_coordinate"
+        var[:] = np.linspace(geot[0], geot[0]+(geot[1]*rast.RasterXSize), rast.RasterXSize)
+        
+        var = ds.createVariable("y", "f8", ("y",))
+        var.units = "m"
+        var.long_name = "y coordinate of projection"
+        var.standard_name = "projection_y_coordinate"
+        var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
+        
+        var = ds.createVariable("flammability", 'f4', ("time", "y", "x"), fill_value=.0)
+        var.long_name = "Flammability Index"
+        var.units = '%'
+        var.grid_mapping = "sinusoidal"
+        var[:] = flam[None,...]
+
+        var = ds.createVariable("sinusoidal", 'S1', ())
+        var.grid_mapping_name = "sinusoidal"
+        var.false_easting = 0.0
+        var.false_northing = 0.0
+        var.longitude_of_central_meridian = 0.0
+        var.longitude_of_prime_meridian = 0.0
+        var.semi_major_axis = 6371007.181
+        var.inverse_flattening = 0.0
+        var.spatial_ref = proj_wkt
+        var.GeoTransform = "{} {} {} {} {} {} ".format(*[geot[i] for i in range(6)])
+
+
+"""
 # All Modis 7 bands are 2400x2400 so we just get geotransform for Band1
 def get_affine(geot):
     
@@ -103,7 +196,7 @@ def get_tile_map_transformer(tile_path, map_path):
         return (int(round(idx[0])), int(round(idx[1])))
     
     return transformer
-
+"""
 
 def get_fmc_functor():
     # Load FMC table

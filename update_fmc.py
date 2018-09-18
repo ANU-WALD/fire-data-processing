@@ -2,8 +2,8 @@ import os.path
 from osgeo import gdal
 import numpy as np
 import argparse
-from glob import glob
-from utils import get_top_n_functor, get_fmc_functor, pack_data
+#from glob import glob
+from utils import get_top_n_functor, get_fmc_functor, pack_fmc, get_vegmask
 from datetime import datetime
 import xarray as xr
 import uuid
@@ -11,7 +11,7 @@ import shutil
 import sys
 
 mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
-mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
+#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type):
@@ -36,41 +36,6 @@ def fmc(raster_stack, q_mask, veg_type):
 
     return mean_arr, std_arr
 
-
-def get_vegmask(tile_id, tile_date):
-    dates = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
-
-    for d in dates:
-        msk_date =  datetime.strptime(d.split("/")[-1], '%Y.%m.%d')
-        if msk_date > tile_date:
-            continue
-           
-        files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(d, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
-        if len(files) == 1:
-            veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
-
-            veg_mask[veg_mask == 1] = 3
-            veg_mask[veg_mask == 2] = 3
-            veg_mask[veg_mask == 3] = 3
-            veg_mask[veg_mask == 4] = 3
-            veg_mask[veg_mask == 5] = 3
-            veg_mask[veg_mask == 6] = 2
-            veg_mask[veg_mask == 7] = 2
-            veg_mask[veg_mask == 8] = 3
-            veg_mask[veg_mask == 9] = 3
-            veg_mask[veg_mask == 10] = 1
-            veg_mask[veg_mask == 11] = 0
-            veg_mask[veg_mask == 12] = 1
-            veg_mask[veg_mask == 13] = 0
-            veg_mask[veg_mask == 14] = 0
-            veg_mask[veg_mask == 15] = 0
-            veg_mask[veg_mask == 16] = 0
-            veg_mask[veg_mask == 254] = 0
-            veg_mask[veg_mask == 255] = 0
-            
-            return veg_mask
-    
-    return None
 
 
 def get_reflectances(tile_path):
@@ -130,7 +95,7 @@ def update_fmc(modis_path, dst, tmp, comp):
     mean, stdv = fmc(ref_stack, q_mask, veg_type)
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
 
-    pack_data(modis_path, date, mean, stdv, q_mask, tmp_file)
+    pack_fmc(modis_path, date, mean, stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
