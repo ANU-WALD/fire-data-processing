@@ -47,7 +47,7 @@ def get_flammability_stack_dates(year):
         
     return dates
 
-def compose_mosaic(date, n_band):
+def compose_mosaic(date, n_band, var_name, data_type):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
     lat0 = -10.
     lat1 = -44.
@@ -60,15 +60,15 @@ def compose_mosaic(date, n_band):
     lats = np.linspace(lat0, lat1+res, num=y_size)
     lons = np.linspace(lon0, lon1-res, num=x_size)
     
-    src = gdal.GetDriverByName('MEM').Create('', tile_size, tile_size, 1, gdal.GDT_Float32,)
+    src = gdal.GetDriverByName('MEM').Create('', tile_size, tile_size, 1, data_type,)
 
     geot = [lon0, res, 0., lat0, 0., -1*res]
-    dst = gdal.GetDriverByName('MEM').Create('', x_size, y_size, 1, gdal.GDT_Float32,)
+    dst = gdal.GetDriverByName('MEM').Create('', x_size, y_size, 1, data_type,)
     dst.SetGeoTransform(geot)
     dst.SetProjection(wgs84_wkt)
 
     for au_tile in au_tiles:
-        stack = gdal.Open('NETCDF:"/g/data/fj4/scratch/{}_{}_flammability.nc":flammability'.format(d.year, au_tile))
+        stack = gdal.Open('NETCDF:"/g/data/fj4/scratch/{}_{}_flammability.nc":{}'.format(d.year, au_tile, var_name))
         if stack is None:
             continue
         
@@ -83,11 +83,12 @@ def compose_mosaic(date, n_band):
 
 def update_flammability_mosaic(date, n_band, dst, tmp, comp):
             
-    flam = compose_mosaic(date, n_band)
+    flam = compose_mosaic(date, n_band, "flammability", gdal.GDT_Float32)
+    anom = compose_mosaic(date, n_band, "anomaly", gdal.GDT_Float32)
     
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    pack_flammability_mosaic(d, flam, tmp_file)
+    pack_flammability_mosaic(d, flam, anom, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
