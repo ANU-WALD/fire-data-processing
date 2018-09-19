@@ -2,7 +2,7 @@ import os.path
 import numpy as np
 import argparse
 from glob import glob
-from utils import pack_flammability_mosaic, get_vegmask
+from utils import pack_fmc_mosaic, get_vegmask
 from datetime import datetime, timedelta
 import xarray as xr
 import uuid
@@ -79,13 +79,15 @@ def compose_mosaic(date, n_band, var_name, data_type):
     
     return dst.ReadAsArray()
 
-def update_flammability_mosaic(date, n_band, dst, tmp, comp):
+def update_fmc_mosaic(date, n_band, dst, tmp, comp):
             
-    flam = compose_mosaic(date, n_band, "flammability", gdal.GDT_Float32)
+    fmc_mean = compose_mosaic(date, n_band, "lfmc_mean", gdal.GDT_Float32)
+    fmc_stdv = compose_mosaic(date, n_band, "lfmc_stdv", gdal.GDT_Float32)
+    q_mask = compose_mosaic(date, n_band, "quality_mask", gdal.GDT_Byte)
     
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    pack_flammability_mosaic(d, flam, tmp_file)
+    pack_fmc_mosaic(d, fmc_mean, fmc_stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
@@ -111,13 +113,13 @@ if __name__ == "__main__":
     parser.add_argument('-tmp', '--tmp', required=True, type=str, help="Full path to destination.")
     args = parser.parse_args()
 
-    fmc_dates = get_flammability_stack_dates(args.year)
+    fmc_dates = get_fmc_stack_dates(args.year)
     mosaic_dates = get_mosaic_stack_dates(args.destination)
-    print(flam_dates)
+    print(fmc_dates)
     print(mosaic_dates)
 
-    for band, flam_date in enumerate(flam_dates):
-        if flam_date not in mosaic_dates:
-            print(flam_date)
-            update_flammability_mosaic(flam_date, band+1, args.destination, args.tmp, args.compression)
+    for band, fmc_date in enumerate(fmc_dates):
+        if fmc_date not in mosaic_dates:
+            print(fmc_date)
+            update_fmc_mosaic(fmc_date, band+1, args.destination, args.tmp, args.compression)
 
