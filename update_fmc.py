@@ -21,8 +21,8 @@ def fmc(raster_stack, q_mask, veg_type):
     if q_mask is None:
         q_mask = np.ones((tile_size, tile_size), dtype=bool)
 
-    mean_arr = np.zeros((tile_size, tile_size), dtype=np.float32)
-    std_arr = np.zeros((tile_size, tile_size), dtype=np.float32)
+    mean_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
+    std_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
     
     get_top_n = get_top_n_functor()
     get_fmc = get_fmc_functor()
