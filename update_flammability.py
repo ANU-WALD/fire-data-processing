@@ -60,28 +60,29 @@ def compute_flammability(date, tile):
     diff = fmc_t2 - fmc_t1
  
     grass = 0.18 - 0.01 * mean + 0.020 * diff - 0.02 * anomaly
+    grass = 1 / (1 + np.e ** - grass)
     shrub = 5.66 - 0.09 * mean + 0.005 * diff - 0.28 * anomaly
+    shrub = 1 / (1 + np.e ** - shrub)
     forst = 1.51 - 0.03 * mean + 0.020 * diff - 0.02 * anomaly
+    forst = 1 / (1 + np.e ** - forst)
 
-    flammability = np.zeros((tile_size*tile_size), dtype=np.float32)
+    flammability = np.ones((tile_size*tile_size), dtype=np.float32) * -9999.9
+
     # 1=Grass, 2=Shrub, 3=Forest
     vegmask = get_vegmask(tile, t).flatten()
     flammability[vegmask==1] = grass.flatten()[vegmask==1]
     flammability[vegmask==2] = shrub.flatten()[vegmask==2]
     flammability[vegmask==3] = forst.flatten()[vegmask==3]
-    # Convert to [0..1] index with exponential equation
-    flammability = 1 / (1 + np.e ** - flammability)
 
-    return flammability.reshape((tile_size,tile_size))
-
+    return flammability.reshape((tile_size,tile_size)), anomaly
 
 def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
             
-    flam = compute_flammability(date, tile_id)
+    flam, anom = compute_flammability(date, tile_id)
     
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    pack_flammability(fmc_file, d, flam, tmp_file)
+    pack_flammability(fmc_file, d, flam, anom, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
