@@ -17,21 +17,34 @@ def flammability(fmc_t1, fmc_t2):
     return None
 
 
-def get_fmc_stack_dates(f_path):
-    if os.path.isfile(f_path):
-        ds = xr.open_dataset(f_path)
-        return ds.time.data
-        
-    return []
+def get_fmc_stack_dates(year, tile_id):
+    dates = np.array([], dtype=np.datetime64)
+    
+    fmc_file = fmc_stack_path.format(year-1, tile_id)
+    if os.path.isfile(fmc_file):
+        print("The source FMC file for the previous year exists.")
+        ds = xr.open_dataset(fmc_file)
+        dates = np.append(dates, ds.time.data)
+    
+    fmc_file = fmc_stack_path.format(year, tile_id)
+    if os.path.isfile(fmc_file):
+        print("The source FMC file for the current year exists.")
+        ds = xr.open_dataset(fmc_file)
+        dates = np.append(dates, ds.time.data)
 
+    return dates
 
 def get_fmc(date, tile):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    #d = date.astype(datetime)
     fmc_file = fmc_stack_path.format(d.year, tile)
     
     return xr.open_dataset(fmc_file).lfmc_mean.loc[date, :].data
 
+def get_qmask(date, tile):
+    d = datetime.utcfromtimestamp(date.astype('O')/1e9)
+    fmc_file = fmc_stack_path.format(d.year, tile)
+    
+    return xr.open_dataset(fmc_file).quality_mask.loc[date, :].data
 
 def get_flammability_stack_dates(f_path):
     if os.path.isfile(f_path):
@@ -47,9 +60,8 @@ def get_t(date, tile):
     idx = (np.abs(t_dim - date)).argmin()
     return t_dim[idx]
 
-def compute_flammability(date, tile):
-    fmc_t = get_fmc(date, tile)
-    t = datetime.utcfromtimestamp(date.astype('O')/1e9)
+def compute_flammability(t, tile):
+    #t = datetime.utcfromtimestamp(date.astype('O')/1e9)
     t1 = get_t(np.datetime64(t - timedelta(days=8), "ns"), tile)
     t2 = get_t(np.datetime64(t - timedelta(days=16), "ns"), tile)
     
@@ -78,11 +90,12 @@ def compute_flammability(date, tile):
 
 def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
             
+    t1 = get_t(np.datetime64(date - timedelta(days=8), "ns"), tile_id)
+    qmask = get_qmask(t1, tile_id)
     flam, anom = compute_flammability(date, tile_id)
     
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
-    d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    pack_flammability(fmc_file, d, flam, anom, tmp_file)
+    pack_flammability(fmc_file, date, flam, anom, qmask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
@@ -111,16 +124,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     fmc_file = fmc_stack_path.format(args.year, args.tile)
-    if not os.path.isfile(fmc_file):
-        print("The source FMC file does not exist.")
-        sys.exit(0)
-
-    fmc_dates = get_fmc_stack_dates(fmc_file)
-    flam_dates = get_flammability_stack_dates(args.destination)
-    print(fmc_dates)
-    print(flam_dates)
+    fmc_dates = get_fmc_stack_dates(args.year, args.tile)
+    flam_dates = [datetime.utcfromtimestamp(flam_date.astype('O')/1e9) for flam_date in get_flammability_stack_dates(args.destination)]
 
     for fmc_date in fmc_dates:
-        if fmc_date not in flam_dates:
-            print(fmc_date)
-            update_flammability(fmc_date, args.tile, fmc_file, args.destination, args.tmp, args.compression)
+        d = datetime.utcfromtimestamp(fmc_date.astype('O')/1e9) + timedelta(days=8)
+        if d.year == args.year and d not in flam_dates:
+            print(datetime.utcfromtimestamp(fmc_date.astype('O')/1e9), d)
+            update_flammability(d , args.tile, fmc_file, args.destination, args.tmp, args.compression)
