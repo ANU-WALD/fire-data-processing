@@ -2,7 +2,7 @@ import os.path
 from osgeo import gdal
 import numpy as np
 import argparse
-#from glob import glob
+from glob import glob
 from utils import get_top_n_functor, get_fmc_functor, pack_fmc, get_vegmask
 from datetime import datetime
 import xarray as xr
@@ -35,7 +35,6 @@ def fmc(raster_stack, q_mask, veg_type):
                 mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
 
     return mean_arr, std_arr
-
 
 
 def get_reflectances(tile_path):

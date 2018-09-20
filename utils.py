@@ -7,19 +7,23 @@ import os
 from datetime import datetime
 import xarray as xr
 
-mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
+#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
+mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006"
 
 def get_vegmask(tile_id, tile_date):
-    dates = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
+    mask_paths = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
 
-    for d in dates:
-        msk_date =  datetime.strptime(d.split("/")[-1], '%Y.%m.%d')
+    # Find the most recent mask for the FMC data
+    for mask_path in mask_paths:
+        msk_date =  datetime.strptime(mask_path.split("/")[-1], '%Y.%m.%d')
         if msk_date > tile_date:
             continue
-           
-        files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(d, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
+          
+        files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.006.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
+        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
         if len(files) == 1:
-            veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
+            #veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
+            veg_mask = xr.open_dataset(files[0]).LC_Type1[:].data
 
             veg_mask[veg_mask == 1] = 3
             veg_mask[veg_mask == 2] = 3
@@ -37,6 +41,7 @@ def get_vegmask(tile_id, tile_date):
             veg_mask[veg_mask == 14] = 0
             veg_mask[veg_mask == 15] = 0
             veg_mask[veg_mask == 16] = 0
+            veg_mask[veg_mask == 17] = 0
             veg_mask[veg_mask == 254] = 0
             veg_mask[veg_mask == 255] = 0
             
@@ -110,7 +115,7 @@ def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         var.GeoTransform = "{} {} {} {} {} {} ".format(*[geot[i] for i in range(6)])
 
 
-def pack_flammability(fmc_file, date, flam, anom, dest):
+def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -157,6 +162,12 @@ def pack_flammability(fmc_file, date, flam, anom, dest):
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = anom[None,...]
+
+        var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
+        var.long_name = "Combined Bands Quality Mask"
+        var.units = 'Cat'
+        var.grid_mapping = "sinusoidal"
+        var[:] = q_mask.astype(np.int8)[None,...]
 
         var = ds.createVariable("sinusoidal", 'S1', ())
         var.grid_mapping_name = "sinusoidal"
@@ -228,7 +239,7 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         var[:] = q_mask[None,...]
 
 
-def pack_flammability_mosaic(date, flam, anom, dest):
+def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
     lat0 = -10.
     lat1 = -44.
     lon0 = 113.
@@ -278,6 +289,11 @@ def pack_flammability_mosaic(date, flam, anom, dest):
         var.long_name = "FMC Anomaly"
         var.units = '%'
         var[:] = flam[None,...]
+        
+        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
+        var.long_name = "Quality Mask"
+        var.units = 'Cat'
+        var[:] = q_mask[None,...]
 
 """
 # All Modis 7 bands are 2400x2400 so we just get geotransform for Band1
@@ -342,7 +358,6 @@ def get_top_n_functor():
     lut_sq = np.sqrt(np.einsum('ij,ij->i',lut, lut))
 
     def get_top_n(mb, veg_type, top_n, mat=lut, smat=lut_sq):
-
         idx = get_vegtype_idx(veg_type)
 
         # Select Veg type subset from LUT table
