@@ -85,7 +85,6 @@ def get_mcd43_paths(year, tile, file_dates):
 
 
 def update_fmc(modis_path, dst, tmp, comp):
-
     date = datetime.strptime(modis_path.split("/")[-2], '%Y.%m.%d')
     tile_id = modis_tile.split("/")[-1].split(".")[2]
 
