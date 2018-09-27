@@ -139,7 +139,5 @@ if __name__ == "__main__":
     else:
         sys.exit(1)
 
-    print("AAAA", args.compression)
-
     for modis_tile in modis_tiles:
         update_fmc(modis_tile, args.destination, args.tmp, args.compression)
