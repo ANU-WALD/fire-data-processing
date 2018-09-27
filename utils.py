@@ -7,8 +7,8 @@ import os
 from datetime import datetime
 import xarray as xr
 
-mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006"
+#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
+mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006"
 
 def get_vegmask(tile_id, tile_date):
     mask_paths = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
@@ -19,11 +19,11 @@ def get_vegmask(tile_id, tile_date):
         if msk_date > tile_date:
             continue
           
-        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.006.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
-        files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
+        files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.006.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
+        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
         if len(files) == 1:
-            veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
-            #veg_mask = xr.open_dataset(files[0]).LC_Type1[:].data
+            #veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
+            veg_mask = xr.open_dataset(files[0]).LC_Type1[:].data
 
             veg_mask[veg_mask == 1] = 3
             veg_mask[veg_mask == 2] = 3
@@ -41,7 +41,7 @@ def get_vegmask(tile_id, tile_date):
             veg_mask[veg_mask == 14] = 0
             veg_mask[veg_mask == 15] = 0
             veg_mask[veg_mask == 16] = 0
-            #veg_mask[veg_mask == 17] = 0
+            veg_mask[veg_mask == 17] = 0
             veg_mask[veg_mask == 254] = 0
             veg_mask[veg_mask == 255] = 0
             
