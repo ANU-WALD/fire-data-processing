@@ -62,6 +62,8 @@ def compose_mosaic(date, n_band, var_name, data_type):
 
     geot = [lon0, res, 0., lat0, 0., -1*res]
     dst = gdal.GetDriverByName('MEM').Create('', x_size, y_size, 1, data_type,)
+    if data_type == gdal.GDT_Float32:
+        dst.GetRasterBand(1).WriteArray(np.ones((y_size, x_size), dtype=np.float32) * -9999.9)
     dst.SetGeoTransform(geot)
     dst.SetProjection(wgs84_wkt)
 
