@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -P ai53
+#PBS -q normal
+#PBS -l ncpus=1
+#PBS -l mem=4GB
+#PBS -l walltime=20:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+cd /home/603/pl5189/fire-data-processing
+/g/data1/xc0/software/conda-envs/rs3/bin/python cdo_mean.py -tmp $PBS_JOBFS
