@@ -9,8 +9,8 @@ import uuid
 import shutil
 import sys
 
-fmc_stack_path = "/g/data/fj4/scratch/2018/MCD43A4.A{}.{}.006.LFMC.nc"
-fmc_mean_path = "/g/data/ub8/au/FMC/mean_LVMC_{}.nc"
+fmc_stack_path = "/g/data/fj4/scratch/fmc_c6_{}_{}.nc"
+fmc_mean_path = "/g/data/fj4/scratch/mean_2001_2016_{}.nc"
 tile_size = 2400
 
 def flammability(fmc_t1, fmc_t2):
@@ -65,7 +65,7 @@ def compute_flammability(t, tile):
     t1 = get_t(np.datetime64(t - timedelta(days=8), "ns"), tile)
     t2 = get_t(np.datetime64(t - timedelta(days=16), "ns"), tile)
     
-    mean = xr.open_dataset(fmc_mean_path.format(tile)).lvmc_mean.data
+    mean = xr.open_dataset(fmc_mean_path.format(tile)).lfmc_mean.data
     fmc_t1 = get_fmc(t1, tile)
     fmc_t2 = get_fmc(t2, tile)
     anomaly = fmc_t1 - mean
