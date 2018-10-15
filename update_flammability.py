@@ -38,7 +38,10 @@ def get_fmc(date, tile):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
     fmc_file = fmc_stack_path.format(d.year, tile)
     
-    return xr.open_dataset(fmc_file).lfmc_mean.loc[date, :].data
+    if os.path.isfile(fmc_file):
+        return xr.open_dataset(fmc_file).lfmc_mean.loc[date, :].data
+
+    return None
 
 def get_qmask(date, tile):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
@@ -56,14 +59,21 @@ def get_flammability_stack_dates(f_path):
 def get_t(date, tile):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
     fmc_file = fmc_stack_path.format(d.year, tile)
-    t_dim = xr.open_dataset(fmc_file).time.data
-    idx = (np.abs(t_dim - date)).argmin()
-    return t_dim[idx]
+    if os.path.isfile(fmc_file):
+        t_dim = xr.open_dataset(fmc_file).time.data
+        idx = (np.abs(t_dim - date)).argmin()
+        return t_dim[idx]
+
+    return None
 
 def compute_flammability(t, tile):
     #t = datetime.utcfromtimestamp(date.astype('O')/1e9)
     t1 = get_t(np.datetime64(t - timedelta(days=8), "ns"), tile)
+    if t1 == None:
+        return None, None
     t2 = get_t(np.datetime64(t - timedelta(days=16), "ns"), tile)
+    if t2 == None:
+        return None, None
     
     mean = xr.open_dataset(fmc_mean_path.format(tile)).lfmc_mean.data
     fmc_t1 = get_fmc(t1, tile)
@@ -93,7 +103,7 @@ def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
     t1 = get_t(np.datetime64(date - timedelta(days=8), "ns"), tile_id)
     qmask = get_qmask(t1, tile_id)
     flam, anom = compute_flammability(date, tile_id)
-    
+
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     pack_flammability(fmc_file, date, flam, anom, qmask, tmp_file)
 
