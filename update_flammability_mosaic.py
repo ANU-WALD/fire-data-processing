@@ -12,7 +12,7 @@ from osgeo import gdal
 from matplotlib import pyplot as plt
 
 flam_stack_path = "/g/data/fj4/scratch/{}_{}_flammability.nc"
-fmc_stack_path = "/g/data/fj4/scratch/2018/MCD43A4.A{}.{}.006.LFMC.nc"
+fmc_stack_path = "/g/data/fj4/scratch/fmc_c6_{}_{}.nc"
 fmc_mean_path = "/g/data/ub8/au/FMC/mean_LVMC_{}.nc"
 au_tiles = ["h27v11", "h27v12", "h28v11", "h28v12", "h28v13", "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", "h32v10", "h32v11"]
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
@@ -70,7 +70,8 @@ def compose_mosaic(date, n_band, var_name, data_type):
     dst.SetProjection(wgs84_wkt)
 
     for au_tile in au_tiles:
-        stack = gdal.Open('NETCDF:"/g/data/fj4/scratch/{}_{}_flammability.nc":{}'.format(d.year, au_tile, var_name))
+        fname = flam_stack_path.format(d.year, au_tile)
+        stack = gdal.Open('NETCDF:"{}":{}'.format(fname, var_name))
         if stack is None:
             continue
         

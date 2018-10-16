@@ -68,7 +68,7 @@ def compose_mosaic(date, n_band, var_name, data_type):
     dst.SetProjection(wgs84_wkt)
 
     for au_tile in au_tiles:
-	fname = fmc_stack_path.format(d.year, au_tile)
+        fname = fmc_stack_path.format(d.year, au_tile)
         stack = gdal.Open('NETCDF:"{}":{}'.format(fname, var_name))
         if stack is None:
             continue
