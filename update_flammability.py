@@ -46,8 +46,10 @@ def get_fmc(date, tile):
 def get_qmask(date, tile):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
     fmc_file = fmc_stack_path.format(d.year, tile)
+    if os.path.isfile(fmc_file):
+        return xr.open_dataset(fmc_file).quality_mask.loc[date, :].data
     
-    return xr.open_dataset(fmc_file).quality_mask.loc[date, :].data
+    return None
 
 def get_flammability_stack_dates(f_path):
     if os.path.isfile(f_path):
@@ -103,6 +105,8 @@ def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
     t1 = get_t(np.datetime64(date - timedelta(days=8), "ns"), tile_id)
     qmask = get_qmask(t1, tile_id)
     flam, anom = compute_flammability(date, tile_id)
+    if flam is None or anom is None:
+        return
 
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     pack_flammability(fmc_file, date, flam, anom, qmask, tmp_file)
@@ -111,6 +115,7 @@ def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
         shutil.move(tmp_file, dst)
     else:
         tmp_file2 = os.path.join(tmp, uuid.uuid4().hex + ".nc")
+        print("AAA", tmp_file2)
         os.system("cdo mergetime {} {} {}".format(tmp_file, dst, tmp_file2))
         os.remove(tmp_file)
         if comp:
@@ -121,6 +126,7 @@ def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
             os.remove(tmp_file2)
             shutil.move(tmp_file3, dst)
         else: 
+            print("AAA2", tmp_file2, dst)
             shutil.move(tmp_file2, dst)
 
 
