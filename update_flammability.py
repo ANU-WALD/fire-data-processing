@@ -9,8 +9,8 @@ import uuid
 import shutil
 import sys
 
-fmc_stack_path = "/g/data/fj4/scratch/fmc_c6_{}_{}.nc"
-fmc_mean_path = "/g/data/fj4/scratch/mean_2001_2016_{}.nc"
+fmc_stack_path = "/g/data/ub8/au/FMC/c6/fmc_c6_{}_{}.nc"
+fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2016_{}.nc"
 tile_size = 2400
 
 def flammability(fmc_t1, fmc_t2):
