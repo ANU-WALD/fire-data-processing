@@ -13,8 +13,12 @@ fmc_stack_path = "/g/data/ub8/au/FMC/c6/fmc_c6_{}_{}.nc"
 fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2016_{}.nc"
 tile_size = 2400
 
-def flammability(fmc_t1, fmc_t2):
-    return None
+def mcd_date_gen(year):
+    start = datetime(year, 1, 1)
+
+    while start.year == year:
+        yield start
+        start = start + timedelta(days=4)
 
 
 def get_fmc_stack_dates(year, tile_id):
@@ -63,8 +67,10 @@ def get_t(date, tile):
     fmc_file = fmc_stack_path.format(d.year, tile)
     if os.path.isfile(fmc_file):
         t_dim = xr.open_dataset(fmc_file).time.data
-        idx = (np.abs(t_dim - date)).argmin()
-        return t_dim[idx]
+        dists = np.abs(t_dim - date)
+        idx = dists.argmin()
+        if dists[idx].astype('O')/(1e9*3600*24) < 3:
+            return t_dim[idx]
 
     return None
 
@@ -100,22 +106,24 @@ def compute_flammability(t, tile):
 
     return flammability.reshape((tile_size,tile_size)), anomaly
 
-def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
-            
+def update_flammability(date, tile_id, dst, tmp, comp):
     t1 = get_t(np.datetime64(date - timedelta(days=8), "ns"), tile_id)
+    if t1 is None:
+        return
+
     qmask = get_qmask(t1, tile_id)
     flam, anom = compute_flammability(date, tile_id)
     if flam is None or anom is None:
         return
 
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
+    fmc_file = fmc_stack_path.format(2001, tile_id)
     pack_flammability(fmc_file, date, flam, anom, qmask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
     else:
         tmp_file2 = os.path.join(tmp, uuid.uuid4().hex + ".nc")
-        print("AAA", tmp_file2)
         os.system("cdo mergetime {} {} {}".format(tmp_file, dst, tmp_file2))
         os.remove(tmp_file)
         if comp:
@@ -126,9 +134,7 @@ def update_flammability(date, tile_id, fmc_file, dst, tmp, comp):
             os.remove(tmp_file2)
             shutil.move(tmp_file3, dst)
         else: 
-            print("AAA2", tmp_file2, dst)
             shutil.move(tmp_file2, dst)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Modis Vegetation Analysis argument parser""")
@@ -139,12 +145,8 @@ if __name__ == "__main__":
     parser.add_argument('-tmp', '--tmp', required=True, type=str, help="Full path to destination.")
     args = parser.parse_args()
 
-    fmc_file = fmc_stack_path.format(args.year, args.tile)
-    fmc_dates = get_fmc_stack_dates(args.year, args.tile)
-    flam_dates = [datetime.utcfromtimestamp(flam_date.astype('O')/1e9) for flam_date in get_flammability_stack_dates(args.destination)]
+    flam_dates = get_flammability_stack_dates(args.destination)
 
-    for fmc_date in fmc_dates:
-        d = datetime.utcfromtimestamp(fmc_date.astype('O')/1e9) + timedelta(days=8)
-        if d.year == args.year and d not in flam_dates:
-            print(datetime.utcfromtimestamp(fmc_date.astype('O')/1e9), d)
-            update_flammability(d , args.tile, fmc_file, args.destination, args.tmp, args.compression)
+    for flam_date in mcd_date_gen(args.year):
+        if np.datetime64(flam_date) not in flam_dates:
+            update_flammability(flam_date , args.tile, args.destination, args.tmp, args.compression)
