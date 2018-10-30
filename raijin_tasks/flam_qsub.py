@@ -12,4 +12,5 @@ if __name__ == "__main__":
 
     for au_tile in au_tiles:
         print("qsub -v 'year={0},tile={1}' flam.qsub".format(args.year, au_tile))
-        os.system('qsub -v "year={0},tile={1}" flam.qsub'.format(args.year, au_tile))
+        #os.system('qsub -v "year={0},tile={1}" flam.qsub'.format(args.year, au_tile))
+        os.system('qsub -v "year={0},tile={1}" flam_rec.qsub'.format(args.year, au_tile))
