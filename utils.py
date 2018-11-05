@@ -288,7 +288,7 @@ def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
         var = ds.createVariable("anomaly", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "FMC Anomaly"
         var.units = '%'
-        var[:] = flam[None,...]
+        var[:] = anom[None,...]
         
         var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
         var.long_name = "Quality Mask"
