@@ -9,7 +9,7 @@
 
 module load cdo
 
-cd /home/603/pl5189/fire-data-processing
+cd /home/603/pl5189/github/fire-data-processing
 /g/data1/xc0/software/conda-envs/rs3/bin/python update_fmc_mosaic.py -y $year -dst /g/data/ub8/au/FMC/c6/mosaics/fmc_c6_${year}.nc -tmp $PBS_JOBFS
 chmod -R a+r /g/data/ub8/au/FMC/c6
 
