@@ -10,8 +10,8 @@
 
 module load cdo
 
-cd /home/603/pl5189/fire-data-processing
+cd /home/603/pl5189/github/fire-data-processing
 /g/data1/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d $year -t $tile -dst /g/data/ub8/au/FMC/c6/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
 
-cd /home/603/pl5189/fire-data-processing/raijin_tasks
+cd /home/603/pl5189/github/fire-data-processing/raijin_tasks
 qsub -v year=${year},tile=${tile} fmc_rec.qsub
