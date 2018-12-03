@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -P ai53
-#PBS -a 0000
+#PBS -a 1200
 #PBS -q normal
 #PBS -l ncpus=1
-#PBS -l mem=4GB
+#PBS -l mem=8GB
 #PBS -l walltime=02:00:00
 #PBS -l jobfs=100GB
 
