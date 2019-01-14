@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -P ai53
+#PBS -P xc0
 #PBS -a 0600
 #PBS -q normal
 #PBS -l ncpus=1
