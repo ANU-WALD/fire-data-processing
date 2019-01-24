@@ -37,9 +37,10 @@ def compose_mosaic(year, dst_path):
     for au_tile in au_tiles:
         masks = glob("{}/{}.01.01/MCD12Q1.A{}001.{}.006.*.hdf".format(mask_path, year, year, au_tile))
         if len(masks) != 1:
-            print("1")
             return None
         mask_tile = gdal.Open('HDF4_EOS:EOS_GRID:"{}":MCD12Q1:LC_Type1'.format(masks[0]))
+
+        # Categories: 1=Grass 2=Shrub 3=Forest 0=No fuel
         veg_mask = mask_tile.ReadAsArray()
         veg_mask[veg_mask == 1] = 3
         veg_mask[veg_mask == 2] = 3
