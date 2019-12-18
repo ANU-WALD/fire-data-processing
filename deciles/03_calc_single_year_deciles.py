@@ -38,7 +38,6 @@ nc_var_short = var_short_dict[nc_var]
 
 temp_path += '/' + nc_var_short
 
-
 onc_path_file = '/g/data/ub8/au/FMC/c6/mosaics/' + nc_var_short + '_c6_' + nc_year + '.nc'
 sdd_file = nc_var_short + '_c6_' + nc_year + '_dc.nc'
 sdd_path = '/g/data/ub8/au/FMC/c6/mosaics/deciles'

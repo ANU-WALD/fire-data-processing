@@ -4,7 +4,7 @@
 #PBS -a 0000
 #PBS -q normal
 #PBS -l ncpus=1
-#PBS -l mem=8GB
+#PBS -l mem=4GB
 #PBS -l walltime=02:00:00
 #PBS -l jobfs=100GB
 

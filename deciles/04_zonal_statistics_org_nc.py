@@ -13,53 +13,42 @@ from multiprocessing import Pool
 import warnings
 
 """
-convert plg to raster with raster size and extent of flamability deciles
+calculates zonal stats for original netcdf products for flammability and fmc_mean
+this script does not work with decile products
 
-polygons:
-/g/data1a/xc0/original/GIS/Australia/ABS/LGAs
-used QGIS for rasterization
+to run
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp flammability 2018 LGA
 
-gdal_rasterize -l LGA11aAust_wgs84 -a LGA_CODE11 -tr 0.005 0.005 -a_nodata -9999.0 -te 113.0 -43.995 154.0 -9.995 -ot Float32 -of netCDF -co WRITE_BOTTOMUP=NO /g/data/xc0/user/ali/projects/AFMS/c6/mask_areas/LGA11aAust_wgs84.shp /g/data/xc0/user/ali/projects/AFMS/c6/mask_areas/mask_plgs.nc
-
-
-sdd     single date decile and decile group file in NetCDF format
+NO NEED to run it independately, as 00_task_manager_dc.py will do it
 
 """
-# /g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp flammability 2018 LGA
 
 temp_path = sys.argv[1]
 nc_var = sys.argv[2]
 nc_year = sys.argv[3]
-plg_name = sys.argv[4]  # LGA or FWA
+plg_name = sys.argv[4]  # LGA or FWA or States
 
 # nc_var = 'flammability'
 # nc_year = '2018'
 # temp_path = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/temp'
-# plg_name = 'LAG'
+# plg_name = 'LGA'
 
 var_short_dict = {
     'flammability': 'flam',
     'fmc_mean': 'fmc'
 }
+
+
 nc_var_short = var_short_dict[nc_var]
 
 temp_path += '/' + nc_var_short
 
-onc_file = nc_var_short + '_c6_' + nc_year + '.nc'
-onc_path = '/g/data/ub8/au/FMC/c6/mosaics'  # file containing flam for all dates
-onc_path_file = onc_path + '/' + onc_file
-
-myd_path = temp_path
-
-sdd_file = nc_var_short + '_c6_' + nc_year + '_dc.nc'
-sdd_path = '/g/data/ub8/au/FMC/c6/mosaics/deciles'
-sdd_temp_path = temp_path + '/sdd'
-
-sdd_path_file = sdd_path + '/' + sdd_file
-sdd_temp_path_file = sdd_temp_path + '/' + sdd_file
+nc_file = nc_var_short + '_c6_' + nc_year + '.nc'
+nc_path = '/g/data/ub8/au/FMC/c6/mosaics'  # file containing flam for all dates
+nc_path_file = nc_path + '/' + nc_file
 
 zst_temp_path = temp_path + '/zonal_stats'
-zst_file = nc_var_short + '__' + plg_name + '__' + nc_year + '__dc_zonal_stat.pk'
+zst_file = nc_var_short + '__' + plg_name + '__' + nc_year + '__nc_zonal_stat.pk'
 
 zst_temp_path_file = zst_temp_path + '/' + zst_file
 
@@ -68,8 +57,10 @@ if not os.path.exists(zst_temp_path):
 
 if plg_name == 'LGA':
     nc_plg_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/LGAs/LGA11aAust.nc'
-else:
+elif plg_name == 'FWA':
     nc_plg_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/FWA/gfe_fire_weather.nc'
+else:
+    nc_plg_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/States/aus_states.nc'
 
 # getting plg ids from the netcdf file
 with nc.Dataset(nc_plg_path_file, 'r') as plgs_fid:
@@ -93,15 +84,16 @@ def get_nc_dates(nc_fid):
 
 
 zonal_stat_dict = {}
-with nc.Dataset(sdd_temp_path_file, 'r') as sdd_fid:
-    sdd_dates = get_nc_dates(nc_fid=sdd_fid)
+
+with nc.Dataset(nc_path_file, 'r') as nc_fid:
+    nc_dates = get_nc_dates(nc_fid=nc_fid)
 
     cnt_dt = -1
-    for sdd_date in sdd_dates:
+    for nc_date in nc_dates:
         cnt_dt += 1
 
-        dc_vals = np.array(sdd_fid.variables['decile_values'][cnt_dt, :, :]).astype(np.float32)
-        dc_vals[dc_vals == 111] = np.nan
+        nc_vals = np.array(nc_fid.variables[nc_var][cnt_dt, :, :]).astype(np.float32)
+        nc_vals[nc_vals == -9999.9] = np.nan
 
 
         def process_date(plg_id_f):
@@ -110,7 +102,7 @@ with nc.Dataset(sdd_temp_path_file, 'r') as sdd_fid:
                 'stats': {},
             }
             pg_arr = copy(plgs_arr)
-            np_arr = copy(dc_vals)
+            np_arr = copy(nc_vals)
             vg_arr = copy(vegmask_arr)
 
             pg_arr[pg_arr != plg_id_f] = np.nan
@@ -156,7 +148,7 @@ with nc.Dataset(sdd_temp_path_file, 'r') as sdd_fid:
             plg_id_str = str(int(plg_id))
             if not plg_id_str in zonal_stat_dict:
                 zonal_stat_dict[plg_id_str] = {}
-            zonal_stat_dict[plg_id_str][sdd_date] = item['stats']
-        print('this', sdd_date, 'time', time.time() - st, 'last', sdd_dates[-1])
+            zonal_stat_dict[plg_id_str][nc_date] = item['stats']
+        print('this', nc_date, 'time', time.time() - st, 'last', nc_dates[-1])
 
     save_pickle(object=zonal_stat_dict, path_file=zst_temp_path_file)

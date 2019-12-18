@@ -123,7 +123,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     file_dates = get_fmc_stack_dates(args.destination)
-
     modis_tiles = []
     if len(args.date) == 8:
         d = datetime.strptime(args.date, "%Y%m%d")
