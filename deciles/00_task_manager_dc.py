@@ -4,17 +4,27 @@ from netCDF4 import num2date, date2num
 import netCDF4 as nc
 import functions_pbs
 
-# in raijin only
-# cd /g/data/xc0/user/ali/code/fire_deciles
-# /g/data/xc0/software/python/miniconda3/bin/python3 00_task_manager.py flammability 2019
-# /g/data/xc0/software/python/miniconda3/bin/python3 00_task_manager.py fmc_mean 2019
+"""
+in raijin only
+cd /g/data/xc0/user/ali/code/fire_deciles
+/g/data/xc0/software/python/miniconda3/bin/python3 00_task_manager_dc.py flammability 2019 345
+/g/data/xc0/software/python/miniconda3/bin/python3 00_task_manager_dc.py fmc_mean 2019 345
+
+nc_var: flammability or fmc_mean
+nc_year: 2019 or other years
+var_mode: '345' for all tasks or '45'. see pbs_dict for task ids
+"""
 
 if len(sys.argv) > 1:
     nc_var = sys.argv[1]
     nc_year = sys.argv[2]
+    var_mode = sys.argv[3]
 else:
     nc_var = 'flammability'
     nc_year = str(2019)
+    var_mode = '345'
+
+print(nc_var, nc_var, var_mode)
 
 var_short_dict = {
     'flammability': 'flam',
@@ -47,7 +57,7 @@ pbs_dict = {
     '3': {
         'config': {
             'pbs_file': '3_' + nc_var + '_' + str(nc_year) + '.pbs',
-            'q': 'express',
+            'q': 'normal',
             'ncpus': 8,
             'mem': 16,
             'walltime_hr': 1
@@ -62,14 +72,14 @@ pbs_dict = {
     '4_LGA': {
         'config': {
             'pbs_file': '4_' + nc_var + '_' + str(nc_year) + '_LGA.pbs',
-            'q': 'express',
+            'q': 'normal',
             'ncpus': 16,
             'mem': 32,
             'walltime_hr': 9
         },
         'cmd_list': ['module load netcdf',
                      'cd ' + code_path,
-                     python_path + ' 04_zonal_statistics.py ' + temp_path + ' ' + nc_var + ' ' + str(nc_year) + ' LGA'
+                     python_path + ' 04_zonal_statistics_deciles.py ' + temp_path + ' ' + nc_var + ' ' + str(nc_year) + ' LGA'
                      ],
         'depends_on': '3'
     },
@@ -77,21 +87,35 @@ pbs_dict = {
     '4_FWA': {
         'config': {
             'pbs_file': '4_' + nc_var + '_' + str(nc_year) + '_FWA.pbs',
-            'q': 'express',
+            'q': 'normal',
             'ncpus': 16,
             'mem': 32,
             'walltime_hr': 9
         },
         'cmd_list': ['module load netcdf',
                      'cd ' + code_path,
-                     python_path + ' 04_zonal_statistics.py ' + temp_path + ' ' + nc_var + ' ' + str(nc_year) + ' FWA'
+                     python_path + ' 04_zonal_statistics_deciles.py ' + temp_path + ' ' + nc_var + ' ' + str(nc_year) + ' FWA'
                      ],
         'depends_on': '4_LGA'
+    },
+    '4_States': {
+        'config': {
+            'pbs_file': '4_' + nc_var + '_' + str(nc_year) + '_States.pbs',
+            'q': 'normal',
+            'ncpus': 16,
+            'mem': 32,
+            'walltime_hr': 9
+        },
+        'cmd_list': ['module load netcdf',
+                     'cd ' + code_path,
+                     python_path + ' 04_zonal_statistics_deciles.py ' + temp_path + ' ' + nc_var + ' ' + str(nc_year) + ' States'
+                     ],
+        'depends_on': '4_FWA'
     },
     '5': {
         'config': {
             'pbs_file': '5_' + nc_var + '.pbs',
-            'q': 'express',
+            'q': 'normal',
             'ncpus': 8,
             'mem': 16,
             'walltime_hr': 3
@@ -99,16 +123,33 @@ pbs_dict = {
         'cmd_list': ['module load netcdf',
                      'module load nco',
                      'cd ' + code_path,
-                     python_path + ' 05_zonal_statistics_merge_to_nc.py ' + temp_path + ' LGA ' + nc_var,
+                     python_path + ' 05_zonal_statistics_deciles_merge_to_nc.py ' + temp_path + ' LGA ' + nc_var,
                      'cd ' + code_path,
-                     python_path + ' 05_zonal_statistics_merge_to_nc.py ' + temp_path + ' FWA ' + nc_var,
+                     python_path + ' 05_zonal_statistics_deciles_merge_to_nc.py ' + temp_path + ' FWA ' + nc_var,
+                     'cd ' + code_path,
+                     python_path + ' 05_zonal_statistics_deciles_merge_to_nc.py ' + temp_path + ' States ' + nc_var,
                      ],
-        'depends_on': '4_FWA'
+        'depends_on': '4_States'
     },
 
 }
 
-if onc_last_date > sdd_last_date:
-    steps = ['3', '4_LGA', '4_FWA', '5']
-    ids_path_file = pbs_path + 'jobids_345_' + nc_var + '_' + str(nc_year) + '.txt'
+print('onc_last_date', onc_last_date)
+print('sdd_last_date', sdd_last_date)
+
+if var_mode == '345':
+    print('in 345')
+    if onc_last_date > sdd_last_date:
+        print('in progress for 345')
+        steps = ['3', '4_LGA', '4_FWA', '4_States',  '5']
+        ids_path_file = pbs_path + 'jobids_dc_345_' + nc_var + '_' + str(nc_year) + '.txt'
+        functions_pbs.schedule_pbs(pbs_path=pbs_path, pbs_dict=pbs_dict, steps=steps, ids_path_file=ids_path_file)
+
+if var_mode == '45':
+    print('in 45')
+    steps = ['4_LGA', '4_FWA', '4_States', '5']
+
+    pbs_dict['4_LGA']['depends_on'] = None
+
+    ids_path_file = pbs_path + 'jobids_dc_45_' + nc_var + '_' + str(nc_year) + '.txt'
     functions_pbs.schedule_pbs(pbs_path=pbs_path, pbs_dict=pbs_dict, steps=steps, ids_path_file=ids_path_file)
