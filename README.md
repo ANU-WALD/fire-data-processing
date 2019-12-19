@@ -46,25 +46,3 @@ To create your own environment, run the command:
     conda create --name rs3 --channel conda-forge python=3 xarray>=0.10 pynio jupyter
 
 If that doesn't work (eg due to package updates), install from `environment.yml` to get *exactly* the same packages.
-
----
-
-#### onetile.py
-Onetile is used to generate *one tile* of live fuel moisture content (LFMC) data for the [AFMS](http://wenfo.org/afms/) system. The script uses a group of colour channels within satellite data from [NASA's MODIS satellite](https://terra.nasa.gov/about/terra-instruments/modis) (sinusoidal projection) to calculate information about fuel moisture and reflectance on a specific tile of the world.
-
-Onetile is optionally capable of interpreting SPOT6 and SPOT7 satellite data and can be extended to support more.
-
-The world map on the sinusoidal projection grid can be found below. ![Sinusoidal Projection Grid World Map](https://modis-land.gsfc.nasa.gov/images/MODIS_sinusoidal_grid1.gif).
-
-#### launchmany.py
-Launchmany is essentially a job queue system for the NCI Raijin super computer and producing LFMC data. The job queue distributes the input tiles to onetile.py (the heart of the processing) and processes each tile individually to derive LFMC data.
-
-As input, this script takes a comma separated list of sinusoidal tiles and schedules a set of jobs on Raijin (using the Raijin specific job handler). Automating this LFMC process is appealing as generating multiple tiles over many years can take some time.
-
-For ease of use, launchmany has a few tile shortcuts builtin for countries around the world, such as Australia, Spain and South Africa.
-
-#### modis.py
-This script provides general-purpose functions for manipulating MODIS data, including loading reflectance and restoring physical coordinates to an array for a given tile.
-
-#### mosaic.py
-Mosaic is used to reproject the MODIS fuel moisture sinusoidal grid of Australia to a WGS84 Lat/Lon coordinate mosaic. This script also calculates and adds a flammability variable to the the standard set of data. In addition to reprojecting, this script can be used to combine tiles.
