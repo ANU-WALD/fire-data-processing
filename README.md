@@ -5,11 +5,6 @@ The Fire Data Processing repository is a collection of scripts used to produce t
 This is a research initiative to provide quality spatial information on fire hazards in Australia to better understand the risk of bushfires, their severity and preparing ways to respond to them.
 
 
-### Authors
----
-* *[Zac Hatfield Dodds](https://github.com/Zac-HD) and [Dion Misic](https://github.com/kingdion)* (code)
-* *[Marta Yebra](https://researchers.anu.edu.au/researchers/yebra-m)* (science)
-
 ### Important Links
 ---
 * [The Project](http://www.bnhcrc.com.au/research/understanding-mitigating-hazards/255)
