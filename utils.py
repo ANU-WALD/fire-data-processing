@@ -20,9 +20,7 @@ def get_vegmask(tile_id, tile_date):
             continue
           
         files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.006.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
-        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
         if len(files) == 1:
-            #veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
             veg_mask = xr.open_dataset(files[0]).LC_Type1[:].data
 
             veg_mask[veg_mask == 1] = 3
@@ -86,13 +84,13 @@ def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
         
         var = ds.createVariable("lfmc_mean", 'f4', ("time", "y", "x"), fill_value=-9999.9)
-        var.long_name = "LFMC Arithmetic Mean"
+        var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = mean_arr[None,...]
 
         var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=-9999.9)
-        var.long_name = "LFMC Standard Deviation"
+        var.long_name = "Live Fuel Moisture Content Uncertainty"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = std_arr[None,...]
@@ -115,7 +113,7 @@ def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         var.GeoTransform = "{} {} {} {} {} {} ".format(*[geot[i] for i in range(6)])
 
 
-def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
+def pack_flammability(fmc_file, date, flam, q_mask, dest):
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -157,12 +155,6 @@ def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
         var.grid_mapping = "sinusoidal"
         var[:] = flam[None,...]
         
-        var = ds.createVariable("anomaly", 'f4', ("time", "y", "x"), fill_value=-9999.9)
-        var.long_name = "Flammability Anomaly"
-        var.units = '%'
-        var.grid_mapping = "sinusoidal"
-        var[:] = anom[None,...]
-
         var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
         var.long_name = "Combined Bands Quality Mask"
         var.units = 'Cat'
@@ -224,12 +216,12 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         var[:] = np.linspace(lat0, lat1+res, num=y_size)
         
         var = ds.createVariable("fmc_mean", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
-        var.long_name = "Mean Live Fuel Moisture Content"
+        var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_mean[None,...]
 
         var = ds.createVariable("fmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
-        var.long_name = "Standard Deviation Live Fuel Moisture Content"
+        var.long_name = "Live Fuel Moisture Content Uncertainty"
         var.units = '%'
         var[:] = fmc_stdv[None,...]
         
@@ -239,7 +231,7 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         var[:] = q_mask[None,...]
 
 
-def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
+def pack_flammability_mosaic(date, flam, q_mask, dest):
     lat0 = -10.
     lat1 = -44.
     lon0 = 113.
@@ -285,11 +277,6 @@ def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
         var.units = '%'
         var[:] = flam[None,...]
 
-        var = ds.createVariable("anomaly", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
-        var.long_name = "FMC Anomaly"
-        var.units = '%'
-        var[:] = anom[None,...]
-        
         var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
         var.long_name = "Quality Mask"
         var.units = 'Cat'

@@ -104,7 +104,7 @@ def compute_flammability(t, tile):
     flammability[vegmask==2] = shrub.flatten()[vegmask==2]
     flammability[vegmask==3] = forst.flatten()[vegmask==3]
 
-    return flammability.reshape((tile_size,tile_size)), anomaly
+    return flammability.reshape((tile_size,tile_size))
 
 def update_flammability(date, tile_id, dst, tmp, comp):
     t1 = get_t(np.datetime64(date - timedelta(days=8), "ns"), tile_id)
@@ -112,13 +112,13 @@ def update_flammability(date, tile_id, dst, tmp, comp):
         return
 
     qmask = get_qmask(t1, tile_id)
-    flam, anom = compute_flammability(date, tile_id)
-    if flam is None or anom is None:
+    flam = compute_flammability(date, tile_id)
+    if flam is None:
         return
 
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     fmc_file = fmc_stack_path.format(2001, tile_id)
-    pack_flammability(fmc_file, date, flam, anom, qmask, tmp_file)
+    pack_flammability(fmc_file, date, flam, qmask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)

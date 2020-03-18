@@ -85,12 +85,11 @@ def compose_mosaic(date, n_band, var_name, data_type):
 def update_flammability_mosaic(date, n_band, dst, tmp, comp):
             
     flam = compose_mosaic(date, n_band, "flammability", gdal.GDT_Float32)
-    anom = compose_mosaic(date, n_band, "anomaly", gdal.GDT_Float32)
     qmask = compose_mosaic(date, n_band, "quality_mask", gdal.GDT_Byte)
     
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    pack_flammability_mosaic(d, flam, anom, qmask, tmp_file)
+    pack_flammability_mosaic(d, flam, qmask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
