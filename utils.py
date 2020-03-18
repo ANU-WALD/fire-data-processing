@@ -83,13 +83,13 @@ def pack_fmc(hdf_file, date, median_arr, std_arr, q_mask, dest):
         var.standard_name = "projection_y_coordinate"
         var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
         
-        var = ds.createVariable("lfmc_median", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = median_arr[None,...]
 
-        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_uncertainty", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content Uncertainty"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
@@ -215,12 +215,12 @@ def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
         var.standard_name = "latitude"
         var[:] = np.linspace(lat0, lat1+res, num=y_size)
         
-        var = ds.createVariable("lfmc_median", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_mean[None,...]
 
-        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_uncertainty", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content Uncertainty"
         var.units = '%'
         var[:] = fmc_stdv[None,...]
