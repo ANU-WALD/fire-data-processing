@@ -291,7 +291,7 @@ def get_fmc_functor():
         # Select Veg type subset from LUT table
         #mean = np.einsum('i->', fmc[idxs])/idxs.shape[0]
         median = np.median(fmc[idxs])
-        return median, np.sqrt(np.einsum('i->',(fmc[idxs]-mean)**2)/idxs.shape[0])
+        return median, np.sqrt(np.einsum('i->',(fmc[idxs]-median)**2)/idxs.shape[0])
 
     return get_fmc
 
