@@ -15,7 +15,7 @@ mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type):
-    ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
+    ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 2])/(raster_stack[:, :, 1]+raster_stack[:, :, 2])
 
     # In case the mask doesn't exist
     if q_mask is None:
@@ -48,7 +48,7 @@ def get_reflectances(tile_path):
         ref_stack = np.dstack((ref_stack, xr.open_dataset(tile_path)["Nadir_Reflectance_Band{}".format(i)][:].data.astype(np.float32)))
         q_mask = np.dstack((q_mask, xr.open_dataset(tile_path)["BRDF_Albedo_Band_Mandatory_Quality_Band{}".format(i)]))
     
-    # VDII compositions between bands 2 and 6 -> indexes 1 and 3
+    # NDII compositions between bands 2 and 6 -> indexes 1 and 3
     ref_stack = np.dstack((ref_stack, (ref_stack[:, :, 1]-ref_stack[:, :, 3])/(ref_stack[:, :, 1]+ref_stack[:, :, 3])))
 
     q_mask = q_mask == 0
