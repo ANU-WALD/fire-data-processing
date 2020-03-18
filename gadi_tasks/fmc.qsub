@@ -4,8 +4,9 @@
 #PBS -l ncpus=1
 #PBS -l mem=4GB
 #PBS -l walltime=06:00:00
+#PBS -l storage=gdata/ub8+gdata/xc0
 #PBS -l jobfs=100GB
 
 module load cdo
 cd /home/603/pl5189/github/fire-data-processing
-/g/data1/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d $year -t $tile -dst /g/data/ub8/au/FMC/2020/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
+/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d $year -t $tile -dst /g/data/ub8/au/FMC/2020/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
