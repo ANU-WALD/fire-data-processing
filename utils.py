@@ -282,39 +282,6 @@ def pack_flammability_mosaic(date, flam, q_mask, dest):
         var.units = 'Cat'
         var[:] = q_mask[None,...]
 
-"""
-# All Modis 7 bands are 2400x2400 so we just get geotransform for Band1
-def get_affine(geot):
-    
-    return np.array([geot[1], .0, geot[0], .0, geot[5], geot[3], .0, .0, 1.]).reshape((3,3))
-    
-
-def transform(geot, i, j):
-    
-    return tuple(np.dot(get_affine(geot), np.array([i, j, 1]))[:2])
-
-
-def transform_inv(geot, x, y):
-    
-    return tuple(np.dot(np.linalg.inv(get_affine(geot)), np.array([x, y, 1]))[:2])
-
-
-def get_tile_map_transformer(tile_path, map_path):
-
-    tile = gdal.Open('HDF4_EOS:EOS_GRID:"{}":MOD_Grid_BRDF:Nadir_Reflectance_Band1'.format(tile_path))
-    tile_geot = tile.GetGeoTransform()
-    
-    aumap = gdal.Open(map_path)
-    map_geot = aumap.GetGeoTransform()
-    
-
-    def transformer(x, y):
-
-        idx = transform_inv(map_geot, *transform(tile_geot, x, y))
-        return (int(round(idx[0])), int(round(idx[1])))
-    
-    return transformer
-"""
 
 def get_fmc_functor():
     # Load FMC table
@@ -342,6 +309,7 @@ def get_top_n_functor():
     lut = np.load("./LUT.npy")
     lut = lut[:, [0,1,3,5,6,7]]
 
+    # This term is sqrt(sum(v^2)) in the FMC equation's denominator and is constant (precomputed)
     lut_sq = np.sqrt(np.einsum('ij,ij->i',lut, lut))
 
     def get_top_n(mb, veg_type, top_n, mat=lut, smat=lut_sq):
@@ -355,6 +323,7 @@ def get_top_n_functor():
         # arccos is a decreaing function in the [-1,1] range so we can replace this
         # with a constant linear function as we are only interested in the relative values.
         #err = np.arccos(np.einsum('ij,j->i', vmat, mb)/(np.einsum('i,i->', mb, mb)**.5*vsmat))
+
         err = -1*np.einsum('ij,j->i', vmat, mb)/(np.einsum('i,i->', mb, mb)**.5*vsmat)
 
         idxs = np.argpartition(err, top_n)[:top_n] + idx[0]
