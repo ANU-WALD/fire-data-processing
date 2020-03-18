@@ -21,7 +21,7 @@ def fmc(raster_stack, q_mask, veg_type):
     if q_mask is None:
         q_mask = np.ones((tile_size, tile_size), dtype=bool)
 
-    mean_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
+    median_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
     std_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
     
     get_top_n = get_top_n_functor()
@@ -32,9 +32,9 @@ def fmc(raster_stack, q_mask, veg_type):
             #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and q_mask[j, i]:
             if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15:
                 top_40 = get_top_n(raster_stack[j, i, :], veg_type[j, i], 40)
-                mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
+                median_arr[j, i], std_arr[j, i] = get_fmc(top_40)
 
-    return mean_arr, std_arr
+    return median_arr, std_arr
 
 
 def get_reflectances(tile_path):
@@ -90,10 +90,10 @@ def update_fmc(modis_path, dst, tmp, comp):
 
     veg_type = get_vegmask(tile_id, date)
     ref_stack, q_mask = get_reflectances(modis_path)
-    mean, stdv = fmc(ref_stack, q_mask, veg_type)
+    median, stdv = fmc(ref_stack, q_mask, veg_type)
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
 
-    pack_fmc(modis_path, date, mean, stdv, q_mask, tmp_file)
+    pack_fmc(modis_path, date, median, stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)

@@ -47,7 +47,7 @@ def get_vegmask(tile_id, tile_date):
     
     return None
 
-def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
+def pack_fmc(hdf_file, date, median_arr, std_arr, q_mask, dest):
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -83,11 +83,11 @@ def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         var.standard_name = "projection_y_coordinate"
         var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
         
-        var = ds.createVariable("lfmc_mean", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
-        var[:] = mean_arr[None,...]
+        var[:] = median_arr[None,...]
 
         var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content Uncertainty"
@@ -174,7 +174,7 @@ def pack_flammability(fmc_file, date, flam, q_mask, dest):
 
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
-def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
+def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
     lat0 = -10.
     lat1 = -44.
     lon0 = 113.
@@ -215,12 +215,12 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         var.standard_name = "latitude"
         var[:] = np.linspace(lat0, lat1+res, num=y_size)
         
-        var = ds.createVariable("fmc_mean", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_mean[None,...]
 
-        var = ds.createVariable("fmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content Uncertainty"
         var.units = '%'
         var[:] = fmc_stdv[None,...]
@@ -289,8 +289,9 @@ def get_fmc_functor():
     
     def get_fmc(idxs, fmc=fmc):
         # Select Veg type subset from LUT table
-        mean = np.einsum('i->', fmc[idxs])/idxs.shape[0]
-        return mean, np.sqrt(np.einsum('i->',(fmc[idxs]-mean)**2)/idxs.shape[0])
+        #mean = np.einsum('i->', fmc[idxs])/idxs.shape[0]
+        median = np.median(fmc[idxs])
+        return median, np.sqrt(np.einsum('i->',(fmc[idxs]-mean)**2)/idxs.shape[0])
 
     return get_fmc
 
