@@ -193,8 +193,8 @@ def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
         setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
         
         t_dim = ds.createDimension("time", 1)
-        x_dim = ds.createDimension("longitude", fmc_mean.shape[1])
-        y_dim = ds.createDimension("latitude", fmc_mean.shape[0])
+        x_dim = ds.createDimension("longitude", fmc_median.shape[1])
+        y_dim = ds.createDimension("latitude", fmc_median.shape[0])
 
         var = ds.createVariable("time", "f8", ("time",))
         var.units = "seconds since 1970-01-01 00:00:00.0"
@@ -218,7 +218,7 @@ def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
         var = ds.createVariable("lfmc", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content"
         var.units = '%'
-        var[:] = fmc_mean[None,...]
+        var[:] = fmc_median[None,...]
 
         var = ds.createVariable("lfmc_uncertainty", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Live Fuel Moisture Content Uncertainty"

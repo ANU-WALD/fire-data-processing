@@ -7,5 +7,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("qsub -v 'year={0}' flam_mosaic_rec.qsub".format(args.year))
-    #os.system('qsub -v "year={0}" flam_mosaic.qsub'.format(args.year))
-    os.system('qsub -v "year={0}" flam_mosaic_rec.qsub'.format(args.year))
+    os.system('qsub -v "year={0}" flam_mosaic.qsub'.format(args.year))
+    #os.system('qsub -v "year={0}" flam_mosaic_rec.qsub'.format(args.year))
