@@ -1,9 +1,10 @@
 #!/bin/bash
-#PBS -P xc0
+#PBS -P ac76
 #PBS -q normal
 #PBS -l ncpus=1
 #PBS -l mem=4GB
 #PBS -l walltime=01:00:00
+#PBS -l storage=gdata/ub8+gdata/xc0+gdata/u39
 #PBS -l jobfs=100GB
 
 module load cdo
