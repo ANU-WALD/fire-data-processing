@@ -1,16 +1,23 @@
 import os.path
-from osgeo import gdal
+import os
+import dotenv
+# from osgeo import gdal
 import numpy as np
 import argparse
-from glob import glob
+#from glob import glob
+from gridflow.get_data import glob, local_ver
 from utils import get_top_n_functor, get_fmc_functor, pack_fmc, get_vegmask
 from datetime import datetime
 import xarray as xr
 import uuid
 import shutil
 import sys
+import json
 
-mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
+dotenv.load_dotenv()
+DEFAULT_SETTINGS=os.path.join(os.path.dirname(__file__),'defaults.json')
+
+#mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
 #mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
 tile_size = 2400
 
@@ -40,21 +47,30 @@ def fmc(raster_stack, q_mask, veg_type):
 def get_reflectances(tile_path):
     #Special case where we don't use all the bands 1, 2, 4, 6, 7
     bands = [1,2,4,6,7]
+    tmp_tile_path = local_ver(tile_path)
+    ref_stack = None
+    q_mask = None
+    ds = None
+    try:
+        ds = xr.open_dataset(tmp_tile_path)
+        ref_stack = ds.Nadir_Reflectance_Band1[:].data.astype(np.float32)
+        q_mask = ds.BRDF_Albedo_Band_Mandatory_Quality_Band1[:].data
+        
+        for i in bands[1:]:
+            ref_stack = np.dstack((ref_stack, ds["Nadir_Reflectance_Band{}".format(i)][:].data.astype(np.float32)))
+            q_mask = np.dstack((q_mask, ds["BRDF_Albedo_Band_Mandatory_Quality_Band{}".format(i)]))
+        
+        # NDII compositions between bands 2 and 6 -> indexes 1 and 3
+        ref_stack = np.dstack((ref_stack, (ref_stack[:, :, 1]-ref_stack[:, :, 3])/(ref_stack[:, :, 1]+ref_stack[:, :, 3])))
 
-    ref_stack = xr.open_dataset(tile_path).Nadir_Reflectance_Band1[:].data.astype(np.float32)
-    q_mask = xr.open_dataset(tile_path).BRDF_Albedo_Band_Mandatory_Quality_Band1[:].data
-    
-    for i in bands[1:]:
-        ref_stack = np.dstack((ref_stack, xr.open_dataset(tile_path)["Nadir_Reflectance_Band{}".format(i)][:].data.astype(np.float32)))
-        q_mask = np.dstack((q_mask, xr.open_dataset(tile_path)["BRDF_Albedo_Band_Mandatory_Quality_Band{}".format(i)]))
-    
-    # NDII compositions between bands 2 and 6 -> indexes 1 and 3
-    ref_stack = np.dstack((ref_stack, (ref_stack[:, :, 1]-ref_stack[:, :, 3])/(ref_stack[:, :, 1]+ref_stack[:, :, 3])))
+        q_mask = q_mask == 0
+        q_mask = np.all(q_mask, axis=2)
 
-    q_mask = q_mask == 0
-    q_mask = np.all(q_mask, axis=2)
-
-    return ref_stack, q_mask
+        return ref_stack, q_mask, tmp_tile_path
+    finally:
+        if tmp_tile_path != tile_path:
+            if ds is not None: ds.close()
+            # os.remove(tmp_tile_path)
 
 
 def get_fmc_stack_dates(f_path):
@@ -84,16 +100,21 @@ def get_mcd43_paths(year, tile, file_dates):
     return sorted(paths)
 
 
-def update_fmc(modis_path, dst, tmp, comp):
+def update_fmc(modis_path, dst, tmp, comp,mask_path):
     date = datetime.strptime(modis_path.split("/")[-2], '%Y.%m.%d')
     tile_id = modis_tile.split("/")[-1].split(".")[2]
 
-    veg_type = get_vegmask(tile_id, date)
-    ref_stack, q_mask = get_reflectances(modis_path)
+    veg_type = get_vegmask(tile_id, date,mask_path)
+    assert veg_type is not None
+
+    ref_stack, q_mask,fn = get_reflectances(modis_path)
+    assert ref_stack is not None
+    assert q_mask is not None
+
     median, stdv = fmc(ref_stack, q_mask, veg_type)
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
 
-    pack_fmc(modis_path, date, median, stdv, q_mask, tmp_file)
+    pack_fmc(fn, date, median, stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
@@ -115,6 +136,7 @@ def update_fmc(modis_path, dst, tmp, comp):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Modis Vegetation Analysis argument parser""")
+    parser.add_argument('-s','--settings',type=str,default=os.environ.get('WALD_SETTINGS',DEFAULT_SETTINGS),required=False,help='Settings file (json)')
     parser.add_argument('-t', '--tile', type=str, required=True, help="Modis tile in hXXvXX format.")
     parser.add_argument('-d', '--date', type=str, required=True, help="Date with format YYYYMMDD or YYYY to update with latest data.")
     parser.add_argument('-c', '--compression', action='store_true', help="Apply compression to destination netCDF4.")
@@ -122,6 +144,8 @@ if __name__ == "__main__":
     parser.add_argument('-tmp', '--tmp', required=True, type=str, help="Full path to destination.")
     args = parser.parse_args()
 
+    settings = json.load(open(args.settings))
+    mcd43_root = settings['mcd43_root']
     file_dates = get_fmc_stack_dates(args.destination)
     modis_tiles = []
     if len(args.date) == 8:
@@ -139,4 +163,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     for modis_tile in modis_tiles:
-        update_fmc(modis_tile, args.destination, args.tmp, args.compression)
+        update_fmc(modis_tile, args.destination, args.tmp, args.compression,settings['mcd12q1_path'])
+

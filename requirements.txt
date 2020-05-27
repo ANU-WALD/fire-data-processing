@@ -1,0 +1,3 @@
+python-dotenv
+gdal==2.4.0
+https://github.com/ANU-WALD/gridflow_lib/archive/master.zip
