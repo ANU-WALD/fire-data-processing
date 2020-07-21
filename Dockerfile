@@ -1,19 +1,13 @@
-FROM continuumio/anaconda3:2020.02
+FROM joelrahman/conda-python-science
 
-COPY requirements.txt /tmp/requirements.txt
-
-RUN apt-get update && \
-    apt-get install -y g++ libgdal-dev libgdal20 gdal-bin && \
-    /opt/conda/bin/conda install jupyter -y --quiet && \
-    conda install --yes netcdf4 xarray && \
-    cd /tmp && pip install -r requirements.txt && \
-    apt-get install cdo && \
-    mkdir /opt/notebooks 
+RUN mkdir /opt/fire && cd /opt/fire
     # conda install --yes -c conda-forge gdal && \
+
+COPY . /opt/fire
 
 # USER ubuntu
 
-WORKDIR /opt/notebooks
+WORKDIR /opt/fire
 
-CMD [ "/opt/conda/bin/jupyter","notebook","--notebook-dir=/opt/notebooks", "--ip='*'", "--port=8888","--no-browser", "--allow-root" ]
+CMD [ "python","update_fmc.py"]
 
