@@ -15,6 +15,8 @@ mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type):
+    # I think this is a problem with the current data, this is what I think whould be here
+    #ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 2])/(raster_stack[:, :, 1]+raster_stack[:, :, 2])
     ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
 
     # In case the mask doesn't exist
