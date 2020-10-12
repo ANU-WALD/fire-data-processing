@@ -1,3 +1,4 @@
+
 {
     "Conventions": "CF-1.6, ACDD-1.3",
     "title": "Live Fuel Moisture Content (LFMC), Australia Coverage.",
@@ -9,10 +10,10 @@
     "standard_name_vocabulary": "CF Standard Names, v28",
     "keywords_vocabulary": "GCMD Science Keywords, Version 8.0.0.0.0",
     "keywords": "EARTH SCIENCE > BIOSPHERE > VEGETATION > LEAF CHARACTERISTICS , EARTH SCIENCE > BIOSPHERE > VEGETATION > LIVE FUEL MOISTURE CONTENT",
-    "creator_name": "Pablo Rozas Larraondo",
-    "creator_email": "pablo.larraondo@anu.edu.au",
-    "institution": "National Computational Infrastructure (NCI)",
-    "creator_url": "http://www.nci.org.au",
+    "creator_name": "Gianluca Scortechini",
+    "creator_email": "gianluca.scortechini@anu.edu.au",
+    "institution": "ANU - Fenner School",
+    "creator_url": "",
     "history": "",
     "source": "The original MODIS data used to generate the Live FUel Moisture Content Product were supplied by the Land Processes Distributed Active Archive Center (LPDAAC), located at the U.S. Geological Survey (USGS) Earth Resources Observation and Science Center (EROS) http://lpdaac.usgs.gov.",
     "references": "Yebra, M., Quan, X., Riano, D., Rozas-Larraondo, P., van Dijk, A., Cary, G. (2018). A fuel moisture content and flammability monitoring methodology for continental Australia based on optical remote sensing. Remote Sensing of Environment. 212. 260-272.",
