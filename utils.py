@@ -183,15 +183,14 @@ def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
 def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
-    lat0 = -10.
-    lat1 = -44.
-    lon0 = 113.
-    lon1 = 154.
+    lat_max = -10.
+    lat_min = -44.
+    lon_max = 154.
+    lon_min = 113.
     res = 0.005
     
-    x_size = int((lon1 - lon0)/res)
-    y_size = int((lat1 - lat0)/(-1*res))
-    geot = [lon0, res, 0., lat0, 0., -1*res]
+    x_size = int((lon_max - lon_min)/res)
+    y_size = int((lat_max - lat_min)/res)
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -215,13 +214,13 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         var.units = "degrees"
         var.long_name = "longitude"
         var.standard_name = "longitude"
-        var[:] = np.linspace(lon0, lon1-res, num=x_size)
+        var[:] = np.linspace(lon_min, lon_max-res, num=x_size)
         
         var = ds.createVariable("latitude", "f8", ("latitude",))
         var.units = "degrees"
         var.long_name = "latitude"
         var.standard_name = "latitude"
-        var[:] = np.linspace(lat0, lat1+res, num=y_size)
+        var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
         var = ds.createVariable("fmc_mean", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Mean Live Fuel Moisture Content"
@@ -240,15 +239,14 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
 
 
 def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
-    lat0 = -10.
-    lat1 = -44.
-    lon0 = 113.
-    lon1 = 154.
+    lat_max = -10.
+    lat_min = -44.
+    lon_max = 154.
+    lon_min = 113.
     res = 0.005
     
-    x_size = int((lon1 - lon0)/res)
-    y_size = int((lat1 - lat0)/(-1*res))
-    geot = [lon0, res, 0., lat0, 0., -1*res]
+    x_size = int((lon_max - lon_min)/res)
+    y_size = int((lat_max - lat_min)/res)
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -272,13 +270,13 @@ def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
         var.units = "degrees"
         var.long_name = "longitude"
         var.standard_name = "longitude"
-        var[:] = np.linspace(lon0, lon1-res, num=x_size)
+        var[:] = np.linspace(lon_min, lon_max-res, num=x_size)
         
         var = ds.createVariable("latitude", "f8", ("latitude",))
         var.units = "degrees"
         var.long_name = "latitude"
         var.standard_name = "latitude"
-        var[:] = np.linspace(lat0, lat1+res, num=y_size)
+        var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
         var = ds.createVariable("flammability", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Flammability Index"

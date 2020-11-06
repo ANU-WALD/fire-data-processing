@@ -47,21 +47,22 @@ def get_flammability_stack_dates(year):
 
 def compose_mosaic(date, n_band, var_name, data_type):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    lat0 = -10.
-    lat1 = -44.
-    lon0 = 113.
-    lon1 = 154.
+    lat_max = -10.
+    lat_min = -44.
+    lon_max = 154.
+    lon_min = 113.
     res = 0.005
 
-    x_size = int((lon1 - lon0)/res)
-    y_size = int((lat1 - lat0)/(-1*res))
-    lats = np.linspace(lat0, lat1+res, num=y_size)
-    lons = np.linspace(lon0, lon1-res, num=x_size)
+    x_size = int((lon_max - lon_min)/res)
+    y_size = int((lat_max - lat_min)/res)
+    lats = np.linspace(lat_max, lat_min+res, num=y_size)
+    lons = np.linspace(lon_min, lon_max-res, num=x_size)
     
-    src = gdal.GetDriverByName('MEM').Create('', tile_size, tile_size, 1, data_type,)
+    geot = [lon_min - res/2, res, 0., lat_max + res/2, 0., -1*res] #gdal geotransform indicate top left corner, not the coord of centre of top left pixel as netcdf
 
-    geot = [lon0, res, 0., lat0, 0., -1*res]
+    src = gdal.GetDriverByName('MEM').Create('', tile_size, tile_size, 1, data_type,)
     dst = gdal.GetDriverByName('MEM').Create('', x_size, y_size, 1, data_type,)
+
     if data_type == gdal.GDT_Float32:
         dst.GetRasterBand(1).WriteArray(np.ones((y_size, x_size), dtype=np.float32) * -9999.9)
     dst.SetGeoTransform(geot)
