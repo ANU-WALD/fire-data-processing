@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 import xarray as xr
 
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
+#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051" #old
 mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006"
 
 def get_vegmask(tile_id, tile_date):
@@ -18,9 +18,11 @@ def get_vegmask(tile_id, tile_date):
         msk_date =  datetime.strptime(mask_path.split("/")[-1], '%Y.%m.%d')
         if msk_date > tile_date:
             continue
-          
+        
+        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))  #old
         files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.006.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
-        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
+
+
         if len(files) == 1:
             #veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
             veg_mask = xr.open_dataset(files[0]).LC_Type1[:].data
@@ -77,13 +79,17 @@ def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         var.units = "m"
         var.long_name = "x coordinate of projection"
         var.standard_name = "projection_x_coordinate"
-        var[:] = np.linspace(geot[0], geot[0]+(geot[1]*rast.RasterXSize), rast.RasterXSize)
+        x_min_netcdf = geot[0] + (geot[1]/2) #netcdf: coords of centre of pixel; gdal's geot: coord of UL corner --> UL x + half resolution
+        x_max_netcdf = x_min_netcdf + (geot[1]*rast.RasterXSize) - geot[1]
+        var[:] = np.linspace(x_min_netcdf, x_max_netcdf, rast.RasterXSize)
         
         var = ds.createVariable("y", "f8", ("y",))
         var.units = "m"
         var.long_name = "y coordinate of projection"
         var.standard_name = "projection_y_coordinate"
-        var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
+        y_max_netcdf = geot[3] + (geot[5]/2) #NB: geot[5] is negative, so effectively this is a subtraction | netcdf: coords of centre of pixel; gdal's geot: coord of UL corner --> UL y - half resolution
+        y_min_netcdf = y_max_netcdf + (geot[5]*rast.RasterYSize) - geot[5] #NB: geot[5] is negative
+        var[:] = np.linspace(y_max_netcdf, y_min_netcdf, rast.RasterYSize)
         
         var = ds.createVariable("lfmc_mean", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "LFMC Arithmetic Mean"
@@ -143,13 +149,17 @@ def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
         var.units = "m"
         var.long_name = "x coordinate of projection"
         var.standard_name = "projection_x_coordinate"
-        var[:] = np.linspace(geot[0], geot[0]+(geot[1]*rast.RasterXSize), rast.RasterXSize)
+        x_min_netcdf = geot[0] + (geot[1]/2) #netcdf: coords of centre of pixel; gdal's geot: coord of UL corner --> UL x + half resolution
+        x_max_netcdf = x_min_netcdf + (geot[1]*rast.RasterXSize) - geot[1]
+        var[:] = np.linspace(x_min_netcdf, x_max_netcdf, rast.RasterXSize)
         
         var = ds.createVariable("y", "f8", ("y",))
         var.units = "m"
         var.long_name = "y coordinate of projection"
         var.standard_name = "projection_y_coordinate"
-        var[:] = np.linspace(geot[3], geot[3]+(geot[5]*rast.RasterYSize), rast.RasterYSize)
+        y_max_netcdf = geot[3] + (geot[5]/2) #NB: geot[5] is negative, so effectively this is a subtraction | netcdf: coords of centre of pixel; gdal's geot: coord of UL corner --> UL y - half resolution
+        y_min_netcdf = y_max_netcdf + (geot[5]*rast.RasterYSize) - geot[5] #NB: geot[5] is negative
+        var[:] = np.linspace(y_max_netcdf, y_min_netcdf, rast.RasterYSize)
         
         var = ds.createVariable("flammability", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "Flammability Index"
@@ -294,6 +304,7 @@ def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
         var[:] = q_mask[None,...]
 
 """
+# OLD
 # All Modis 7 bands are 2400x2400 so we just get geotransform for Band1
 def get_affine(geot):
     
