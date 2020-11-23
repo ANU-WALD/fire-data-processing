@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P ac76
 #PBS -q normal
-#PBS -l storage=gdata/xc0+gdata/u39
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
 #PBS -l ncpus=1
 #PBS -l mem=4GB
 #PBS -l walltime=20:00:00
@@ -9,4 +9,4 @@
 
 module load cdo
 cd /g/data/xc0/user/scortechini/github/fire-data-processing
-/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d $year -t $tile -dst /g/data/xc0/user/scortechini/correct_tiles/fmc/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
+/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc_different_mcd43a4_path.py -d $year -t $tile -dst /g/data/ub8/au/FMC/c6/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS

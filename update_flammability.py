@@ -10,7 +10,7 @@ import shutil
 import sys
 
 fmc_stack_path = "/g/data/ub8/au/FMC/c6/fmc_c6_{}_{}.nc"
-fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2016_{}.nc"
+fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2019_{}.nc"
 tile_size = 2400
 
 def mcd_date_gen(year):
@@ -82,13 +82,13 @@ def compute_flammability(t, tile):
     t2 = get_t(np.datetime64(t - timedelta(days=16), "ns"), tile)
     if t2 == None:
         return None, None
-    
+
     mean = xr.open_dataset(fmc_mean_path.format(tile)).lfmc_mean.data
     fmc_t1 = get_fmc(t1, tile)
     fmc_t2 = get_fmc(t2, tile)
     anomaly = fmc_t1 - mean
     diff = fmc_t2 - fmc_t1
- 
+
     grass = 0.18 - 0.01 * mean + 0.020 * diff - 0.02 * anomaly
     grass = 1 / (1 + np.e ** - grass)
     shrub = 5.66 - 0.09 * mean + 0.005 * diff - 0.28 * anomaly

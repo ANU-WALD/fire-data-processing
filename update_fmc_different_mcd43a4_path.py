@@ -1,3 +1,4 @@
+
 import os.path
 from osgeo import gdal
 import numpy as np
@@ -10,9 +11,10 @@ import uuid
 import shutil
 import sys
 
+# different path:
 mcd43_root = '/g/data/xc0/user/scortechini/mcd43a4'
-#mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"  # old version
+
+
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type, band_mask):
@@ -153,3 +155,4 @@ if __name__ == "__main__":
 
     for modis_tile in modis_tiles:
         update_fmc(modis_tile, args.destination, args.tmp, args.compression)
+
