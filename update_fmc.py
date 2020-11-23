@@ -11,7 +11,6 @@ import shutil
 import sys
 
 mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"  # old version
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type, band_mask):
