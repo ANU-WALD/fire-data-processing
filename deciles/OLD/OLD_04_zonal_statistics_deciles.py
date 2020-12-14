@@ -19,7 +19,7 @@ polygons:
 /g/data1a/xc0/original/GIS/Australia/ABS/LGAs
 used QGIS for rasterization
 
-gdal_rasterize -l LGA11aAust_wgs84 -a LGA_CODE11 -tr 0.005 0.005 -a_nodata -9999.0 -te 112.9975 -43.9975 153.9975 -9.9975 -ot Float32 -of netCDF -co WRITE_BOTTOMUP=NO /g/data/xc0/user/ali/projects/AFMS/c6/mask_areas/LGA11aAust_wgs84.shp /g/data/xc0/user/ali/projects/AFMS/c6/mask_areas/mask_plgs.nc
+gdal_rasterize -l LGA11aAust_wgs84 -a LGA_CODE11 -tr 0.005 0.005 -a_nodata -9999.0 -te 113.0 -43.995 154.0 -9.995 -ot Float32 -of netCDF -co WRITE_BOTTOMUP=NO /g/data/xc0/user/ali/projects/AFMS/c6/mask_areas/LGA11aAust_wgs84.shp /g/data/xc0/user/ali/projects/AFMS/c6/mask_areas/mask_plgs.nc
 
 
 sdd     single date decile and decile group file in NetCDF format

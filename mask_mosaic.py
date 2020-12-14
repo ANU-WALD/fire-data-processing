@@ -13,7 +13,7 @@ wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572
 tile_size = 2400
 
 def compose_mosaic(year, dst_path):
-    print("{}/{}_latlon_mask.nc".format(dst_path, year))
+    print(dst_path, year)
     
     lat_max = -10.
     lat_min = -44.
@@ -71,7 +71,7 @@ def compose_mosaic(year, dst_path):
         err = gdal.ReprojectImage(src, dst, None, None, gdal.GRA_NearestNeighbour)
         print(err)
   
-    with netCDF4.Dataset("{}/mask_{}.nc".format(dst_path, year), 'w', format='NETCDF4_CLASSIC') as ds:
+    with netCDF4.Dataset("{}".format(dst_path), 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
             attrs = json.load(data_file)
             for key in attrs:

@@ -68,7 +68,7 @@ with nc.Dataset(nc_plg_path_file, 'r') as plgs_fid:
     plgs_arr[plgs_arr == -9999] = np.nan
     plg_ids = np.unique(plgs_arr[~np.isnan(plgs_arr)])
 
-nc_vegmask_path_file = '/g/data/ub8/au/FMC/c6/mosaics/mask_2017.nc'
+nc_vegmask_path_file = '/g/data/ub8/au/FMC/c6/mosaics/mask_2018.nc'
 # getting veg mask layer the netcdf file
 with nc.Dataset(nc_vegmask_path_file, 'r') as vegmask_fid:
     vegmask_arr = np.array(vegmask_fid.variables['quality_mask'][:]).astype(np.float)[0, :, :]
