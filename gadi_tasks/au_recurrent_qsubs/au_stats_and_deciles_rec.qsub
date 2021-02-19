@@ -1,14 +1,14 @@
 #!/bin/bash
 #PBS -P fo65
-#PBS -a 2300
+#PBS -a 0910
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/ub8
-#PBS -l ncpus=1
-#PBS -l mem=4GB
-#PBS -l walltime=20:00:00
-#PBS -l jobfs=100GB
+#PBS -l ncpus=8
+#PBS -l mem=32GB
+#PBS -l walltime=15:00:00
 
-module load cdo
+module load netcdf
+module load nco
 
 cd /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/
 
@@ -37,4 +37,4 @@ cd /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/
 
 
 cd /g/data/xc0/user/scortechini/github/fire-data-processing/
-/g/data/xc0/software/conda-envs/rs3/bin/python gadi_tasks/au_recurrent_qsubs/au_deciles_and_stats_qsub_rec.py
+/g/data/xc0/software/conda-envs/rs3/bin/python gadi_tasks/au_recurrent_qsubs/au_stats_and_deciles_qsub_rec.py
