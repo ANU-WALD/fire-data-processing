@@ -167,4 +167,4 @@ with nc.Dataset(sdd_temp_path_file, "r+", format='NETCDF4_CLASSIC') as sdd_fid:
                 var_sdd_time[cnt_dt] = date2num(onc_date, units='seconds since 1970-01-01 00:00:00.0', calendar='standard')
 
 shutil.copyfile(sdd_temp_path_file, sdd_path_file)
-os.remove(sdd_temp_path_file)
+#os.remove(sdd_temp_path_file)
