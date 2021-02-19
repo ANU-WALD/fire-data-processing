@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -P fo65
+#PBS -a 1300
+#PBS -q normal
+#PBS -l storage=gdata/xc0
+#PBS -l ncpus=1
+#PBS -l mem=4GB
+#PBS -l walltime=10:00:00
+#PBS -l jobfs=100GB
+
+/g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/au_recurrent_qsubs/au_stats_and_deciles_qsub_rec.py
