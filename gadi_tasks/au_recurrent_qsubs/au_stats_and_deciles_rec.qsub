@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -P fo65
-#PBS -a 0910
+#PBS -a 1600
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/ub8
 #PBS -l ncpus=8
