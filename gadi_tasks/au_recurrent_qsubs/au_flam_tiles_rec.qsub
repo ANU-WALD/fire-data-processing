@@ -12,6 +12,6 @@ module load cdo
 cd /g/data/xc0/user/scortechini/github/fire-data-processing
 /g/data/xc0/software/conda-envs/rs3/bin/python update_flammability.py -y $year -t $tile -dst /g/data/ub8/au/FMC/c6/flam_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
 
-cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/au_recurrent_qsubs
-qsub -v year=${year},tile=${tile} au_flam_tiles_rec.qsub
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/jobs_reports
+qsub -v year=${year},tile=${tile} /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/au_recurrent_qsubs/au_flam_tiles_rec.qsub
 
