@@ -13,5 +13,5 @@ cd /g/data/xc0/user/scortechini/github/fire-data-processing
 /g/data/xc0/software/conda-envs/rs3/bin/python update_fmc_mosaic.py -y $year -dst /g/data/ub8/au/FMC/c6/mosaics/fmc_c6_${year}.nc -tmp $PBS_JOBFS
 
 
-cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/au_recurrent_qsubs
-qsub -v year=${year} au_fmc_mosaics_rec.qsub
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/jobs_reports
+qsub -v year=${year} /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/au_recurrent_qsubs/au_fmc_mosaics_rec.qsub
