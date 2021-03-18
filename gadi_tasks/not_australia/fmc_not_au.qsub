@@ -1,0 +1,12 @@
+#!/bin/bash
+#PBS -P fo65
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/u39
+#PBS -l ncpus=1
+#PBS -l mem=4GB
+#PBS -l walltime=05:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+cd /g/data/xc0/user/scortechini/github/fire-data-processing
+/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d $year -t $tile -dst /g/data/xc0/user/scortechini/lfmc_not_au/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
