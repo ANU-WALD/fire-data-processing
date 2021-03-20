@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -P fo65
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/ub8
+#PBS -l ncpus=8
+#PBS -l mem=150GB
+#PBS -l walltime=00:30:00
+
+module load cdo
+
+cd /g/data/xc0/user/scortechini/github/fire-data-processing
+
+/g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/chunk_fmc_files.py -y 2020 -dst /g/data/ub8/au/FMC/perf_prof_test/fmc_c6_2020.nc
+
+/g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/chunk_flam_files.py -y 2020 -dst /g/data/ub8/au/FMC/perf_prof_test/flam_c6_2020.nc
