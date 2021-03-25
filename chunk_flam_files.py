@@ -39,20 +39,20 @@ def pack_flammability_mosaic_chunks(dates, flam, dest):
         x_dim = ds.createDimension("longitude", x_size)
         y_dim = ds.createDimension("latitude", y_size)
 
-        var = ds.createVariable("time", "f8", ("time",))
+        var = ds.createVariable("time", "f8", ("time",), chunksizes=(len(dates)))
         var.units = "seconds since 1970-01-01 00:00:00.0"
         var.calendar = "standard"
         var.long_name = "Time, unix time-stamp"
         var.standard_name = "time"
         var[:] = netCDF4.date2num(dates, units="seconds since 1970-01-01 00:00:00.0", calendar="standard")
 
-        var = ds.createVariable("longitude", "f8", ("longitude",))
+        var = ds.createVariable("longitude", "f8", ("longitude",), chunksizes=(50))
         var.units = "degrees"
         var.long_name = "longitude"
         var.standard_name = "longitude"
         var[:] = np.linspace(lon_min, lon_max-res, num=x_size)
         
-        var = ds.createVariable("latitude", "f8", ("latitude",))
+        var = ds.createVariable("latitude", "f8", ("latitude",), chunksizes=(50))
         var.units = "degrees"
         var.long_name = "latitude"
         var.standard_name = "latitude"

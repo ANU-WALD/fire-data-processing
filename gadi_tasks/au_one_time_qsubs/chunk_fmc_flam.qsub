@@ -3,7 +3,7 @@
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/ub8
 #PBS -l ncpus=8
-#PBS -l mem=150GB
+#PBS -l mem=180GB
 #PBS -l walltime=00:30:00
 
 module load cdo
