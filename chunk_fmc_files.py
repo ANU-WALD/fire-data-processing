@@ -27,6 +27,7 @@ def pack_fmc_mosaic_chunks(dates, fmc_mean, dest):
     
     x_size = int((lon_max - lon_min)/res)
     y_size = int((lat_max - lat_min)/res)
+    t_size = len(dates)
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -35,30 +36,30 @@ def pack_fmc_mosaic_chunks(dates, fmc_mean, dest):
                 setattr(ds, key, attrs[key])
         setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
         
-        t_dim = ds.createDimension("time", len(dates))
+        t_dim = ds.createDimension("time", t_size)
         x_dim = ds.createDimension("longitude", x_size)
         y_dim = ds.createDimension("latitude", y_size)
 
-        var = ds.createVariable("time", "f8", ("time",), chunksizes=(len(dates)))
+        var = ds.createVariable("time", "f8", ("time",), chunksizes=(t_size,))
         var.units = "seconds since 1970-01-01 00:00:00.0"
         var.calendar = "standard"
         var.long_name = "Time, unix time-stamp"
         var.standard_name = "time"
         var[:] = netCDF4.date2num(dates, units="seconds since 1970-01-01 00:00:00.0", calendar="standard")
 
-        var = ds.createVariable("longitude", "f8", ("longitude",), chunksizes=(50))
+        var = ds.createVariable("longitude", "f8", ("longitude",), chunksizes=(50,))
         var.units = "degrees"
         var.long_name = "longitude"
         var.standard_name = "longitude"
         var[:] = np.linspace(lon_min, lon_max-res, num=x_size)
         
-        var = ds.createVariable("latitude", "f8", ("latitude",), chunksizes=(50))
+        var = ds.createVariable("latitude", "f8", ("latitude",), chunksizes=(50,))
         var.units = "degrees"
         var.long_name = "latitude"
         var.standard_name = "latitude"
         var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
-        var = ds.createVariable("fmc_mean", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9, chunksizes=(len(dates),50,50))
+        var = ds.createVariable("fmc_mean", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9, chunksizes=(t_size,50,50))
         var.long_name = "Mean Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_mean[...]
