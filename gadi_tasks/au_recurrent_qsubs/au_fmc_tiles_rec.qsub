@@ -1,10 +1,10 @@
 #!/bin/bash
 #PBS -P fo65
-#PBS -a 0000
+#PBS -a 1900
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
 #PBS -l ncpus=1
-#PBS -l mem=4GB
+#PBS -l mem=6GB
 #PBS -l walltime=20:00:00
 #PBS -l jobfs=100GB
 

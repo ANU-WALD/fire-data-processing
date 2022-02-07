@@ -7,17 +7,17 @@ import pandas as pd
 from functions_io import load_pickle
 
 # module load nco
-# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp LGA fmc_mean
-# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp FWA fmc_mean
-# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp LGA flammability
-# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp FWA flammability
+# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp LGA fmc_mean
+# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp FWA fmc_mean
+# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp LGA flammability
+# /g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp FWA flammability
 
 
 temp_path = sys.argv[1]
 plg_name = sys.argv[2]
 nc_var = sys.argv[3]
 
-# temp_path = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/temp'
+# temp_path = '/g/data/ub8/au/FMC/calc_deciles/data/temp'
 # plg_name = 'LGA'  # LGA or FWA or States
 # nc_var = 'flammability'
 

@@ -17,7 +17,7 @@ calculates zonal stats for original netcdf products for flammability and fmc_mea
 this script does not work with decile products
 
 to run
-/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp flammability 2018 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2018 LGA
 
 NO NEED to run it independately, as 00_task_manager_dc.py will do it
 
@@ -30,7 +30,7 @@ plg_name = sys.argv[4]  # LGA or FWA or States
 
 # nc_var = 'flammability'
 # nc_year = '2018'
-# temp_path = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/temp'
+# temp_path = '/g/data/ub8/au/FMC/calc_deciles/data/temp'
 # plg_name = 'LGA'
 
 var_short_dict = {
@@ -56,11 +56,11 @@ if not os.path.exists(zst_temp_path):
     os.mkdir(zst_temp_path)
 
 if plg_name == 'LGA':
-    nc_plg_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/LGAs/LGA11aAust.nc'
+    nc_plg_path_file = '/g/data/ub8/au/FMC/calc_deciles/data/LGAs/LGA11aAust.nc'
 elif plg_name == 'FWA':
-    nc_plg_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/FWA/gfe_fire_weather.nc'
+    nc_plg_path_file = '/g/data/ub8/au/FMC/calc_deciles/data/FWA/gfe_fire_weather.nc'
 else:
-    nc_plg_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/States/aus_states.nc'
+    nc_plg_path_file = '/g/data/ub8/au/FMC/calc_deciles/data/States/aus_states.nc'
 
 # getting plg ids from the netcdf file
 with nc.Dataset(nc_plg_path_file, 'r') as plgs_fid:
@@ -119,7 +119,7 @@ with nc.Dataset(nc_path_file, 'r') as nc_fid:
 
                 out_dict['stats']['min'] = np.nanmin(np_arr)
                 out_dict['stats']['max'] = np.nanmax(np_arr)
-                out_dict['stats']['avg'] = np.round(np.nanmean(np_arr), 0)
+                out_dict['stats']['avg'] = np.round(np.nanmean(np_arr), decimals=2)
 
                 for vg_class in [0.0, 1.0, 2.0, 3.0]:
                     np_arr0 = copy(np_arr)
@@ -131,7 +131,7 @@ with nc.Dataset(nc_path_file, 'r') as nc_fid:
 
                     out_dict['stats']['min_' + str(int(vg_class))] = np.nanmin(np_arr0)
                     out_dict['stats']['max_' + str(int(vg_class))] = np.nanmax(np_arr0)
-                    out_dict['stats']['avg_' + str(int(vg_class))] = np.round(np.nanmean(np_arr0), 0)
+                    out_dict['stats']['avg_' + str(int(vg_class))] = np.round(np.nanmean(np_arr0), decimals=2)
 
             return out_dict
 
