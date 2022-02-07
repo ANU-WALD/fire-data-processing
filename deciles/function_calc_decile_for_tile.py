@@ -5,7 +5,7 @@ import numpy as np
 from copy import copy
 
 tile_path_file = sys.argv[1]
-# tile_path_file = '/g/data/xc0/project/FMC_Australia/calc_deciles/data/temp/temp_tiles/flam_1.nc/flammability__1.pk'
+# tile_path_file = '/g/data/ub8/au/FMC/calc_deciles/data/temp/temp_tiles/flam_1.nc/flammability__1.pk'
 tile_path = os.path.dirname(tile_path_file)
 tile_file = os.path.basename(tile_path_file)
 

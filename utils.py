@@ -8,7 +8,8 @@ from datetime import datetime
 import xarray as xr
 
 #mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051" #old
-mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006"
+#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006" #currently lacking of 2019 files
+mcd12q1_path = "/g/data/ub8/au/FMC/MCD12Q1.006"
 
 def get_vegmask(tile_id, tile_date):
     mask_paths = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]
@@ -348,6 +349,19 @@ def get_fmc_functor():
         return mean, np.sqrt(np.einsum('i->',(fmc[idxs]-mean)**2)/idxs.shape[0])
 
     return get_fmc
+
+
+def get_fmc_functor_median():
+    # Load FMC table
+    fmc = np.load("./FMC.npy")
+    
+    def get_fmc_median(idxs, fmc=fmc):
+        # Select Veg type subset from LUT table
+        mean = np.einsum('i->', fmc[idxs])/idxs.shape[0]
+        median = np.nanmedian(fmc[idxs])
+        return median, np.sqrt(np.einsum('i->',(fmc[idxs]-mean)**2)/idxs.shape[0])
+
+    return get_fmc_median
 
 
 def get_vegtype_idx(veg_type):
