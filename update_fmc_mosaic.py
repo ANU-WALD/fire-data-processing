@@ -2,7 +2,7 @@ import os.path
 import numpy as np
 import argparse
 from glob import glob
-from utils import pack_fmc_mosaic, get_vegmask
+from utils import pack_fmc_mosaic
 from datetime import datetime, timedelta
 import xarray as xr
 import uuid
@@ -33,11 +33,11 @@ def get_fmc_stack_dates(year):
     dates = []
 
     for au_tile in au_tiles:
-        flam_file = fmc_stack_path.format(year, au_tile)
-        if not os.path.isfile(flam_file):
+        fmc_file = fmc_stack_path.format(year, au_tile)
+        if not os.path.isfile(fmc_file):
             print("Missing:", au_tile)
             return []
-        ds = xr.open_dataset(flam_file)
+        ds = xr.open_dataset(fmc_file)
         if not dates:
             dates = list(ds.time.data)
         else:
@@ -87,13 +87,13 @@ def compose_mosaic(date, n_band, var_name, data_type):
 
 def update_fmc_mosaic(date, n_band, dst, tmp, comp):
             
-    fmc_mean = compose_mosaic(date, n_band, "lfmc_mean", gdal.GDT_Float32)
+    fmc_median = compose_mosaic(date, n_band, "lfmc_median", gdal.GDT_Float32)
     fmc_stdv = compose_mosaic(date, n_band, "lfmc_stdv", gdal.GDT_Float32)
     q_mask = compose_mosaic(date, n_band, "quality_mask", gdal.GDT_Byte)
     
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
-    pack_fmc_mosaic(d, fmc_mean, fmc_stdv, q_mask, tmp_file)
+    pack_fmc_mosaic(d, fmc_median, fmc_stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)

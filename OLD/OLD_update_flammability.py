@@ -10,7 +10,7 @@ import shutil
 import sys
 
 fmc_stack_path = "/g/data/ub8/au/FMC/c6/fmc_c6_{}_{}.nc"
-fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2021_{}.nc"
+fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2019_{}.nc"
 tile_size = 2400
 
 def mcd_date_gen(year):
@@ -43,7 +43,7 @@ def get_fmc(date, tile):
     fmc_file = fmc_stack_path.format(d.year, tile)
     
     if os.path.isfile(fmc_file):
-        return xr.open_dataset(fmc_file).lfmc_median.loc[date, :].data
+        return xr.open_dataset(fmc_file).lfmc_mean.loc[date, :].data
 
     return None
 
@@ -83,7 +83,7 @@ def compute_flammability(t, tile):
     if t2 == None:
         return None, None
 
-    mean = xr.open_dataset(fmc_mean_path.format(tile)).lfmc_median.data  #the variable is called lfmc_median becasue LFMC values are a median between the values corresponding to the 40 most similar spectra of what observed
+    mean = xr.open_dataset(fmc_mean_path.format(tile)).lfmc_mean.data
     fmc_t1 = get_fmc(t1, tile)
     fmc_t2 = get_fmc(t2, tile)
     anomaly = fmc_t1 - mean

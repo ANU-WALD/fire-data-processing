@@ -1,0 +1,12 @@
+#!/bin/bash
+#PBS -P fo65
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
+#PBS -l ncpus=1
+#PBS -l mem=40GB
+#PBS -l walltime=20:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+cd /g/data/xc0/user/scortechini/github/fire-data-processing
+/g/data/xc0/software/conda-envs/rs3/bin/python update_flammability_mosaic.py -y $year -dst /g/data/ub8/au/FMC/c6/mosaics/flam_c6_${year}.nc -tmp $PBS_JOBFS

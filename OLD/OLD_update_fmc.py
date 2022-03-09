@@ -11,12 +11,9 @@ import shutil
 import sys
 
 mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051"
 tile_size = 2400
 
-def fmc(raster_stack, q_mask, veg_type):
-    # I think this is a problem with the current data, this is what I think whould be here
-    #ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 2])/(raster_stack[:, :, 1]+raster_stack[:, :, 2])
+def fmc(raster_stack, q_mask, veg_type, band_mask):
     ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
 
     # In case the mask doesn't exist
@@ -32,7 +29,8 @@ def fmc(raster_stack, q_mask, veg_type):
     for i in range(tile_size):
         for j in range(tile_size):
             #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and q_mask[j, i]:
-            if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15:
+            #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15:
+            if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and band_mask[j, i]:
                 top_40 = get_top_n(raster_stack[j, i, :], veg_type[j, i], 40)
                 mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
 
@@ -40,23 +38,34 @@ def fmc(raster_stack, q_mask, veg_type):
 
 
 def get_reflectances(tile_path):
-    #Special case where we don't use all the bands 1, 2, 4, 6, 7
+    #Special case where we don't use all the bands, only bands 1, 2, 4, 6, 7 are needed for the LUTs
     bands = [1,2,4,6,7]
 
-    ref_stack = xr.open_dataset(tile_path).Nadir_Reflectance_Band1[:].data.astype(np.float32)
-    q_mask = xr.open_dataset(tile_path).BRDF_Albedo_Band_Mandatory_Quality_Band1[:].data
+    tile_file = xr.open_dataset(tile_path)
+
+    # sometimes band 6 (maybe also other bands?) has more missing data than other bands, 
+    # the following mask is to make sure the final LFMC images are composed only by pixels present in all bands, to avoid artifacts
+    band_mask = ~np.isnan(tile_file.Nadir_Reflectance_Band1[:].data.astype(np.float32))
+
+    ref_stack = tile_file.Nadir_Reflectance_Band1[:].data.astype(np.float32)
+    q_mask = tile_file.BRDF_Albedo_Band_Mandatory_Quality_Band1[:].data
     
     for i in bands[1:]:
-        ref_stack = np.dstack((ref_stack, xr.open_dataset(tile_path)["Nadir_Reflectance_Band{}".format(i)][:].data.astype(np.float32)))
-        q_mask = np.dstack((q_mask, xr.open_dataset(tile_path)["BRDF_Albedo_Band_Mandatory_Quality_Band{}".format(i)]))
+        ref_array = tile_file["Nadir_Reflectance_Band{}".format(i)][:].data.astype(np.float32)
+
+        ref_stack = np.dstack((ref_stack, ref_array))
+        q_mask = np.dstack((q_mask, tile_file["BRDF_Albedo_Band_Mandatory_Quality_Band{}".format(i)]))
+        band_mask = np.dstack((band_mask, ~np.isnan(ref_array)))
     
-    # VDII compositions between bands 2 and 6 -> indexes 1 and 3
+    # NDII6 compositions between bands 2 and 6 -> indexes 1 and 3
     ref_stack = np.dstack((ref_stack, (ref_stack[:, :, 1]-ref_stack[:, :, 3])/(ref_stack[:, :, 1]+ref_stack[:, :, 3])))
 
     q_mask = q_mask == 0
     q_mask = np.all(q_mask, axis=2)
 
-    return ref_stack, q_mask
+    band_mask = np.all(band_mask, axis=2)
+
+    return ref_stack, q_mask, band_mask
 
 
 def get_fmc_stack_dates(f_path):
@@ -91,8 +100,8 @@ def update_fmc(modis_path, dst, tmp, comp):
     tile_id = modis_tile.split("/")[-1].split(".")[2]
 
     veg_type = get_vegmask(tile_id, date)
-    ref_stack, q_mask = get_reflectances(modis_path)
-    mean, stdv = fmc(ref_stack, q_mask, veg_type)
+    ref_stack, q_mask, band_mask = get_reflectances(modis_path)
+    mean, stdv = fmc(ref_stack, q_mask, veg_type, band_mask)
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
 
     pack_fmc(modis_path, date, mean, stdv, q_mask, tmp_file)

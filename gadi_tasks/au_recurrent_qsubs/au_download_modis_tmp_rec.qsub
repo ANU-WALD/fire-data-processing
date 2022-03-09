@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -P fo65
+#PBS -a 1539
+#PBS -q copyq
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
+#PBS -l ncpus=1
+#PBS -l mem=4GB
+#PBS -l walltime=10:00:00
+
+module load cdo
+/g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/python_scripts/tmp_solution_download_modis.py -y $year
+
+
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/jobs_reports
+qsub -v year=${year}  /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/au_recurrent_qsubs/au_download_modis_tmp_rec.qsub
