@@ -12,7 +12,6 @@ import shutil
 import sys
 
 # different path:
-#mcd43_root = '/g/data/xc0/user/scortechini/mcd43a4'
 mcd43_root = '/g/data/xc0/tmp/MCD43A4.006'
 
 
