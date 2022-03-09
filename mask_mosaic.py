@@ -103,7 +103,7 @@ def compose_mosaic(year, dst_path):
         var.standard_name = "latitude"
         var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
-        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
+        var = ds.createVariable("veg_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
         var.long_name = "Vegetation Mask"
         var.units = 'Cat'
         var[:] = dst.ReadAsArray()[None,...]

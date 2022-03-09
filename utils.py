@@ -7,7 +7,6 @@ import os
 from datetime import datetime
 import xarray as xr
 
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c5/MCD12Q1.051" #old
 #mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006" #currently lacking of 2019 files
 mcd12q1_path = "/g/data/ub8/au/FMC/MCD12Q1.006"
 
@@ -20,12 +19,10 @@ def get_vegmask(tile_id, tile_date):
         if msk_date > tile_date:
             continue
         
-        #files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.051.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))  #old
         files = glob("{0}/MCD12Q1.A{1}{2:03d}.{3}.006.*.hdf".format(mask_path, msk_date.year, msk_date.timetuple().tm_yday, tile_id))
 
 
         if len(files) == 1:
-            #veg_mask = xr.open_dataset(files[0]).Land_Cover_Type_1[:].data
             veg_mask = xr.open_dataset(files[0]).LC_Type1[:].data
 
             veg_mask[veg_mask == 1] = 3
@@ -52,7 +49,7 @@ def get_vegmask(tile_id, tile_date):
     
     return None
 
-def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
+def pack_fmc(hdf_file, date, median_arr, std_arr, q_mask, dest):
     
     with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
@@ -92,11 +89,11 @@ def pack_fmc(hdf_file, date, mean_arr, std_arr, q_mask, dest):
         y_min_netcdf = y_max_netcdf + (geot[5]*rast.RasterYSize) - geot[5] #NB: geot[5] is negative
         var[:] = np.linspace(y_max_netcdf, y_min_netcdf, rast.RasterYSize)
         
-        var = ds.createVariable("lfmc_mean", 'f4', ("time", "y", "x"), fill_value=-9999.9)
-        var.long_name = "LFMC Arithmetic Mean"
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var.long_name = "LFMC Median"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
-        var[:] = mean_arr[None,...]
+        var[:] = median_arr[None,...]
 
         var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=-9999.9)
         var.long_name = "LFMC Standard Deviation"
@@ -131,7 +128,7 @@ def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
                 setattr(ds, key, attrs[key])
         setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
         
-        rast = gdal.Open('NETCDF:"{}":lfmc_mean'.format(fmc_file))
+        rast = gdal.Open('NETCDF:"{}":lfmc_median'.format(fmc_file))
         proj_wkt = rast.GetProjection()
         geot = rast.GetGeoTransform()
         
@@ -193,7 +190,7 @@ def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
 
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
-def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
+def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
     lat_max = -10.
     lat_min = -44.
     lon_max = 154.
@@ -211,8 +208,8 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
         
         t_dim = ds.createDimension("time", 1)
-        x_dim = ds.createDimension("longitude", fmc_mean.shape[1])
-        y_dim = ds.createDimension("latitude", fmc_mean.shape[0])
+        x_dim = ds.createDimension("longitude", fmc_median.shape[1])
+        y_dim = ds.createDimension("latitude", fmc_median.shape[0])
 
         var = ds.createVariable("time", "f8", ("time",))
         var.units = "seconds since 1970-01-01 00:00:00.0"
@@ -233,12 +230,12 @@ def pack_fmc_mosaic(date, fmc_mean, fmc_stdv, q_mask, dest):
         var.standard_name = "latitude"
         var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
-        var = ds.createVariable("fmc_mean", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
-        var.long_name = "Mean Live Fuel Moisture Content"
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var.long_name = "Median Live Fuel Moisture Content"
         var.units = '%'
-        var[:] = fmc_mean[None,...]
+        var[:] = fmc_median[None,...]
 
-        var = ds.createVariable("fmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
         var.long_name = "Standard Deviation Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_stdv[None,...]
@@ -339,6 +336,7 @@ def get_tile_map_transformer(tile_path, map_path):
     return transformer
 """
 
+# Obsolete method
 def get_fmc_functor():
     # Load FMC table
     fmc = np.load("./FMC.npy")
@@ -350,7 +348,7 @@ def get_fmc_functor():
 
     return get_fmc
 
-
+# Current method
 def get_fmc_functor_median():
     # Load FMC table
     fmc = np.load("./FMC.npy")
