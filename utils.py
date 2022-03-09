@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 import xarray as xr
 
-#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006" #currently lacking of 2019 files
+#mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006" #currently lacking of 2019 and 2020 files
 mcd12q1_path = "/g/data/ub8/au/FMC/MCD12Q1.006"
 
 def get_vegmask(tile_id, tile_date):
