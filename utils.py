@@ -8,7 +8,7 @@ from datetime import datetime
 import xarray as xr
 
 #mcd12q1_path = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD12Q1.006" #this directory is currently lacking of 2019 and 2020 files
-mcd12q1_path = "/g/data/ub8/au/FMC/MCD12Q1.006"
+mcd12q1_path = "/g/data/ub8/au/FMC/intermediary_files/MCD12Q1.006"
 
 def get_vegmask(tile_id, tile_date):
     mask_paths = sorted(glob("{}/*".format(mcd12q1_path)))[::-1]

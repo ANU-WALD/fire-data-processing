@@ -14,7 +14,7 @@ import netCDF4
 import json
 
 
-flam_stack_path = "/g/data/ub8/au/FMC/c6/mosaics/flam_c6_{}.nc"
+flam_stack_path = "/g/data/ub8/au/FMC/mosaics/flam_c6_{}.nc"
 
 
 #def pack_flammability_mosaic_chunks(dates, flam, anom, q_mask, dest):

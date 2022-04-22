@@ -17,7 +17,7 @@ for au_tile in au_tiles:
         
         for year in range(year_start,year_end+1):
 
-            tile = xr.open_dataset('/g/data/ub8/au/FMC/c6/fmc_c6_{0}_{1}.nc'.format(year, au_tile))
+            tile = xr.open_dataset('/g/data/ub8/au/FMC/tiles/fmc_c6_{0}_{1}.nc'.format(year, au_tile))
 
             for d in tile.time.data:
 

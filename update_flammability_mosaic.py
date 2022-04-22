@@ -10,7 +10,7 @@ import shutil
 import sys
 from osgeo import gdal 
 
-flam_stack_path = "/g/data/ub8/au/FMC/c6/flam_c6_{}_{}.nc"
+flam_stack_path = "/g/data/ub8/au/FMC/tiles/flam_c6_{}_{}.nc"
 au_tiles = ["h27v11", "h27v12", "h28v11", "h28v12", "h28v13", "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", "h32v10", "h32v11"]
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 tile_size = 2400

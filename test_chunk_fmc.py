@@ -13,7 +13,7 @@ import netCDF4
 import json
 
 
-fmc_stack_path = "/g/data/ub8/au/FMC/c6/mosaics/fmc_c6_{}.nc"
+fmc_stack_path = "/g/data/ub8/au/FMC/mosaics/fmc_c6_{}.nc"
 
 def pack_fmc_mosaic_chunks(dates, fmc_mean, dest, t_chunk, lat_chunk, lon_chunk):
     
