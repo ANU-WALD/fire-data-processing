@@ -1,43 +1,45 @@
-
 import os.path
 from osgeo import gdal
 import numpy as np
 import argparse
 from glob import glob
-from utils import get_top_n_functor, get_fmc_functor, pack_fmc, get_vegmask
-from datetime import datetime
+from utils import get_top_n_functor, get_fmc_functor_median, pack_fmc, get_vegmask
+from datetime import timedelta, datetime
 import xarray as xr
 import uuid
 import shutil
 import sys
 
-# different path:
-mcd43_root = ''
-
+mcd43_root = "/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.006"
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type, band_mask):
     ndvi_raster = (raster_stack[:, :, 1]-raster_stack[:, :, 0])/(raster_stack[:, :, 1]+raster_stack[:, :, 0])
+    #print('a')
 
     # In case the mask doesn't exist
     if q_mask is None:
         q_mask = np.ones((tile_size, tile_size), dtype=bool)
-
-    mean_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
+    
+    #print('b')
+    median_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
+    #print('c')
     std_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
-    
+    #print('d')
     get_top_n = get_top_n_functor()
-    get_fmc = get_fmc_functor()
-    
+    #print('e')
+    get_fmc = get_fmc_functor_median()
+    #print('f')
     for i in range(tile_size):
         for j in range(tile_size):
-            #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and q_mask[j, i]:
-            #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15:
+            #print(i,j)
+            #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and q_mask[j, i]: #OLD
+            #if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15:  #OLD
             if veg_type[j, i] > 0 and ndvi_raster[j, i] > .15 and band_mask[j, i]:
                 top_40 = get_top_n(raster_stack[j, i, :], veg_type[j, i], 40)
-                mean_arr[j, i], std_arr[j, i] = get_fmc(top_40)
+                median_arr[j, i], std_arr[j, i] = get_fmc(top_40)
 
-    return mean_arr, std_arr
+    return median_arr, std_arr
 
 
 def get_reflectances(tile_path):
@@ -78,7 +80,25 @@ def get_fmc_stack_dates(f_path):
         
     return []
 
-def get_mcd43_paths(year, tile, file_dates):
+# this function added to modify next one
+def daterange_8(start_date, end_date):
+    n = 0
+
+    while True:
+        d = start_date + timedelta(days=n)
+        if d > end_date:
+            break
+        n += 8  # time range needed (in days)
+        yield d
+
+# this was modified to take only every 8 days, while path contains files every 4 days
+def get_mcd43_paths(year, tile, file_dates):  
+
+    start = datetime(year, 1, 1)
+    end = datetime(year, 12, 31) 
+
+    dates_of_interest = [d.strftime('%Y.%m.%d') for d in daterange_8(start, end)]
+
     paths = []
 
     dirs = glob(mcd43_root + "/*")
@@ -88,7 +108,7 @@ def get_mcd43_paths(year, tile, file_dates):
         if len(tile_date.split(".")) != 3 or int(tile_date.split(".")[0]) != year:
             continue
         d = datetime.strptime(tile_date, '%Y.%m.%d')
-        if np.datetime64(d) not in file_dates and d.year == year:
+        if np.datetime64(d) not in file_dates and tile_date in dates_of_interest:  #this line was modified from "and d.year == year" to "and tile_date in dates_of_interest"
             files = glob(tile_dir + "/*.hdf")
             for f in files:
                 f_parts = os.path.basename(f).split(".")
@@ -101,13 +121,18 @@ def get_mcd43_paths(year, tile, file_dates):
 def update_fmc(modis_path, dst, tmp, comp):
     date = datetime.strptime(modis_path.split("/")[-2], '%Y.%m.%d')
     tile_id = modis_tile.split("/")[-1].split(".")[2]
-
+    
+    print('veg_type')
     veg_type = get_vegmask(tile_id, date)
+    print('get_reflectances')
     ref_stack, q_mask, band_mask = get_reflectances(modis_path)
-    mean, stdv = fmc(ref_stack, q_mask, veg_type, band_mask)
+    print('fmc')
+    median, stdv = fmc(ref_stack, q_mask, veg_type, band_mask)
+    print('tmp_file')
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
+    print('close tmp_file')
 
-    pack_fmc(modis_path, date, mean, stdv, q_mask, tmp_file)
+    pack_fmc(modis_path, date, median, stdv, q_mask, tmp_file)
 
     if not os.path.isfile(dst):
         shutil.move(tmp_file, dst)
@@ -130,7 +155,7 @@ def update_fmc(modis_path, dst, tmp, comp):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Modis Vegetation Analysis argument parser""")
     parser.add_argument('-t', '--tile', type=str, required=True, help="Modis tile in hXXvXX format.")
-    parser.add_argument('-d', '--date', type=str, required=True, help="Date with format YYYYMMDD or YYYY to update with latest data.")
+    parser.add_argument('-d', '--date', type=str, required=True, help="Date with format YYYYMMDD or YYYY to update with latest data every 8 days.")
     parser.add_argument('-c', '--compression', action='store_true', help="Apply compression to destination netCDF4.")
     parser.add_argument('-dst', '--destination', required=True, type=str, help="Full path to destination.")
     parser.add_argument('-tmp', '--tmp', required=True, type=str, help="Full path to destination.")
@@ -151,7 +176,7 @@ if __name__ == "__main__":
         modis_tiles = get_mcd43_paths(int(args.date), args.tile, file_dates)
     else:
         sys.exit(1)
-
+    
     for modis_tile in modis_tiles:
+        print(modis_tile)
         update_fmc(modis_tile, args.destination, args.tmp, args.compression)
-

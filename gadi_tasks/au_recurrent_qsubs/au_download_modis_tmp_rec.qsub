@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -P fo65
+#PBS -P bk75
 #PBS -a 1539
 #PBS -q copyq
 #PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8

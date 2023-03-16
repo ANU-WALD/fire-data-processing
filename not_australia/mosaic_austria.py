@@ -2,7 +2,6 @@ import os.path
 import numpy as np
 import argparse
 from glob import glob
-from utils import pack_fmc_mosaic
 from datetime import datetime, timedelta
 import xarray as xr
 import uuid
@@ -10,11 +9,84 @@ import shutil
 import sys
 from osgeo import gdal 
 from matplotlib import pyplot as plt
+import netCDF4
+import json
+import os
 
-fmc_stack_path = "/g/data/ub8/au/FMC/tiles/fmc_c61_{}_{}.nc"
-au_tiles = ["h27v11", "h27v12", "h28v11", "h28v12", "h28v13", "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", "h32v10", "h32v11"]
+
+#AUSTRIA
+
+lat_max_of_int = 50.
+lat_min_of_int = 40.
+
+lon_max_of_int = 32.
+lon_min_of_int = 0.
+
+res_of_int = 0.005
+
+
+fmc_stack_path = '/g/data/ub8/au/FMC/austria_tiles_check/LFMC_{}_{}_check.nc'
+_tiles = ['h18v04','h19v04']
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 tile_size = 2400
+
+
+def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
+    lat_max = lat_max_of_int
+    lat_min = lat_min_of_int
+    lon_max = lon_max_of_int
+    lon_min = lon_min_of_int
+    res = res_of_int
+    
+    x_size = int((lon_max - lon_min)/res)
+    y_size = int((lat_min - lat_max)/(-1*res))
+    
+    
+    with netCDF4.Dataset(dest, 'w', format='NETCDF4_CLASSIC') as ds:
+        with open('nc_metadata.json') as data_file:
+            attrs = json.load(data_file)
+            for key in attrs:
+                setattr(ds, key, attrs[key])
+        setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
+        
+        t_dim = ds.createDimension("time", 1)
+        x_dim = ds.createDimension("longitude", fmc_median.shape[1])
+        y_dim = ds.createDimension("latitude", fmc_median.shape[0])
+
+        var = ds.createVariable("time", "f8", ("time",))
+        var.units = "seconds since 1970-01-01 00:00:00.0"
+        var.calendar = "standard"
+        var.long_name = "Time, unix time-stamp"
+        var.standard_name = "time"
+        var[:] = netCDF4.date2num([date], units="seconds since 1970-01-01 00:00:00.0", calendar="standard")
+
+        var = ds.createVariable("longitude", "f8", ("longitude",))
+        var.units = "degrees"
+        var.long_name = "longitude"
+        var.standard_name = "longitude"
+        var[:] = np.linspace(lon_min, lon_max-res, num=x_size)
+        
+        var = ds.createVariable("latitude", "f8", ("latitude",))
+        var.units = "degrees"
+        var.long_name = "latitude"
+        var.standard_name = "latitude"
+        var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
+        
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var.long_name = "Median Live Fuel Moisture Content"
+        var.units = '%'
+        var[:] = fmc_median[None,...]
+
+        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var.long_name = "Standard Deviation Live Fuel Moisture Content"
+        var.units = '%'
+        var[:] = fmc_stdv[None,...]
+        
+        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
+        var.long_name = "Quality Mask"
+        var.units = 'Cat'
+        var[:] = q_mask[None,...]
+
 
 def get_fmc(date, tile, var_name):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
@@ -32,12 +104,12 @@ def get_mosaic_stack_dates(f_path):
 def get_fmc_stack_dates(year):
     dates = []
 
-    for au_tile in au_tiles:
-        fmc_file = fmc_stack_path.format(year, au_tile)
-        if not os.path.isfile(fmc_file):
-            print("Missing:", au_tile)
+    for _tile in _tiles:
+        flam_file = fmc_stack_path.format(year, _tile)
+        if not os.path.isfile(flam_file):
+            print("Missing:", _tile)
             return []
-        ds = xr.open_dataset(fmc_file)
+        ds = xr.open_dataset(flam_file)
         if not dates:
             dates = list(ds.time.data)
         else:
@@ -48,17 +120,16 @@ def get_fmc_stack_dates(year):
 def compose_mosaic(date, n_band, var_name, data_type):
     d = datetime.utcfromtimestamp(date.astype('O')/1e9)
 
-    lat_max = -10.
-    lat_min = -44.
-    lon_max = 154.
-    lon_min = 113.
-
-    res = 0.005
+    lat_max = lat_max_of_int
+    lat_min = lat_min_of_int
+    lon_max = lon_max_of_int
+    lon_min = lon_min_of_int
+    res = res_of_int
 
     x_size = int((lon_max - lon_min)/res)
-    y_size = int((lat_max - lat_min)/res)
+    y_size = int((lat_min - lat_max)/(-1*res))
 
-    geot = [lon_min - res/2, res, 0., lat_max + res/2, 0., -1*res] #gdal geotransform indicate top left corner, not the coord of centre of top left pixel like netcdf
+    geot = [lon_min - res/2, res, 0., lat_max + res/2, 0., -1*res]  #gdal geotransform indicate top left corner, not the coord of centre of top left pixel
     
     src = gdal.GetDriverByName('MEM').Create('', tile_size, tile_size, 1, data_type,)
 
@@ -68,8 +139,8 @@ def compose_mosaic(date, n_band, var_name, data_type):
     dst.SetGeoTransform(geot)
     dst.SetProjection(wgs84_wkt)
 
-    for au_tile in au_tiles:
-        fname = fmc_stack_path.format(d.year, au_tile)
+    for _tile in _tiles:
+        fname = fmc_stack_path.format(d.year, _tile)
         stack = gdal.Open('NETCDF:"{}":{}'.format(fname, var_name))
         if stack is None:
             continue
