@@ -1,0 +1,13 @@
+
+======================================================================================
+                  Resource Usage on 2023-03-25 03:05:21:
+   Job Id:             77781866.gadi-pbs
+   Project:            bk75
+   Exit Status:        0
+   Service Units:      690.23
+   NCPUs Requested:    2                      NCPUs Used: 2               
+                                           CPU Time Used: 07:14:47        
+   Memory Requested:   190.0GB               Memory Used: 86.39GB         
+   Walltime requested: 40:00:00            Walltime Used: 07:15:56        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================

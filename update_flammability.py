@@ -9,7 +9,7 @@ import uuid
 import shutil
 import sys
 
-fmc_stack_path = "/g/data/ub8/au/FMC/tiles/fmc_c61_{}_{}.nc"
+fmc_stack_path = "/g/data/ub8/au/FMC/tiles/fmc_c6_{}_{}.nc"
 fmc_mean_path = "/g/data/ub8/au/FMC/intermediary_files/tiles_mean/mean_2001_2022_{}.nc"
 tile_size = 2400
 

@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -P bk75
+#PBS -q express
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
+#PBS -l ncpus=2
+#PBS -l mem=100GB
+#PBS -l walltime=20:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/job_reports
+
+/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc_different_mcd43a4_path.py -d $year -t $tile -dst /g/data/ub8/au/FMC/NSW/tiles/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS

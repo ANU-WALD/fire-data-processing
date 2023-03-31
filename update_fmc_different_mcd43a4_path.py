@@ -12,7 +12,7 @@ import shutil
 import sys
 
 # different path:
-mcd43_root = ''
+mcd43_root = '/g/data/ub8/au/FMC/intermediary_files/NSW_MCD43A4.061'
 
 tile_size = 2400
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         if file_dates is not None and np.datetime64(d) in file_dates:
             print("Time layer already exists in destination file.")
             sys.exit(0)
-        modis_glob = "{}/{}/MCD43A4.A{}{:03d}.{}.006.*.hdf".format(mcd43_root, d.strftime("%Y.%m.%d"), d.year, d.timetuple().tm_yday, args.tile)
+        modis_glob = "{}/{}/MCD43A4.A{}{:03d}.{}.061.*.hdf".format(mcd43_root, d.strftime("%Y.%m.%d"), d.year, d.timetuple().tm_yday, args.tile)
         modis_tiles = glob(modis_glob)
         if len(modis_tiles) != 1:
             sys.exit(1)

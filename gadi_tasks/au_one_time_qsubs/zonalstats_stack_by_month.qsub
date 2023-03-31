@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -P bk75
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
+#PBS -l ncpus=1
+#PBS -l mem=190GB
+#PBS -l walltime=40:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/gadi_tasks/job_reports
+
+/g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_stack_by_month.py -infolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2022 -outfolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022

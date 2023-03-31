@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -P bk75
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
+#PBS -l ncpus=4
+#PBS -l mem=190GB
+#PBS -l walltime=48:00:00
+
+module load cdo
+
+/g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_rank_with_deciles.py -decfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays -mosfolder /g/data/ub8/au/FMC/mosaics -var both -ystart $y -yend $y -outfolder /g/data/ub8/au/FMC/stats/new

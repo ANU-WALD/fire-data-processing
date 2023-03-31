@@ -1,0 +1,204 @@
+Calculation of deciles (practical steps at the end)
+
+This program calculates decile statistics for flammability and FMC variable at Australia scale, as NetCDF raster maps and zonal statistics. Five Python scripts are written to do this process in different steps, as detailed in the following:
+
+
+Step 1
+
+Objective: Create monthly stack of data
+
+Script: 01_nc_by_month.py
+
+Run frequency: Once a year, after having full year of data
+
+Description:
+
+A python script creates monthly stacks of flammability or FMC variable, with all data across all years for a given month, e.g. January, being written to a separate NetCDF file to make it possible to calculate deciles in the next step.
+
+
+
+Step 2
+
+Objective: Calculate multi-year deciles
+
+Script: 02_calc_multiyear_deciles.py
+
+Run frequency: Once a year, following step 1
+
+Description:
+
+The Python script calculates deciles for each month using all records during this period. The script internally tiles the merged file, calculates the deciles for each tile and then merge them into a single NetCDF file for each month.
+
+ 
+
+Step 3
+
+Objective: Calculate deciles for the current year
+
+Script: 03_calc_single_year_deciles.py
+
+Run frequency: Every time a new record becomes available in the NetCDF file
+
+Description:
+
+The script uses the multi-year decile product from step 2. For each record in a given NetCDF file (e.g. flammability for year 2019), it does a pixel-wise comparison with multi-year decile product (of the corresponding month) to find matching decile rank for every pixel. The result is a decile value map for every date in NetCDF format, that uploads to the server for user access, and for calculating zonal statistics in next step.
+
+ 
+
+Step 4
+
+Objective: Calculate zonal statistics
+
+Script: 04_zonal_statistics.py
+
+Run frequency: After step 3
+
+Description:
+
+The script calculates statistics (min, max, average) and coverage (% of valid pixels) for each polygon in a vector layer. It also calculates statistics and coverage for each polygon for vegetation classes (shrublands, croplands/grasslands, forest). The results are in Python pickle format, which need to be merged for all processed years in Step 5.
+
+The user can define the polygon layer, which for now includes governmental admin regions and fire weather layers. Each of these layers were converted from shp format to NetCDF using gdal_rasterize.
+
+ 
+
+
+Step 5
+
+Objective: Merge all zonal statistics for a given polygon layer and save in NetCDF
+
+Script: 05_zonal_statistics_merge_to_nc.py
+
+Run frequency: After step 4
+
+Description:
+
+This script merges all zonal stat files from Step 4 and converts them to a NetCDF file which has time and polygon id as index and statistics and coverage as values.
+
+
+
+______________________________________________________________________________________________________________________________________________
+
+Practical steps (00_task_manager should do the same, but it is only for raijin):
+
+/g/data/xc0/software/python/miniconda3/bin/python3 01_nc_by_month.py flammability /g/data/ub8/au/FMC/calc_deciles/data/temp
+
+/g/data/xc0/software/python/miniconda3/bin/python3 01_nc_by_month.py fmc_mean /g/data/ub8/au/FMC/calc_deciles/data/temp
+
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 1 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 3 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 4 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 5 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 6 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 7 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 8 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 9 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 10 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 11 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 12 tiling
+
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 1 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 3 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 4 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 5 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 6 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 7 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 8 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 9 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 10 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 11 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 12 merging
+
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 1 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 3 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 4 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 5 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 6 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 7 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 8 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 9 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 10 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 11 tiling
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 12 tiling
+
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 1 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 3 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 4 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 5 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 6 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 7 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 8 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 9 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 10 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 11 merging
+/g/data/xc0/software/python/miniconda3/bin/python3 02_calc_multiyear_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 12 merging
+
+/g/data/xc0/software/python/miniconda3/bin/python3 03_calc_single_year_deciles.py flammability /g/data/ub8/au/FMC/calc_deciles/data/temp 2018
+/g/data/xc0/software/python/miniconda3/bin/python3 03_calc_single_year_deciles.py flammability /g/data/ub8/au/FMC/calc_deciles/data/temp 2019
+/g/data/xc0/software/python/miniconda3/bin/python3 03_calc_single_year_deciles.py flammability /g/data/ub8/au/FMC/calc_deciles/data/temp 2020
+
+/g/data/xc0/software/python/miniconda3/bin/python3 03_calc_single_year_deciles.py fmc_mean /g/data/ub8/au/FMC/calc_deciles/data/temp 2018
+/g/data/xc0/software/python/miniconda3/bin/python3 03_calc_single_year_deciles.py fmc_mean /g/data/ub8/au/FMC/calc_deciles/data/temp 2019
+/g/data/xc0/software/python/miniconda3/bin/python3 03_calc_single_year_deciles.py fmc_mean /g/data/ub8/au/FMC/calc_deciles/data/temp 2020
+
+module load gdal
+/g/data/xc0/software/python/miniconda3/bin/python3 04_shp_to_nc.py
+
+---- copy deciles files from ub8 to sdd folder in calc_decile in xc0 ---- (???)
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2018 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2019 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2020 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2021 LGA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2018 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2019 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2020 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2021 FWA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2018 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2019 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2020 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2021 LGA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2018 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2019 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2020 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2021 FWA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2018 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2019 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2020 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2021 LGA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2018 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2019 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2020 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp flammability 2021 FWA 
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2018 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2019 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2020 LGA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2021 LGA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2018 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2019 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2020 FWA
+/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp fmc_mean 2021 FWA
+
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp LGA flammability
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp FWA flammability
+
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp LGA fmc_mean
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp FWA fmc_mean
+
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp LGA flammability
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp FWA flammability
+
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp LGA fmc_mean
+/g/data/xc0/software/python/miniconda3/bin/python3 05_zonal_statistics_deciles_merge_to_nc_org_nc.py /g/data/ub8/au/FMC/calc_deciles/data/temp FWA fmc_mean
+
+
