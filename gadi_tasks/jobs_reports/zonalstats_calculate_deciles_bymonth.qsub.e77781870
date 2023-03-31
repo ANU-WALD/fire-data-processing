@@ -1,2 +1,0 @@
-/g/data/xc0/software/conda-envs/rs3/lib/python3.6/site-packages/numpy/lib/nanfunctions.py:1147: RuntimeWarning: All-NaN slice encountered
-  overwrite_input, interpolation)

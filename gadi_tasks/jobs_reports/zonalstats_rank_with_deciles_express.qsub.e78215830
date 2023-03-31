@@ -1,4 +1,0 @@
-/g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_rank_with_deciles.py:21: RuntimeWarning: invalid value encountered in greater
-  rank_array = np.where(rank_array>0, 10, np.nan) # starts with rank 10, 10th decile, which includes all values. Then rank is subtracted in for loop below
-/g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_rank_with_deciles.py:29: RuntimeWarning: invalid value encountered in less
-  rank_array = np.where(var_array<decile_array, rank_array-1, rank_array) #starting point is 10. If <90th percentile, subtract 1 and get 9, if then below 80th get 8.. and so on until 1 for values that are lower than 10th percentile. Nan values are not affected and stay where originally are
