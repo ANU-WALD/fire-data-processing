@@ -13,23 +13,22 @@ wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572
 tile_size = 2400
 
 def compose_mosaic(year, dst_path):
-    print(dst_path, year)
+    print("{}/{}_latlon_mask.nc".format(dst_path, year))
     
-    lat_max = -10.
-    lat_min = -44.
-    lon_max = 154.
-    lon_min = 113.
+    lat0 = -10.
+    lat1 = -44.
+    lon0 = 113.
+    lon1 = 154.
     res = 0.005
 
-    x_size = int((lon_max - lon_min)/res)
-    y_size = int((lat_max - lat_min)/res)
-    lats = np.linspace(lat_max, lat_min+res, num=y_size)
-    lons = np.linspace(lon_min, lon_max-res, num=x_size)
-
-    geot = [lon_min - res/2, res, 0., lat_max + res/2, 0., -1*res] #gdal geotransform indicate top left corner, not the coord of centre of top left pixel like netcdf
+    x_size = int((lon1 - lon0)/res)
+    y_size = int((lat1 - lat0)/(-1*res))
+    lats = np.linspace(lat0, lat1+res, num=y_size)
+    lons = np.linspace(lon0, lon1-res, num=x_size)
     
     src = gdal.GetDriverByName('MEM').Create('', tile_size, tile_size, 1, gdal.GDT_Byte,)
 
+    geot = [lon0, res, 0., lat0, 0., -1*res]
     dst = gdal.GetDriverByName('MEM').Create('', x_size, y_size, 1, gdal.GDT_Byte,)
     dst.GetRasterBand(1).WriteArray(np.zeros((y_size, x_size), dtype=np.uint8))
     dst.SetGeoTransform(geot)
@@ -71,15 +70,15 @@ def compose_mosaic(year, dst_path):
         err = gdal.ReprojectImage(src, dst, None, None, gdal.GRA_NearestNeighbour)
         print(err)
   
-    with netCDF4.Dataset("{}".format(dst_path), 'w', format='NETCDF4_CLASSIC') as ds:
+    with netCDF4.Dataset("{}/mask_{}.nc".format(dst_path, year), 'w', format='NETCDF4_CLASSIC') as ds:
         with open('nc_metadata.json') as data_file:
             attrs = json.load(data_file)
             for key in attrs:
                 setattr(ds, key, attrs[key])
         setattr(ds, "date_created", datetime.now().strftime("%Y%m%dT%H%M%S"))
         
-        x = np.linspace(lon_min, lon_max-res, num=x_size)
-        y = np.linspace(lat_max, lat_min+res, num=y_size)
+        x = np.linspace(lon0, lon1-res, num=x_size)
+        y = np.linspace(lat0, lat1+res, num=y_size)
         t_dim = ds.createDimension("time", 1)
         x_dim = ds.createDimension("longitude", x.shape[0])
         y_dim = ds.createDimension("latitude", y.shape[0])
@@ -95,15 +94,15 @@ def compose_mosaic(year, dst_path):
         var.units = "degrees"
         var.long_name = "longitude"
         var.standard_name = "longitude"
-        var[:] = np.linspace(lon_min, lon_max-res, num=x_size)
+        var[:] = np.linspace(lon0, lon1-res, num=x_size)
         
         var = ds.createVariable("latitude", "f8", ("latitude",))
         var.units = "degrees"
         var.long_name = "latitude"
         var.standard_name = "latitude"
-        var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
+        var[:] = np.linspace(lat0, lat1+res, num=y_size)
         
-        var = ds.createVariable("veg_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
+        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
         var.long_name = "Vegetation Mask"
         var.units = 'Cat'
         var[:] = dst.ReadAsArray()[None,...]

@@ -9,7 +9,7 @@
 #PBS -l jobfs=100GB
 
 module load cdo
-cd /g/data/xc0/user/scortechini/github/fire-data-processing
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/main_lfmc_flam
 /g/data/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d $year -t $tile -dst /g/data/ub8/au/FMC/tiles/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
 
 
