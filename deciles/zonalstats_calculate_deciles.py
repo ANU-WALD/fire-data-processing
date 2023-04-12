@@ -6,10 +6,8 @@ def compute_percentile(folder_path, month, var, percentile):
     '''compute percentile over time axis (z axis) using closest observation method'''
 
     array_3d = np.load('{}/{}_month{}.npz'.format(folder_path, var, month))['{}'.format(var)]
-
     #output = np.nanpercentile(array_3d, percentile, axis=2, method='closest_observation')
     output = np.nanpercentile(array_3d, percentile, axis=2, interpolation='nearest') #for older versions of numpy
-
     del array_3d
 
     return output

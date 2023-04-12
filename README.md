@@ -30,11 +30,9 @@ All scripts accept a help argument which displays all input flags. Use "python s
 You must be in the following NCI project groups to perform certain tasks with these scripts;
 
 * **ub8** - Data Access (**ub8_admin** for write permissions)
-* **xc0** - To schedule Raijin jobs & edit scripts
+* **xc0** - To activate a Python environment with all the required packages
+* A project with Gadi allocation, to edit and run the various \*.qsub files
 
-Alternatively, you could edit the various \*.qsub files to run under a different project's Raijin allocation.
-
-As a general use-case, you should be in the *root* directory of the repository to run scripts.
 
 #### Dependencies
 These scripts rely on a range of scientific packages not included in the Python standard library.

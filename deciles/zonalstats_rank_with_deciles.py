@@ -3,7 +3,7 @@ import argparse
 import xarray as xr
 import pandas as pd
 import netCDF4
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 
@@ -12,27 +12,19 @@ def rank_with_deciles(nc_to_rank, variable, variable_long, path_to_deciles, deci
     list_rank_arrays = list()
 
     for date in nc_to_rank.time.data:
-
         var_array = nc_to_rank.sel(time=date)['{}'.format(variable_long)].data
-
         month = pd.to_datetime(date).month
-
         rank_array = var_array.copy() 
         rank_array = np.where(rank_array>0, 10, np.nan) # starts with rank 10, 10th decile, which includes all values. Then rank is subtracted in for loop below
 
-
         for decile in reversed(range(10,100,10)): #start from 90, then 80, 70...10
             print(date, variable, 'decile:', decile)
-
             decile_array = np.load('{}/{}_month{}_percentile{}.npz'.format(path_to_deciles, variable, month, decile))['{}'.format(decile_array_name)]
-
             rank_array = np.where(var_array<decile_array, rank_array-1, rank_array) #starting point is 10. If <90th percentile, subtract 1 and get 9, if then below 80th get 8.. and so on until 1 for values that are lower than 10th percentile. Nan values are not affected and stay where originally are
-
 
         list_rank_arrays.append(rank_array)
 
     rank_array_3d = np.stack(list_rank_arrays, axis=0)
-
 
     return rank_array_3d
 
@@ -120,7 +112,7 @@ if __name__ == '__main__':
 
 
     # example for running script
-    # /g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_rank_with_deciles.py -decfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays -mosfolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/stats/new
+    # /g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_rank_with_deciles.py -decfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays -mosfolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/stats
  
 
 
