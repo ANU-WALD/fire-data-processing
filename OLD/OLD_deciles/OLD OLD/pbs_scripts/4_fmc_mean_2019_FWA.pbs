@@ -1,9 +1,0 @@
-#!/bin/bash
-#PBS -P xc0
-#PBS -q express
-#PBS -l ncpus=16
-#PBS -l mem=32GB
-#PBS -l walltime=09:00:00
-module load netcdf
-cd /g/data1a/xc0/user/ali/code/fire_deciles
-/g/data/xc0/software/python/miniconda3/bin/python3 04_zonal_statistics_deciles.py /g/data/xc0/project/FMC_Australia/calc_deciles/data/temp fmc_mean 2019 FWA

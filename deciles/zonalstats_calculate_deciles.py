@@ -22,7 +22,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # example for running script
-    # /g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_calculate_deciles.py -infolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022 -var both -month all -outfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays
+    # /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_calculate_deciles.py -infolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022 -var both -month all -outfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays
 
 
     in_folder_path = args.inputfolder

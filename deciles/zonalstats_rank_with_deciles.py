@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
 
     # example for running script
-    # /g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_rank_with_deciles.py -decfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays -mosfolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/stats
+    # /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_rank_with_deciles.py -decfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays -mosfolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/stats
  
 
 

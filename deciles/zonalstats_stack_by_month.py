@@ -36,7 +36,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # example for running script
-    # /g/data/xc0/software/conda-envs/rs3/bin/python /g/data/xc0/user/scortechini/github/fire-data-processing/deciles/zonalstats_stack_by_month.py -infolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2022 -outfolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022
+    # /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_stack_by_month.py -infolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2022 -outfolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022
 
 
     in_folder_path = args.inputfolder
