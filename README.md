@@ -43,33 +43,43 @@ The core scripts and files are in the folder **"main\_lfmc\_flam"**:
 * "update\_fmc.py" is used to create or update (if already existing) the LFMC tiles starting from MCD43A4 reflectance data and MCD12Q1 IGBP land cover data. It can be run, for example, using the following command:
 ```
     module load cdo
-    /g/data/xc0/software/conda-envs/rs3/bin/python update\_fmc.py -d 2023 -t h27v11 -dst /g/data/ub8/au/FMC/tiles/fmc\_c6\_2023\_h27v11.nc -tmp /g/data/ub8/au/FMC/tmp/
+    /g/data/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d 2023 -t h27v11 -dst /g/data/ub8/au/FMC/tiles/fmc_c6_2023_h27v11.nc -tmp /g/data/ub8/au/FMC/tmp/
 ```
 * "update\_fmc\_mosaic.py" creates or updates (if already existing) the LFMC mosaics. It can be run, for example, using the following command:
 ```
     module load cdo
-    /g/data/xc0/software/conda-envs/rs3/bin/python update\_fmc\_mosaic.py -y 2023 -dst /g/data/ub8/au/FMC/mosaics/fmc\_c6\_2023.nc -tmp /g/data/ub8/au/FMC/tmp/
+    /g/data/xc0/software/conda-envs/rs3/bin/python update_fmc_mosaic.py -y 2023 -dst /g/data/ub8/au/FMC/mosaics/fmc_c6_2023.nc -tmp /g/data/ub8/au/FMC/tmp/
 ```
 * "cdo_mean.py" is used to generate mean LFMC values tiles used to retrieve flammability data.
 * "update\_flammability.py" is used to generate or update (if already existing) the flammability tiles using the LFMC tiles and mean LFMC values tiles as starting point. It can be run, for example, using the following command:
 ```
     module load cdo
-    /g/data/xc0/software/conda-envs/rs3/bin/python update\_flammability.py -y 2023 -t h32v11 -dst /g/data/ub8/au/FMC/tiles/flam\_c6\_2023\_h32v11.nc -tmp /g/data/ub8/au/FMC/tmp/
+    /g/data/xc0/software/conda-envs/rs3/bin/python update_flammability.py -y 2023 -t h32v11 -dst /g/data/ub8/au/FMC/tiles/flam_c6_2023_h32v11.nc -tmp /g/data/ub8/au/FMC/tmp/
 ```
 * "update\_flammability\_mosaic.py" creates or updates (if already existing) the flammability mosaics. It can be run, for example, using the following command:
 ```
     module load cdo
-    /g/data/xc0/software/conda-envs/rs3/bin/python update\_flammability\_mosaic.py -y 2023 -dst /g/data/ub8/au/FMC/mosaics/flam\_c6\_2023.nc -tmp /g/data/ub8/au/FMC/tmp/
+    /g/data/xc0/software/conda-envs/rs3/bin/python update_flammability_mosaic.py -y 2023 -dst /g/data/ub8/au/FMC/mosaics/flam_c6_2023.nc -tmp /g/data/ub8/au/FMC/tmp/
 ```
 * "utils.py" contains functions employed in the other scripts.
 * "update\_fmc\_flam.sh" is a shell script that can be used to update all the LFMC and flammability tiles and their mosaics. It can be run, for example, using the following command:
 ```
-    cd ./fire-data-processing/main\_lfmc\_flam/
-    chmod +x ./update\_fmc\_flam.sh
-    ./update\_fmc\_flam.sh
+    cd ./fire-data-processing/main_lfmc_flam/
+    chmod +x ./update_fmc_flam.sh
+    ./update_fmc_flam.sh
 ```
 * "ALTERNATIVE\_update\_fmc\_different\_mcd43a4\_path.py" and "ALTERNATIVE\_update\_fmc\_every8days.py" are variants of the main scripts that can be used if the directory to MODIS tiles is different or if needed to create 8-daily LFMC tiles.
 
+
+The folder **"deciles"** contains scripts to create and update statistics on LFMC and flammability data:
+* "zonalstats\_stack\_by\_month.py" 
+* "zonalstats\_calculate\_deciles.py"
+* "zonalstats\_rank\_with\_deciles.py"
+* "zonalstats\_update\_rank\_with\_deciles.py"
+* "zonalstats\_veg\_mask.py"
+* "zonalstats\_zonal\_stats\_absolute.py"
+* "zonalstats\_zonal\_stats\_relative.py"
+* "update\_zonal\_stats.sh"
 
 
 
