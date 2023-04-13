@@ -48,7 +48,7 @@ If that doesn't work (eg due to package updates), install from `environment.yml`
 
 
 The core scripts and files are in the folder **"main\_lfmc\_flam"**:
-* <u>"FMC.npy"</u> and "LUT.npy" compose the lookup table used to match reflectance data to Live Fuel Moisture Content (LFMC) values.
+* <ins>"FMC.npy"</ins> and "LUT.npy" compose the lookup table used to match reflectance data to Live Fuel Moisture Content (LFMC) values.
 * "nc_metadata.json" contains the metadata copied into the LFMC and flammability netCDF files.
 * "update\_fmc.py" is used to create or update (if already existing) the LFMC tiles starting from MCD43A4 reflectance data and MCD12Q1 IGBP land cover data. This script should be run whenever new MCD43A4 data is available. The following is an example command that can be used to run the script:
 ```
