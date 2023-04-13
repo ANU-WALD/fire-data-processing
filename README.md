@@ -84,6 +84,7 @@ The core scripts and files are in the folder **"main\_lfmc\_flam"**:
 The folder **"deciles"** contains scripts to create and update statistics on LFMC and flammability data:
 * "zonalstats\_veg\_mask.py" generates the vegetation type masks using MCD12Q1 IGBP land cover data. 3 == forest, 2 == shrub, 1 == grass/cropland, 0 == all the rest. Details on what categories are included in each classification can be found in the script itself. This script can be run when new yearly MCD12Q1 is available. The following is an example command that can be used to run the script: 
 ```
+    /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_veg_mask.py -infolder /g/data/ub8/au/FMC/intermediary_files/MCD12Q1.061 -forestid 3 -shrubid 2 -grassid 1 -allrestid 0 -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/intermediary_files/vegetation_mask
 
 ```
 * "zonalstats\_stack\_by\_month.py" creates 3D arrays by merging together all LFMC (or flammability) daily arrays belonging to the same month (e.g., "fmc\_month1.npz" contains all LFMC mosaics dated from 1st to 31st Januray 2001, 1st to 31st Januray 2002, [...], 1st to 31st Januray 2022). This script can be run only once at the start, or when it is needed to update the reference time series (using Gadi is recommended). The following is an example command that can be used to run the script:
@@ -93,7 +94,6 @@ The folder **"deciles"** contains scripts to create and update statistics on LFM
 * "zonalstats\_calculate\_deciles.py" calculates the 10th, 20th, 30th, [...], 90th percentile arrays for every month using the 3D month arrays created with "zonalstats\_stack\_by\_month.py". The output arrays are 2D arrays where every pixel's value is the Xth percentile along the time dimension (e.g., "fmc\_month1\_percentile10.npz" is a 2D array where every pixel's value is the 10th percentile (or 1st decile) of the LFMC values on that pixel across all January dates from 2001 to 2022). This script can be run only once after "zonalstats\_stack\_by\_month.py" (using Gadi is recommended). The following is an example command that can be used to run the script:
 ```
     /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_calculate_deciles.py -infolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022 -var both -month all -outfolder /g/data/ub8/au/FMC/intermediary_files/deciles_arrays
-
 ```
 * "zonalstats\_rank\_with\_deciles.py" creates netCDF files grouped by year and variable (either LFMC or flammability) which contain the decile ranking of every LFMC or flammability mosaic across the whole time series. The information is extracted by comparing each daily mosaic with the percentiles arrays created with "zonalstats\_calculate\_deciles.py". This script should be run when the reference time series has been changed, after running "zonalstats\_stack\_by\_month.py" and "zonalstats\_calculate\_deciles.py" (using Gadi is recommended). The following is an example command that can be used to run the script:
 ```
