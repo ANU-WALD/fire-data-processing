@@ -16,6 +16,7 @@ This is a research initiative to provide quality spatial information on fire haz
 
 #### General Usage
 \[Last update: April 2023\]
+
 All scripts accept a help argument which displays all input flags. Use "python script.py --help" on the respective script to display help.
 
 You must be in the following NCI project groups to perform certain tasks with these scripts;
@@ -27,6 +28,7 @@ You must be in the following NCI project groups to perform certain tasks with th
 
 #### Dependencies
 \[Last update: December 2019\]
+
 These scripts rely on a range of scientific packages not included in the Python standard library.
 If you are a member of the xc0 group on NCI, simply run "source activate rs3" to activate an environment with all the requirements.
 (If this does not work, see /g/data/xc0/software/README.xc0-miniconda)
