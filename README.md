@@ -9,6 +9,7 @@ This is a research initiative to provide quality spatial information on fire haz
 ---
 * [The Project](http://www.bnhcrc.com.au/research/understanding-mitigating-hazards/255)
 * [Australian Flammability Monitoring System](http://wenfo.org/afms/)
+* [Reference (Yebra et al. 2018)](https://doi.org/10.1016/j.rse.2018.04.053)
 
 
 ### Scripts
@@ -146,8 +147,50 @@ The folder **"others"** contains alternative (and often temporary) python and sh
 
 The folder **"workspace"** contains scripts that are not yet operational.
 
-Finally, **update\_all.sh** is a shell script that can be used to update all LFMC and flammability files (tiles, mosaics and statistics files).
+Finally, **"update\_all.sh"** is a shell script that can be used to update all LFMC and flammability files (tiles, mosaics and statistics files).
 
 ### Access and Description of the Output Data
 ---
+
+The main outputs are georeferenced files (NetCDF) that store Live Fuel Moisture Content (LFMC) and Flammability Index (FI) data.
+
+These files can be in the form of sinusoidal tiles covering a portion of Australia, or WGS84 mosaics showing the whole Australia.
+
+The AFMS data is stored in the NCI and it can be access from the [official web app](http://wenfo.org/afms/), the [online THREDDS catalouge](https://dap.nci.org.au/thredds/remoteCatalogService?catalog=https://dapds00.nci.org.au/thredds/catalog/ub8/au/FMC/catalog.xml) or the NCI's VDI.
+
+#### Accessing the data from the web app
+\[Last update: May 2023\]
+The website can be accessed from the following link: [http://wenfo.org/afms](http://wenfo.org/afms).
+
+The bar at the top contains 4 to 5 menus that let the user choose:
+* whether to show the Live Fuel Moisture Content or the Flammability, 
+* the date of interest, 
+* what kind of partition to use (e.g. Fire Weather Areas, Local Government Areas),
+* if visualise raster data ("Grid"), the areal average or the areal relative values,
+* if show the statistics for the entire areas or only for the selected land cover type (this menu appears only if "Areal Average" or "Areal Relative" are selected).
+
+Clicking on any pixel of the map will generate a chart at the bottom of the webpage. The chart shows the LFMC or FI dynamics and statistics corresponding to the coordinates selected: the highest, the lowest and the median values for each day of the year since 2001, and the current year time series. The chart can be downloaded by clicking the dedicated button below it.
+
+From the menu on the left, it is possible to:
+* hide all the windows in the webpage,
+* adjust the zoom of the map,
+* locate a point by coordinates or address,
+* modify the transparency of the grid layer,
+* choose a different base layer,
+* show current incidents,
+* download the image for the date selected as a GeoTIFF raster file.
+
+#### Accessing the data from THREDDS
+\[Last update: May 2023\]
+
+
+#### Accessing the data from the NCI's VDI
+\[Last update: May 2023\]
+
+For accessing the data from the NCI's VDI, it is necessary to be an NCI user and request to access to the ub8 project ([as per these instructions](https://opus.nci.org.au/display/Help/How+to+connect+to+a+project)).
+The path to the parent directory is: /g/data/ub8/au/FMC.  The repository has the same structure of the THREDDS catalogue.
+
+
+
+
 
