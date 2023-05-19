@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # example for running script
     # module load cdo
-    # /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_zonal_stats_absolute.py -mosfolder /g/data/ub8/au/FMC/mosaics -vegmaskfolder /g/data/ub8/au/FMC/intermediary_files/vegetation_mask -areafolder /g/data/ub8/au/FMC/intermediary_files/areal_classifications -area both -var both -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/stats/zonal_stats/new -tmpfolder /g/data/ub8/au/FMC/tmp 
+    # /g/data/xc0/software/conda-envs/rs3/bin/python zonalstats_zonal_stats_absolute.py -mosfolder /g/data/ub8/au/FMC/mosaics -vegmaskfolder /g/data/ub8/au/FMC/intermediary_files/vegetation_mask -areafolder /g/data/ub8/au/FMC/intermediary_files/areal_classifications -area both -var both -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/stats/zonal_stats -tmpfolder /g/data/ub8/au/FMC/tmp 
     
     y_start = int(args.yearstart)
     y_end = int(args.yearend)
