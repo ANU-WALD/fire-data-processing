@@ -206,7 +206,7 @@ For accessing the data from the NCI's VDI, it is necessary to be an NCI user and
 The path to the parent directory is: /g/data/ub8/au/FMC.  The repository has the same structure of the THREDDS catalogue.
 
 
-#### Description of the AFMS NetCDF files
+#### Description of the variables in the AFMS NetCDF files
 \[Last update: Jul 2023\]
 
 * Live Fuel Moisture Content tiles:
