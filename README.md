@@ -156,10 +156,11 @@ The main outputs are georeferenced files (NetCDF) that store Live Fuel Moisture 
 
 These files can be in the form of sinusoidal tiles covering a portion of Australia, or WGS84 mosaics showing the whole Australia.
 
-The AFMS data is stored in the NCI and it can be access from the [official web app](http://wenfo.org/afms/), the [online THREDDS catalouge](https://dap.nci.org.au/thredds/remoteCatalogService?catalog=https://dapds00.nci.org.au/thredds/catalog/ub8/au/FMC/catalog.xml) or the NCI's VDI.
+The AFMS data is stored in the NCI and it can be access from the [official web app](http://wenfo.org/afms/), the [online THREDDS catalogue](https://dap.nci.org.au/thredds/remoteCatalogService?catalog=https://dapds00.nci.org.au/thredds/catalog/ub8/au/FMC/catalog.xml) or the NCI's VDI.
 
 #### Accessing the data from the web app
 \[Last update: May 2023\]
+
 The website can be accessed from the following link: [http://wenfo.org/afms](http://wenfo.org/afms).
 
 The bar at the top contains 4 to 5 menus that let the user choose:
@@ -181,7 +182,21 @@ From the menu on the left, it is possible to:
 * download the image for the date selected as a GeoTIFF raster file.
 
 #### Accessing the data from THREDDS
-\[Last update: May 2023\]
+\[Last update: Jul 2023\]
+
+The [THREDDS catalogue](https://dap.nci.org.au/thredds/remoteCatalogService?catalog=https://dapds00.nci.org.au/thredds/catalog/ub8/au/FMC/catalog.xml) is linked to the repository inside the NCI, where all the AFMS files are stored.
+
+There are 5 main folders: "tiles", "mosaics", "stats", "intermediary_files", "tmp". 
+
+* **"tiles"** stores yearly NetCDF files with LFMC and Flammability data in the form of sinusoidal tiles. The spatial resolution of the data is approximately 500m, while the temporal resolution is every 4 days. The names of the files include the type of data they contain (*"fmc"* or *"flam"*), the year and the tile ID (same as the original MODIS tiles). The tiles present in this folder are "h27v11", "h27v12", "h28v11", "h28v12", "h28v13", "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", "h32v10", "h32v11".
+
+* **"mosaics"** stores yearly NetCDF files with LFMC and Flammability data in the form of lat/lon (WGS84) mosaics, which cover the whole Australia. The spatial resolution of the data is 500m, while the temporal resolution is every 4 days. The names of these files include the type of data they contain and the year.
+
+* **"stats"** contains yearly mosaicked NetCDF files with the LFMC deciles values. The deciles are computed by taking into account all the dates available from the LFMC mosaics in the period 2001-2022 (inclusive). The subfolder **"zonal_stats"** contains NetCDF files with zonal statistics (e.g. minimum, maximum, mean values) per Fire Weather Area (FWA) or Local Government Area (LGA) (these files are used by the web app for the "Areal Relative" and "Areal Average" features).
+
+* **"intermediary_files"** contains files that are instrumental in the creation of the output data.
+
+* **"tmp"** is a folder used to temporarily store ancillary files created while generating the output data.
 
 
 #### Accessing the data from the NCI's VDI
@@ -191,6 +206,20 @@ For accessing the data from the NCI's VDI, it is necessary to be an NCI user and
 The path to the parent directory is: /g/data/ub8/au/FMC.  The repository has the same structure of the THREDDS catalogue.
 
 
+#### Description of the AFMS NetCDF files
+\[Last update: Jul 2023\]
 
+* Live Fuel Moisture Content tiles:
+
+*"sinusoidal"*: information on the projection of the file.
+*"lfmc_median"*: median of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+*"lfmc_stdv"*: standard deviation of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+*"quality_mask"*: 0 if all the reflectance bands from MODIS MCD43A4 used by the algorithm has BRDF_Albedo_Band_Mandatory_Quality_Band classified as good (full BRDF inversions), 1 if any of the bands belongs to a different quality category.
+
+* Live Fuel Moisture Content mosaics:
+
+*"lfmc_median"*: median of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+*"lfmc_stdv"*: standard deviation of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+*"quality_mask"*: 0 if all the reflectance bands from MODIS MCD43A4 used by the algorithm has BRDF_Albedo_Band_Mandatory_Quality_Band classified as good (full BRDF inversions), 1 if any of the bands belongs to a different quality category.
 
 

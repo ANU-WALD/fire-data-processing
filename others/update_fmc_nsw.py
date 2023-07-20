@@ -10,7 +10,7 @@ import uuid
 import shutil
 import sys
 
-mcd43_root = '/g/data/u39/public/data/modis/lpdaac-tiles-c6/MCD43A4.061' #'/g/data/ub8/au/FMC/intermediary_files/MCD43A4.061'
+mcd43_root = '/g/data/ub8/au/FMC/intermediary_files/NSW_MCD43A4.061'
 tile_size = 2400
 
 def fmc(raster_stack, q_mask, veg_type, band_mask):
@@ -150,4 +150,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     for modis_tile in modis_tiles:
+        print(modis_tile)
         update_fmc(modis_tile, args.destination, args.tmp, args.compression)
