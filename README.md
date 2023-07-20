@@ -212,14 +212,19 @@ The path to the parent directory is: /g/data/ub8/au/FMC.  The repository has the
 * Live Fuel Moisture Content tiles:
 
 *"sinusoidal"*: information on the projection of the file.
+
 *"lfmc_median"*: median of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+
 *"lfmc_stdv"*: standard deviation of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+
 *"quality_mask"*: 0 if all the reflectance bands from MODIS MCD43A4 used by the algorithm has BRDF_Albedo_Band_Mandatory_Quality_Band classified as good (full BRDF inversions), 1 if any of the bands belongs to a different quality category.
 
 * Live Fuel Moisture Content mosaics:
 
 *"lfmc_median"*: median of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+
 *"lfmc_stdv"*: standard deviation of the 40 Live Fuel Moisture Content values corresponding to the 40 most similar spectra in the Look-Up Table (see Yebra et al. 2018 for further details).
+
 *"quality_mask"*: 0 if all the reflectance bands from MODIS MCD43A4 used by the algorithm has BRDF_Albedo_Band_Mandatory_Quality_Band classified as good (full BRDF inversions), 1 if any of the bands belongs to a different quality category.
 
 
