@@ -11,7 +11,7 @@ import sys
 import pandas as pd
 
 fmc_stack_path = '/g/data/ub8/au/FMC/tiles/fmc_c6_{}_{}.nc'
-fmc_mean_path = '/g/data/ub8/au/FMC/mean_lfmc_arrays/mean_fmc_2001_2020_{}_{}.npz'
+fmc_mean_path = '/g/data/ub8/au/FMC/mean_lfmc_arrays/mean_fmc_2001_2022_{}_{}.npz'
 tile_size = 2400
 
 def mcd_date_gen(year):
