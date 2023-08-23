@@ -10,8 +10,7 @@ import shutil
 import sys
 import pandas as pd
 
-fmc_stack_path = "/g/data/ub8/au/FMC/c6/fmc_c6_{}_{}.nc"
-#fmc_mean_path = "/g/data/ub8/au/FMC/c6/mean_2001_2019_{}.nc"
+fmc_stack_path = '/g/data/ub8/au/FMC/tiles/fmc_c6_{}_{}.nc'
 fmc_mean_path = '/g/data/ub8/au/FMC/mean_lfmc_arrays/mean_fmc_2001_2020_{}_{}.npz'
 tile_size = 2400
 
@@ -45,7 +44,7 @@ def get_fmc(date, tile):
     fmc_file = fmc_stack_path.format(d.year, tile)
     
     if os.path.isfile(fmc_file):
-        return xr.open_dataset(fmc_file).lfmc_mean.loc[date, :].data
+        return xr.open_dataset(fmc_file).lfmc_median.loc[date, :].data
 
     return None
 
@@ -86,18 +85,17 @@ def compute_flammability(t, tile):
         return None, None
 
     doy = pd.to_datetime(t).dayofyear
-    mean = np.load(fmc_mean_path.format(tile, doy))['lfmc_mean']
-    #mean = xr.open_dataset(fmc_mean_path.format(tile)).lfmc_mean.data
+    mean = np.load(fmc_mean_path.format(tile, doy))['mean_lfmc']
     fmc_t1 = get_fmc(t1, tile)
     fmc_t2 = get_fmc(t2, tile)
     anomaly = fmc_t1 - mean
     diff = fmc_t2 - fmc_t1
 
-    grass = 0.18 - 0.01 * mean + 0.020 * diff - 0.02 * anomaly
+    grass = 0.18 - 0.01 * fmc_t1 + 0.020 * diff - 0.02 * anomaly
     grass = 1 / (1 + np.e ** - grass)
-    shrub = 5.66 - 0.09 * mean + 0.005 * diff - 0.28 * anomaly
+    shrub = 5.66 - 0.09 * fmc_t1 + 0.005 * diff - 0.28 * anomaly
     shrub = 1 / (1 + np.e ** - shrub)
-    forst = 1.51 - 0.03 * mean + 0.020 * diff - 0.02 * anomaly
+    forst = 1.51 - 0.03 * fmc_t1 + 0.020 * diff - 0.02 * anomaly
     forst = 1 / (1 + np.e ** - forst)
 
     flammability = np.ones((tile_size*tile_size), dtype=np.float32) * -9999.9
