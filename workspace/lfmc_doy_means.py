@@ -21,10 +21,14 @@ for au_tile in au_tiles:
             tile = xr.open_dataset('/g/data/ub8/au/FMC/tiles/fmc_c6_{0}_{1}.nc'.format(year, au_tile)) 
 
             d = datetime.strptime('{0}{1}'.format(year,doy), '%Y%j').strftime('%Y-%m-%d')
-            print(d)
-            lfmc_array = tile.sel(time=d).lfmc_median.data
-            
-            list_lfmc_same_doy.append(lfmc_array)
+
+            try:
+                lfmc_array = tile.sel(time=d).lfmc_median.data
+                list_lfmc_same_doy.append(lfmc_array)
+
+            except:
+                print(d)
+                pass
 
         lfmc_same_doy_3d = np.dstack(list_lfmc_same_doy)
         lfmc_same_doy_mean = np.nanmean(lfmc_same_doy_3d, axis=2)
