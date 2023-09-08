@@ -32,6 +32,6 @@ for au_tile in au_tiles:
 
         lfmc_same_doy_3d = np.dstack(list_lfmc_same_doy)
         lfmc_same_doy_mean = np.nanmean(lfmc_same_doy_3d, axis=2)
-        np.savez_compressed('/g/data/ub8/au/FMC/mean_lfmc_arrays/mean_lfmc_{0}_{1}_{2}_{3}.npz'.format(year_start, year_end, au_tile, doy), mean_lfmc=lfmc_same_doy_mean)
+        np.savez_compressed('/g/data/ub8/au/FMC/intermediary_files/mean_lfmc_arrays/mean_lfmc_{0}_{1}_{2}_{3}.npz'.format(year_start, year_end, au_tile, doy), mean_lfmc=lfmc_same_doy_mean)
 
 print('done')

@@ -11,7 +11,7 @@ import sys
 import pandas as pd
 
 fmc_stack_path = '/g/data/ub8/au/FMC/tiles/fmc_c6_{}_{}.nc'
-fmc_mean_path = '/g/data/ub8/au/FMC/mean_lfmc_arrays/mean_lfmc_2001_2022_{}_{}.npz'
+fmc_mean_path = '/g/data/ub8/au/FMC/intermediary_files/mean_lfmc_arrays/mean_lfmc_2001_2022_{}_{}.npz'
 tile_size = 2400
 
 def mcd_date_gen(year):
@@ -119,7 +119,7 @@ def update_flammability(date, tile_id, dst, tmp, comp):
         return
 
     tmp_file = os.path.join(tmp, uuid.uuid4().hex + ".nc")
-    fmc_file = fmc_stack_path.format(2001, tile_id)
+    fmc_file = fmc_stack_path.format(date.year, tile_id)
     pack_flammability(fmc_file, date, flam, anom, qmask, tmp_file)
 
     if not os.path.isfile(dst):
