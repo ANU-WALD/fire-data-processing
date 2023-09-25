@@ -1,0 +1,10 @@
+#!/bin/bash
+#PBS -P mr51
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/ub8
+#PBS -l ncpus=1
+#PBS -l mem=4GB
+#PBS -l walltime=20:00:00
+
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/main_lfmc_flam
+/g/data/xc0/software/conda-envs/rs3/bin/python lfmc_doy_means.py

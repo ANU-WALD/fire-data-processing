@@ -53,13 +53,13 @@ if __name__ == '__main__':
             np.savez_compressed('{}/fmc_month{}.npz'.format(out_folder_path,month), fmc=month_stack)
             del month_stack
             
-    elif args.variable == 'flam':
+    elif var == 'flam':
         for month in range(1,13):
             month_stack = monthly_stack(in_folder_path, month, start, end, var, 'flammability')
             np.savez_compressed('{}/flam_month{}.npz'.format(out_folder_path,month), flam=month_stack)
             del month_stack
 
-    elif args.variable == 'both':
+    elif var == 'both':
         for month in range(1,13):
             fmc_month_stack = monthly_stack(in_folder_path, month, start, end, 'fmc', 'lfmc_median')
             np.savez_compressed('{}/fmc_month{}.npz'.format(out_folder_path,month), fmc=fmc_month_stack)

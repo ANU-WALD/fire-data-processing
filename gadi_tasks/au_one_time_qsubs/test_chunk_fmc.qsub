@@ -2,7 +2,7 @@
 #PBS -P fo65
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/ub8
-#PBS -l ncpus=8
+#PBS -l ncpus=1
 #PBS -l mem=90GB
 #PBS -l walltime=00:10:00
 

@@ -336,19 +336,6 @@ def get_tile_map_transformer(tile_path, map_path):
     return transformer
 """
 
-# Obsolete method
-def get_fmc_functor():
-    # Load FMC table
-    fmc = np.load("./FMC.npy")
-    
-    def get_fmc(idxs, fmc=fmc):
-        # Select Veg type subset from LUT table
-        mean = np.einsum('i->', fmc[idxs])/idxs.shape[0]
-        return mean, np.sqrt(np.einsum('i->',(fmc[idxs]-mean)**2)/idxs.shape[0])
-
-    return get_fmc
-
-# Current method
 def get_fmc_functor_median():
     # Load FMC table
     fmc = np.load("./FMC.npy")
