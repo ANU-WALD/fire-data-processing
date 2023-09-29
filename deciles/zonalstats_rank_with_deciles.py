@@ -82,12 +82,12 @@ def create_netcdf_mosaic(path_output, nc_to_rank, decile_array, group_array):
         var.standard_name = "latitude"
         var[:] = lats
 
-        var = ds.createVariable('decile_values', np.int8, ('time', 'latitude', 'longitude'), fill_value=111)
+        var = ds.createVariable('decile_values', np.int8, ('time', 'latitude', 'longitude'), fill_value=111, zlib=True, complevel=9)
         var.units = 'int8'
         var.long_name = 'deciles'
         var[:] = decile_array
         
-        var = ds.createVariable('decile_groups', np.int8, ('time', 'latitude', 'longitude'), fill_value=111)
+        var = ds.createVariable('decile_groups', np.int8, ('time', 'latitude', 'longitude'), fill_value=111, zlib=True, complevel=9)
         var.units = 'int8'
         var.long_name = 'decile groups'
         var[:] = group_array

@@ -89,19 +89,19 @@ def pack_fmc(hdf_file, date, median_arr, std_arr, q_mask, dest):
         y_min_netcdf = y_max_netcdf + (geot[5]*rast.RasterYSize) - geot[5] #NB: geot[5] is negative
         var[:] = np.linspace(y_max_netcdf, y_min_netcdf, rast.RasterYSize)
         
-        var = ds.createVariable("lfmc_median", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "y", "x"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "LFMC Median"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = median_arr[None,...]
 
-        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "y", "x"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "LFMC Standard Deviation"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = std_arr[None,...]
         
-        var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
+        var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0, zlib=True, complevel=9)
         var.long_name = "Combined Bands Quality Mask"
         var.units = 'Cat'
         var.grid_mapping = "sinusoidal"
@@ -159,19 +159,19 @@ def pack_flammability(fmc_file, date, flam, anom, q_mask, dest):
         y_min_netcdf = y_max_netcdf + (geot[5]*rast.RasterYSize) - geot[5] #NB: geot[5] is negative
         var[:] = np.linspace(y_max_netcdf, y_min_netcdf, rast.RasterYSize)
         
-        var = ds.createVariable("flammability", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("flammability", 'f4', ("time", "y", "x"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "Flammability Index"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = flam[None,...]
         
-        var = ds.createVariable("anomaly", 'f4', ("time", "y", "x"), fill_value=-9999.9)
+        var = ds.createVariable("anomaly", 'f4', ("time", "y", "x"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "Flammability Anomaly"
         var.units = '%'
         var.grid_mapping = "sinusoidal"
         var[:] = anom[None,...]
 
-        var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0)
+        var = ds.createVariable("quality_mask", 'i1', ("time", "y", "x"), fill_value=0, zlib=True, complevel=9)
         var.long_name = "Combined Bands Quality Mask"
         var.units = 'Cat'
         var.grid_mapping = "sinusoidal"
@@ -230,17 +230,17 @@ def pack_fmc_mosaic(date, fmc_median, fmc_stdv, q_mask, dest):
         var.standard_name = "latitude"
         var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
-        var = ds.createVariable("lfmc_median", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_median", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "Median Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_median[None,...]
 
-        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("lfmc_stdv", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "Standard Deviation Live Fuel Moisture Content"
         var.units = '%'
         var[:] = fmc_stdv[None,...]
         
-        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
+        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0, zlib=True, complevel=9)
         var.long_name = "Quality Mask"
         var.units = 'Cat'
         var[:] = q_mask[None,...]
@@ -286,17 +286,17 @@ def pack_flammability_mosaic(date, flam, anom, q_mask, dest):
         var.standard_name = "latitude"
         var[:] = np.linspace(lat_max, lat_min+res, num=y_size)
         
-        var = ds.createVariable("flammability", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("flammability", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "Flammability Index"
         var.units = '%'
         var[:] = flam[None,...]
 
-        var = ds.createVariable("anomaly", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9)
+        var = ds.createVariable("anomaly", 'f4', ("time", "latitude", "longitude"), fill_value=-9999.9, zlib=True, complevel=9)
         var.long_name = "FMC Anomaly"
         var.units = '%'
         var[:] = anom[None,...]
         
-        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0)
+        var = ds.createVariable("quality_mask", 'i1', ("time", "latitude", "longitude"), fill_value=0, zlib=True, complevel=9)
         var.long_name = "Quality Mask"
         var.units = 'Cat'
         var[:] = q_mask[None,...]

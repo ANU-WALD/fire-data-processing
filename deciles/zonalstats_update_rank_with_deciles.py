@@ -87,12 +87,12 @@ def pack_netcdf(path_output, nc_template, decile_array, group_array):
         var.standard_name = "latitude"
         var[:] = lats
 
-        var = ds.createVariable('decile_values', np.int8, ('time', 'latitude', 'longitude'), fill_value=111)
+        var = ds.createVariable('decile_values', np.int8, ('time', 'latitude', 'longitude'), fill_value=111, zlib=True, complevel=9)
         var.units = 'int8'
         var.long_name = 'deciles'
         var[:] = decile_array[None,...]
         
-        var = ds.createVariable('decile_groups', np.int8, ('time', 'latitude', 'longitude'), fill_value=111)
+        var = ds.createVariable('decile_groups', np.int8, ('time', 'latitude', 'longitude'), fill_value=111, zlib=True, complevel=9)
         var.units = 'int8'
         var.long_name = 'decile groups'
         var[:] = group_array[None,...]
