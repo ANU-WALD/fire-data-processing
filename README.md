@@ -42,7 +42,7 @@ If that doesn't work (eg due to package updates), install from `environment.yml`
 
 
 #### Repository and Pipeline Explained
-\[Last update: Sep 2023\]
+\[Last update: Oct 2023\]
 
 *Please note that the land cover product MCD12Q1 (used by several scripts to generate the output data) is updated yearly. Thus, there might be a lag of 1 year or more between the most recent dates of MCD43A4 (the reflectance data which the Live Fuel Moisture Content outputs rely on) and the last year of available land cover data. For those dates within the lag period, the most recent year available in MCD12Q1 is used.*
 *It is recommended to update the LFMC, flammability and any other output data that depend on MCD12Q1, when new MCD12Q1 data is avaiable. This could mean re-creating netCDF files containing year-long time series.*
@@ -92,7 +92,7 @@ The folder **"deciles"** contains scripts to create and update statistics on LFM
     cd ./fire-data-processing/deciles/
     /ENVIRONMENT_PATH/bin/python zonalstats_veg_mask.py -infolder /g/data/ub8/au/FMC/intermediary_files/MCD12Q1.061 -forestid 3 -shrubid 2 -grassid 1 -allrestid 0 -ystart 2001 -yend 2023 -outfolder /g/data/ub8/au/FMC/intermediary_files/vegetation_mask
 ```
-* "<ins>zonalstats\_stack\_by\_month.py</ins>" creates 3D arrays by merging together all LFMC (or flammability) daily arrays belonging to the same month (e.g., "fmc\_month1.npz" contains all LFMC mosaics dated from 1st to 31st Januray 2001, 1st to 31st Januray 2002, [...], 1st to 31st Januray 2022). This script can be run only once at the start, or when it is needed to update the reference time series (using Gadi is recommended). The following is an example command that can be used to run the script:
+* "<ins>zonalstats\_stack\_by\_month.py</ins>" creates 3D arrays by merging together all LFMC (or flammability) daily arrays belonging to the same month (e.g., "fmc\_month1.npz" contains all LFMC mosaics dated from 1st to 31st Januray 2001, 1st to 31st Januray 2002, [...], 1st to 31st Januray 2022). This script can be run only once at the start, or when it is needed to update the reference time series (using Gadi is recommended). If some output files are already contained in the output folder (e.g.,the script was run previously, but it was interrupted before it could create all the output files), the code will skip those and it will create the missing files only. The following is an example command that can be used to run the script:
 ```
     cd ./fire-data-processing/deciles/
     /ENVIRONMENT_PATH/bin/python zonalstats_stack_by_month.py -infolder /g/data/ub8/au/FMC/mosaics -var both -ystart 2001 -yend 2022 -outfolder /g/data/ub8/au/FMC/intermediary_files/stack_by_month_2001_2022

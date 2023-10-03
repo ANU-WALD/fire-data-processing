@@ -2,6 +2,7 @@ import xarray as xr
 import numpy as np
 import argparse
 import pandas as pd
+import glob
 
 def monthly_stack(folder_path, month, year_start, year_end, var_filename, var_infile):
 
@@ -49,25 +50,29 @@ if __name__ == '__main__':
 
     if var == 'fmc':
         for month in range(1,13):
-            month_stack = monthly_stack(in_folder_path, month, start, end, var, 'lfmc_median')
-            np.savez_compressed('{}/fmc_month{}.npz'.format(out_folder_path,month), fmc=month_stack)
-            del month_stack
+            if not glob.glob('{}/fmc_month{}.npz'.format(out_folder_path,month)):
+                month_stack = monthly_stack(in_folder_path, month, start, end, var, 'lfmc_median')
+                np.savez_compressed('{}/fmc_month{}.npz'.format(out_folder_path,month), fmc=month_stack)
+                del month_stack
             
     elif var == 'flam':
         for month in range(1,13):
-            month_stack = monthly_stack(in_folder_path, month, start, end, var, 'flammability')
-            np.savez_compressed('{}/flam_month{}.npz'.format(out_folder_path,month), flam=month_stack)
-            del month_stack
+            if not glob.glob('{}/flam_month{}.npz'.format(out_folder_path,month)):
+                month_stack = monthly_stack(in_folder_path, month, start, end, var, 'flammability')
+                np.savez_compressed('{}/flam_month{}.npz'.format(out_folder_path,month), flam=month_stack)
+                del month_stack
 
     elif var == 'both':
         for month in range(1,13):
-            fmc_month_stack = monthly_stack(in_folder_path, month, start, end, 'fmc', 'lfmc_median')
-            np.savez_compressed('{}/fmc_month{}.npz'.format(out_folder_path,month), fmc=fmc_month_stack)
-            del fmc_month_stack
+            if not glob.glob('{}/fmc_month{}.npz'.format(out_folder_path,month)):
+                fmc_month_stack = monthly_stack(in_folder_path, month, start, end, 'fmc', 'lfmc_median')
+                np.savez_compressed('{}/fmc_month{}.npz'.format(out_folder_path,month), fmc=fmc_month_stack)
+                del fmc_month_stack
 
-            flam_month_stack = monthly_stack(in_folder_path, month, start, end, 'flam', 'flammability')
-            np.savez_compressed('{}/flam_month{}.npz'.format(out_folder_path,month), flam=flam_month_stack)
-            del flam_month_stack
+            if not glob.glob('{}/flam_month{}.npz'.format(out_folder_path,month)):
+                flam_month_stack = monthly_stack(in_folder_path, month, start, end, 'flam', 'flammability')
+                np.savez_compressed('{}/flam_month{}.npz'.format(out_folder_path,month), flam=flam_month_stack)
+                del flam_month_stack
 
 
 
