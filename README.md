@@ -83,6 +83,7 @@ The core scripts and files are in the folder **"main\_lfmc\_flam"**:
     chmod +x ./update_fmc_flam.sh
     ./update_fmc_flam.sh
 ```
+* "<ins>compress\_nc\_files.py</ins>" can be used if it is needed to compress the NetCDF files. It is recommended to run this script for years prior the current one. It is possible to set the range of years of interest by changing the "year\_start" and "year\_end" variables in the final part of the script.
 * "<ins>ALTERNATIVE\_update\_fmc\_different\_mcd43a4\_path.py</ins>" and "<ins>ALTERNATIVE\_update\_fmc\_every8days.py</ins>" are variants of the main scripts that can be used if the directory to MODIS tiles is different or if needed to create 8-daily LFMC tiles.
 
 
