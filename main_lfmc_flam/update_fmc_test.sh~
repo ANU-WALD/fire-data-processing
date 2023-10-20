@@ -1,0 +1,3 @@
+module load cdo
+
+/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc.py -d 20161031 -t h30v12 -dst /g/data/ub8/au/FMC/fmc_c6_20161031vdi_h30v12.nc -tmp /g/data/ub8/au/FMC/tmp/

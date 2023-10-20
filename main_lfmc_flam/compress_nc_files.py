@@ -3,7 +3,7 @@ from glob import glob
 
 def compress_and_save(path_original, path_output, product):
 
-    nc = xr.load_dataset(path_original)
+    nc = xr.open_dataset(path_original)
 
     comp = {'zlib':True,'complevel':9}
 

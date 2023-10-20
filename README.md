@@ -85,6 +85,13 @@ The core scripts and files are in the folder **"main\_lfmc\_flam"**:
 ```
 * "<ins>compress\_nc\_files.py</ins>" can be used if it is needed to compress the NetCDF files. It is recommended to run this script for years prior the current one. It is possible to set the range of years of interest by changing the "year\_start" and "year\_end" variables in the final part of the script.
 * "<ins>ALTERNATIVE\_update\_fmc\_different\_mcd43a4\_path.py</ins>" and "<ins>ALTERNATIVE\_update\_fmc\_every8days.py</ins>" are variants of the main scripts that can be used if the directory to MODIS tiles is different or if needed to create 8-daily LFMC tiles.
+* "<ins>ALTERNATIVE\_point\_fmc\_from\_modis\_tiles.py</ins>" is for obtaining LFMC from point locations using a table in .csv format. LFMC is directly computed from the MODIS reflectance tiles. The script requires the follwoing inputs: path to the CSV table with the coordinates of the points, path for the output, name of the column containing x or longitude, name of the column containing y or latitude, name of the column containing the dates (currently, only dates in the format day/month/year are accepted), projection of the coordinates in the CSV file (either "wgs4" or "sinusoidal"), lag of days prior to the dates in the table (write "0" for computing LFMC on the exact dates). If the dates in the CSV file refers to the start of a fire, it could be beneficial to extract the LFMC value 8 days prior to those dates, to make sure that the input reflectance data is not influenced by the fire itself (currently MCD43A4 is a composite of 16 days centered at the 9th day).
+The following is an example command that can be used to run the script:
+```
+    cd ./fire-data-processing/main_lfmc_flam/
+    /ENVIRONMENT_PATH/bin/python ALTERNATIVE_point_LFMC_from_MODIS_tiles.py -table /PATH/table.csv -out /PATH/table_final.csv -xcol X_sinu -ycol Y_sinu -datecol Date -proj sinusoidal -lag 8
+
+```
 
 
 The folder **"deciles"** contains scripts to create and update statistics on LFMC and flammability data:
