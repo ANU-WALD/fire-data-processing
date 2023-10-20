@@ -100,7 +100,7 @@ def get_vegtype_idx(veg_type):
 # function to get 40 (in thise case) most similar spectra from the LUT
 def get_top_n_functor():
     # Read the LUT table
-    lut = np.load('PATH_to_GitHub_folder/fire-data-processing/main_lfmc_flam/LUT.npy')
+    lut = np.load('./LUT.npy')
     lut = lut[:, [0,1,3,5,6,7]]
     lut_sq = np.sqrt(np.einsum('ij,ij->i',lut, lut))
 
@@ -129,7 +129,7 @@ def get_top_n_functor():
 # function to compute median of 40 LFMC values from 40 most simalr spectra
 def get_fmc_functor_median():
     # Load FMC table
-    fmc = np.load('PATH_to_GitHub_folder/fire-data-processing/main_lfmc_flam/FMC.npy')
+    fmc = np.load('./FMC.npy')
     
     def get_fmc_median(idxs, fmc=fmc):
         # Select Veg type subset from LUT table
