@@ -42,7 +42,7 @@ If that doesn't work (eg due to package updates), install from `environment.yml`
 
 
 #### Repository and Pipeline Explained
-\[Last update: Oct 2023\]
+\[Last update: Nov 2023\]
 
 *Please note that the land cover product MCD12Q1 (used by several scripts to generate the output data) is updated yearly. Thus, there might be a lag of 1 year or more between the most recent dates of MCD43A4 (the reflectance data which the Live Fuel Moisture Content outputs rely on) and the last year of available land cover data. For those dates within the lag period, the most recent year available in MCD12Q1 is used.*
 *It is recommended to update the LFMC, flammability and any other output data that depend on MCD12Q1, when new MCD12Q1 data is avaiable. This could mean re-creating netCDF files containing year-long time series.*
@@ -83,7 +83,12 @@ The core scripts and files are in the folder **"main\_lfmc\_flam"**:
     chmod +x ./update_fmc_flam.sh
     ./update_fmc_flam.sh
 ```
-* "<ins>compress\_nc\_files.py</ins>" can be used if it is needed to compress the NetCDF files. It is recommended to run this script for years prior the current one. It is possible to set the range of years of interest by changing the "year\_start" and "year\_end" variables in the final part of the script.
+* "<ins>compress\_nc\_files.py</ins>" can be used if it is needed to compress the NetCDF files. It is recommended to run this script for years prior the current one. For running the script, it is necessary to define the calendar year of the files needed to be compressed, whether it is wanted to compress the tiles or mosaics, the tile of interest (not mandatory if 'mosaic' is chosen), the variable of interest (fmc or flam), and the input and output paths. The following are examples command that can be used to run the script:
+```
+    cd ./fire-data-processing/main_lfmc_flam/
+    /ENVIRONMENT_PATH/bin/python compress_nc_files.py -y 2001 -type tile -t h30v11 -var fmc -in /g/data/ub8/au/FMC/tiles -out /sg/data/ub8/au/FMC/tiles_compressed
+    /ENVIRONMENT_PATH/bin/python compress_nc_files.py -y 2001 -type mosaic -var fmc -in /g/data/ub8/au/FMC/mosaics -out /g/data/ub8/au/FMC/mosaics_compressed
+```
 * "<ins>ALTERNATIVE\_update\_fmc\_different\_mcd43a4\_path.py</ins>" and "<ins>ALTERNATIVE\_update\_fmc\_every8days.py</ins>" are variants of the main scripts that can be used if the directory to MODIS tiles is different or if needed to create 8-daily LFMC tiles.
 * "<ins>ALTERNATIVE\_point\_fmc\_from\_modis\_tiles.py</ins>" is for obtaining LFMC from point locations using a table in .csv format. LFMC is directly computed from the MODIS reflectance tiles. The script requires the follwoing inputs: path to the CSV table with the coordinates of the points, path for the output, name of the column containing x or longitude, name of the column containing y or latitude, name of the column containing the dates (currently, only dates in the format day/month/year are accepted), projection of the coordinates in the CSV file (either "wgs4" or "sinusoidal"), lag of days prior to the dates in the table (write "0" for computing LFMC on the exact dates). If the dates in the CSV file refers to the start of a fire, it could be beneficial to extract the LFMC value 8 days prior to those dates, to make sure that the input reflectance data is not influenced by the fire itself (currently MCD43A4 is a composite of 16 days centered at the 9th day).
 The following is an example command that can be used to run the script:

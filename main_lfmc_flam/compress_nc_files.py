@@ -1,5 +1,6 @@
 import xarray as xr
 from glob import glob
+import argparse
 
 def compress_and_save(path_original, path_output, product):
 
@@ -24,36 +25,62 @@ def compress_and_save(path_original, path_output, product):
 
 
 
-au_tiles = ["h27v11", "h27v12", "h28v11", "h28v12", "h28v13", 
-            "h29v10", "h29v11", "h29v12", "h29v13", "h30v10", 
-            "h30v11", "h30v12", "h31v10", "h31v11", "h31v12", 
-            "h32v10", "h32v11"]
-
 
 if __name__ == '__main__':
 
-    year_start = 2023
-    year_end = 2023 #inclusive
-    
-    #tiles
-    for var in ['flam', 'fmc']:
-        for year in range(year_start,year_end+1):
-            for tile in au_tiles:
+    parser = argparse.ArgumentParser(description="""Compress AFMS NetCDF files argument parser""")
+    parser.add_argument('-y', '--year', type=str, required=True, help="Year of files to compress")
+    parser.add_argument('-type', '--filetype', type=str,required=True, help="Either tile or mosaic")
+    parser.add_argument('-t', '--tile',type=str, help="Tile to compress")
+    parser.add_argument('-var', '--variable', type=str,required=True, help="Either fmc or flam or both")
+    parser.add_argument('-in', '--input', type=str,required=True,  help="Full path to non compressed files.")
+    parser.add_argument('-out', '--output', type=str, required=True, help="Full path to destination.")
+    args = parser.parse_args()
 
-                path_original = '/g/data/ub8/au/FMC/tiles/{}_c6_{}_{}.nc'.format(var,year,tile)
-                path_output = '/g/data/ub8/au/FMC/tmp/{}_c6_{}_{}.nc'.format(var,year,tile)
+    # example for running script
+    # /g/data/xc0/software/conda-envs/rs3/bin/python compress_nc_files.py -y 2001 -type tile -t h30v11 -var fmc -in /g/data/ub8/au/FMC/tiles -out /g/data/ub8/au/FMC/tiles_compressed
+    # /g/data/xc0/software/conda-envs/rs3/bin/python compress_nc_files.py -y 2001 -type mosaic -var fmc -in /g/data/ub8/au/FMC/mosaics -out /g/data/ub8/au/FMC/mosaics_compressed
+ 
+    #tiles
+    if args.filetype == 'tile':
+        if args.variable == 'both':
+            for var in ['flam', 'fmc']:
+
+                path_original = '{}/{}_c6_{}_{}.nc'.format(args.input,var,args.year,args.tile)
+                path_output = '{}/{}_c6_{}_{}.nc'.format(args.output,var,args.year,args.tile)
 
                 if not glob(path_output):
                     print(path_output.split('/')[-1])
                     compress_and_save(path_original, path_output, var)
 
+        else:
+            var = args.variable
+
+            path_original = '{}/{}_c6_{}_{}.nc'.format(args.input,var,args.year,args.tile)
+            path_output = '{}/{}_c6_{}_{}.nc'.format(args.output,var,args.year,args.tile)
+
+            if not glob(path_output):
+                print(path_output.split('/')[-1])
+                compress_and_save(path_original, path_output, var)
+
 
     #mosaics
-    for var in ['flam', 'fmc']:
-        for year in range(year_start,year_end+1):
+    elif args.filetype == 'mosaic':
+        if args.variable == 'both':
+            for var in ['flam', 'fmc']:
 
-            path_original = '/g/data/ub8/au/FMC/mosaics/{}_c6_{}.nc'.format(var,year) 
-            path_output = '/g/data/ub8/au/FMC/tmp/{}_c6_{}.nc'.format(var,year)
+                path_original = '{}/{}_c6_{}.nc'.format(args.input,var,args.year) 
+                path_output = '{}/{}_c6_{}.nc'.format(args.output,var,args.year)
+
+                if not glob(path_output):
+                    print(path_output.split('/')[-1])
+                    compress_and_save(path_original, path_output, var)
+
+        else:
+            var = args.variable
+
+            path_original = '{}/{}_c6_{}.nc'.format(args.input,var,args.year) 
+            path_output = '{}/{}_c6_{}.nc'.format(args.output,var,args.year)
 
             if not glob(path_output):
                 print(path_output.split('/')[-1])

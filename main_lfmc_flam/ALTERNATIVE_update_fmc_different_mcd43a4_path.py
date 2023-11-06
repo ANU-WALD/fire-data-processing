@@ -4,7 +4,7 @@ from osgeo import gdal
 import numpy as np
 import argparse
 from glob import glob
-from utils import get_top_n_functor, get_fmc_functor, pack_fmc, get_vegmask
+from utils import get_top_n_functor, get_fmc_functor_median, pack_fmc, get_vegmask
 from datetime import datetime
 import xarray as xr
 import uuid
@@ -12,7 +12,7 @@ import shutil
 import sys
 
 # different path:
-mcd43_root = '/g/data/ub8/au/FMC/intermediary_files/NSW_MCD43A4.061'
+mcd43_root = '/g/data/ub8/au/FMC/intermediary_files/MCD43A4.061'
 
 tile_size = 2400
 
@@ -27,7 +27,7 @@ def fmc(raster_stack, q_mask, veg_type, band_mask):
     std_arr = np.ones((tile_size, tile_size), dtype=np.float32) * -9999.9
     
     get_top_n = get_top_n_functor()
-    get_fmc = get_fmc_functor()
+    get_fmc = get_fmc_functor_median()
     
     for i in range(tile_size):
         for j in range(tile_size):

@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -P mr51
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
+#PBS -l ncpus=1
+#PBS -l mem=16GB
+#PBS -l walltime=40:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/main_lfmc_flam
+
+/g/data/xc0/software/conda-envs/rs3/bin/python ALTERNATIVE_update_fmc_different_mcd43a4_path.py -d $year -t $tile -dst /scratch/mr51/gs3146/tiles/fmc_c6_${year}_${tile}.nc -tmp $PBS_JOBFS
+
+/g/data/xc0/software/conda-envs/rs3/bin/python compress_nc_files.py -y $year -type tile -t $tile -var fmc -in /scratch/mr51/gs3146/tiles -out /scratch/mr51/gs3146/tiles_compressed

@@ -4,7 +4,7 @@
 #PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
 #PBS -l ncpus=1
 #PBS -l mem=4GB
-#PBS -l walltime=01:00:00
+#PBS -l walltime=05:00:00
 #PBS -l jobfs=100GB
 
 module load cdo
