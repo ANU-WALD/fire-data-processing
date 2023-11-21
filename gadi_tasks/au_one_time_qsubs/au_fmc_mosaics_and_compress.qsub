@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -P mr51
+#PBS -q normal
+#PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8+scratch/mr51
+#PBS -l ncpus=1
+#PBS -l mem=60GB
+#PBS -l walltime=30:00:00
+#PBS -l jobfs=100GB
+
+module load cdo
+cd /g/data/xc0/user/scortechini/github/fire-data-processing/main_lfmc_flam
+/g/data/xc0/software/conda-envs/rs3/bin/python update_fmc_mosaic_different_tiles.py -y $year -dst /scratch/mr51/gs3146/mosaics/fmc_c6_${year}.nc -tmp $PBS_JOBFS
+
+/g/data/xc0/software/conda-envs/rs3/bin/python compress_nc_files.py -y $year -type mosaic -var fmc -in /scratch/mr51/gs3146/mosaics -out /scratch/mr51/gs3146/mosaics_compressed

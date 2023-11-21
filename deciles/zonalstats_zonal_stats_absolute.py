@@ -97,7 +97,7 @@ def pack_netcdf(var_netcdf, var_name, date, areas_mask, veg_mask, temp_file):
         for stat in ['avg','coverage','max','min']:
             for code in ['','_1','_2','_3']:
 
-                var = ds.createVariable('{}{}'.format(stat,code), 'f4', ('time', 'plg_id'), zlib=True, complevel=9)
+                var = ds.createVariable('{}{}'.format(stat,code), 'f4', ('time', 'plg_id'))#, zlib=True, complevel=9)
                 var.long_name = '{}{}'.format(stat,code)
                 array_from_dict = np.asarray(stats_dict['{}{}'.format(stat,code)])
                 var[:] = array_from_dict[None,...]

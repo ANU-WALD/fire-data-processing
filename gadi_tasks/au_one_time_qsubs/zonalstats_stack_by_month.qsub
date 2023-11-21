@@ -2,9 +2,9 @@
 #PBS -P mr51
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
-#PBS -l ncpus=8
+#PBS -l ncpus=1
 #PBS -l mem=190GB
-#PBS -l walltime=6:00:00
+#PBS -l walltime=30:00:00
 
 module load cdo
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -P mr51
-#PBS -a 0700
+#PBS -a 0230
 #PBS -q normal
 #PBS -l storage=gdata/xc0+gdata/u39+gdata/ub8
 #PBS -l ncpus=1
